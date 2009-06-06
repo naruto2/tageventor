@@ -1,10 +1,6 @@
-all:	tagEventor scripts
-	@echo ------------------------------------------------------------------------------
+all:	tagEventor
 	@echo DONE
-	@echo You can now add the built files in the change-set/ folder to the working version 
-	@echo To do so: \"cd ..\" then \"bin/addcset `pwd`\"
-	@echo Other make targets are \"clean\" and \"install\" \(for this system, not tc-squared\)
-	@echo ------------------------------------------------------------------------------
+	@echo Other make targets are \"clean\" and \"install\"
 
 #TODO define list of objects some time
 tagEventor: tagEventor.o libtagReader.a
@@ -20,18 +16,12 @@ libtagReader.a: tagReader.o
 tagReader.o: tagReader.c  tagReader.h
 	gcc -c tagReader.c -Wall -I .
 
-scripts: change-set/initrd/etc/tagEventor/generic
-
-change-set/initrd/etc/tagEventor/generic: exampleScipts/generic
-	@cp exampleScipts/generic $@
-	@echo Example script: "generic" added to the change-set
-
 clean:
 	rm -f *.o *.so.*
 
 install: exampleScipts/generic tagEventor tagEventord
-	@echo NOTE: This installs relevant files for tagEventor on this system, not tc-squared
-	@echo To do so, you must run as root to copy files to system directories.
+	@echo This installs relevant files for tagEventor on this system
+	@echo you must run as root to copy files to system directories.
 	@echo Creating directory where tagEventor scripts reside
 	@mkdir -p /etc/tagEventor
 	@cp -f exampleScipts/generic /etc/tagEventor/
