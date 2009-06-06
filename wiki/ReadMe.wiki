@@ -1,5 +1,6 @@
 == How to make ==
 Type "make" at the command prompt in the source directory :-)
+
 You should get appropriate output from the make file and be left with a tagEventor executable object in the current working directory.
 
 === Build Issues ===
@@ -19,11 +20,8 @@ If you can do this, then type "sudo make install".
 This will do a number of things:
 
   # Copy the "tagEventor" binary you build above into /usr/sbin/. Check this has worked and that you can execute it from there with "/usr/sbin/tagEventor"
-
   # Create (if needed) the /etc/tagEventor directory, and copy the "generic" script into it.
-
   # Copies the "tagEventord" init shell script into /etc/init.d for use in starting as a system daemon. This script can be run manually from here also to start and stop the daemon as init would do. e.g. Use "sudo /etc/init.d/tagEventord start|stop|reload|restart" (one of those four options)
-
   # It then creates appropriate links in the different runlevel directories (/etc/rc?.d). Each link points to the same tagEventord script in /etc/init.d. FYI it uses the command "update-rc.d -f tagEventord start 80 2 3 4 5 ." to do this
 
 Now when you restart your system tagEventor should be started as a daemon with verbosity level = 2. 
