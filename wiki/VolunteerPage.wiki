@@ -6,8 +6,6 @@ How you can help depends on what skills and experience you already have, and wha
 
 Read this to find out how you'd like to help, then goto *Get in touch* at the bottom of this page.
 
-Here I describe the different areas in which you can help and explain what you'll need to know or learn to get started.
-
 === Google Code  ===
 This project (as you can see!) is hosted on Google Code servers.
 There are two main ways to interact with the Google Code version control system:
@@ -34,6 +32,7 @@ There are a number of sub-areas in the software that require different knowledge
   * Security and Encryption, Login and Keychain areas
   * USB and attached devices and Plug'n'Play
   * RFID technology, tags, readers that can be useful when writing software
+  * Some lower-level programming such as getting MAC addresses, CPU ID's, communicating with USB devices, etc.
 
 The code is written in 'C'.
 
