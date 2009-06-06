@@ -1,6 +1,6 @@
 all:	tagEventor
 	@echo DONE
-	@echo Other make targets are \"clean\" and \"install\"
+	@echo Other make targets are \"clean\" and \"install\" (as root)
 
 #TODO define list of objects some time
 tagEventor: tagEventor.o libtagReader.a
@@ -20,9 +20,7 @@ clean:
 	rm -f *.o *.so.*
 
 install: exampleScipts/generic tagEventor tagEventord
-	@echo This installs relevant files for tagEventor on this system
-	@echo you must run as root to copy files to system directories.
-	@echo Creating directory where tagEventor scripts reside
+	@echo You must be \"root\" for install to work correctly
 	@mkdir -p /etc/tagEventor
 	@cp -f exampleScipts/generic /etc/tagEventor/
 	@echo Script \"generic\" copied to /etc/tagEventor
