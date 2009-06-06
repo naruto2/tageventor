@@ -1,0 +1,4 @@
+== Supported Systems == 
+This was built and tested on Ubuntu Linux 9.04, but it should build and run on many Linux systems that meet the SoftwareDependencies.
+
+See SupportedReadersAndTags for a list of other hardware required.

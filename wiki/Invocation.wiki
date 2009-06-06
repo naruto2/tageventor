@@ -1,0 +1,26 @@
+== Invocation / Usage ==
+Usage: tagEventor *options*
+  * -n *reader number*   : default = 0
+  * -v *verbosity level* : default = 0 (silent), max = 3 
+  * -d start | stop : start or stop daemon, default = foreground
+  * -r *secs* : retry delay to connect to reader (seconds), default = 10
+  * -p *usecs* : tag polling delay (micro seconds), default = 1000000
+  * -h : print this message
+
+*NOTE: To start the daemon you will need permission for /etc/tagEventor and hence you will probably need to start it as root, or with the "sudo" command!*
+
+*NOTE: There is a build option "make install" that when run as root will install the daemon to be started at system start*
+
+  * -n reader number: this is the number of the reader connected to the pcscd that manages the smart card resources. Default of 0 is chosen.
+
+  * -v verbosity level: sets the verbosity of output. Messages are output if the verbosity level meets or exceed the level of the message. i.e. 0 is no output, 3 is the maximum.
+
+  * -d start|stop: start or stop the daemon process for the given reader (default = 0) and remove the lock-file.
+
+  * -r retry_time: is no reader is found the program loops trying to connect to it, waiting for this specified time in seconds between each try. Default is 10 seconds.
+
+  * - p poll_time: this is the time in microseconds between each poll of the card reader. Default is 1000,000 (1Million), or 1 second.
+
+  * -h: print the help or usage message
+
+

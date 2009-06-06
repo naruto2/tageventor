@@ -1,0 +1,68 @@
+== Output ==
+All errors (LOG_ERROR) and warnings (LOG_WARNING) are logged to syslog if in daemon mode, or output to STDERR in foreground mode. 
+
+Informational messages (LOG_INFO) are logged to syslog (daemon mode) or output on STDOUT (foreground mode) if the currently set verbosity level is equal or higher than the message´s level. Default verbosity is 0, so no information messages are output.
+
+See here for a list of messages output by level:
+
+=== Level 0 ===
+None
+
+=== Level 1 ===
+"Started daemon [command name] with PID=[pid] on reader [reader number], see /var/log/syslog",
+"Daemon Started on reader number [reader number]
+"Hangup signal received - will hangup and reconnect"
+"SIGTERM received, exiting gracefully"
+"Event: Tag [IN|OUT] - UID: [tag UID]"
+"SAM Serial: [serial number of SAM in reader]
+"SAM ID: [ID number of SAM in reader]
+
+=== Level 2 ===
+Current Tag state (number of tags present and what are their UIDs)
+"Number of tags: [number of tags detected ]"
+"Tag ID:   [tag UID]"
+
+"Attempting to execute tag event script [tag UID as a string]"
+"Successfully connected to pcscd server"
+"Found [number of readers found] Readers, "
+"Connected to reader: [reader number]"
+"Disconnecting from reader [reader number]"
+"Disconnecting from pcscd server"
+"Tag Type: MIFARE_ULTRA"
+
+=== Level 3 ===
+Lower level commands sent to reader to read status, ATR, tags etc.
+"APDU: [data sent as apdu in hex"
+"Received: [response]
+"Requesting Response Data ([number of response bytes]"
+"Received: [data in hex received back]"
+
+List of readers found on the system in pcscd, and some of their data:
+"Reader [number]: [reader name string as reported by pcscd]"
+"Firmware: [firmare version string]"
+"ATR: [ATR returned by reader]"
+
+== WARNINGS ===
+"Will wait [retyr delay] seconds and retry connection" when a reader is not found
+
+== ERRORS ===
+"Could not open lock file [lock file name], exiting"
+"Check you have the necessary permission for it"
+"Could not read PID from lock file [lock file name], exiting"
+"Stopping daemon with PID = [pid] on readerNumber [reader number]"
+"Could not open lock file [lock file name], check permissions or run as root, exiting"
+"Could not lock file [lock file name]" ...
+"Probably indicates a previous copy is still running or crashed"...
+"Find PID using \"cat [lock file name]\" or \"ps -ef | grep [command name]\". Exiting.",      
+"Could not write PID to lock file [lock file name]"
+"Error forking daemon [daemon name], exiting"
+"Error creating new SID for daemon process [command name] with PID=[pid] on reader [reader number], see in /var/log/syslog"
+"Failed to find a command to execute" -> none of the script options were found
+
+Any error reported in a call to the PCSC library, converted to a string by the same library.
+
+"APDU failed: SW1 = [SW1 in HEX]"
+
+"Wrong reader index: [reader number]"
+"Not enough memory for readers[]"
+"Reader ([reader firmware string]) not supported"

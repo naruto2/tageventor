@@ -1,0 +1,6 @@
+== Software Dependencies ==
+  * libpcsclite to link executable.
+  * pcscd installed and daemon running on local machine.
+  * libccid driver installed, should be loaded by pcscd.
+
+
