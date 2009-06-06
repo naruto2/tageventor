@@ -1,3 +1,4 @@
+#labels Featured
 Ideas for future work to improve this project are:
 
   * Fix issues! :-)
