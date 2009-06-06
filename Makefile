@@ -17,7 +17,7 @@ tagReader.o: tagReader.c  tagReader.h
 	gcc -c tagReader.c -Wall -I .
 
 clean:
-	rm -f *.o *.so.*
+	rm -f *.o *.so.* *~
 
 install: exampleScipts/generic tagEventor tagEventord
 	@echo You must be \"root\" for install to work correctly
