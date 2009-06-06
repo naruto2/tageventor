@@ -1,0 +1,46 @@
+all:	tagEventor scripts
+	@echo ------------------------------------------------------------------------------
+	@echo DONE
+	@echo You can now add the built files in the change-set/ folder to the working version 
+	@echo To do so: \"cd ..\" then \"bin/addcset `pwd`\"
+	@echo Other make targets are \"clean\" and \"install\" \(for this system, not tc-squared\)
+	@echo ------------------------------------------------------------------------------
+
+#TODO define list of objects some time
+tagEventor: tagEventor.o libtagReader.a
+	gcc tagEventor.o -Wall -l pcsclite  -L. -ltagReader -o $@
+
+# TODO do a generic .c to .o rule sometime
+tagEventor.o: tagEventor.c tagReader.h
+	gcc -c tagEventor.c -Wall -I .
+
+libtagReader.a: tagReader.o
+	ar rcs libtagReader.a tagReader.o
+
+tagReader.o: tagReader.c  tagReader.h
+	gcc -c tagReader.c -Wall -I .
+
+scripts: change-set/initrd/etc/tagEventor/generic
+
+change-set/initrd/etc/tagEventor/generic: exampleScipts/generic
+	@cp exampleScipts/generic $@
+	@echo Example script: "generic" added to the change-set
+
+clean:
+	rm -f *.o *.so.*
+
+install: exampleScipts/generic tagEventor tagEventord
+	@echo NOTE: This installs relevant files for tagEventor on this system, not tc-squared
+	@echo To do so, you must run as root to copy files to system directories.
+	@echo Creating directory where tagEventor scripts reside
+	@mkdir -p /etc/tagEventor
+	@cp -f exampleScipts/generic /etc/tagEventor/
+	@echo Script \"generic\" copied to /etc/tagEventor
+	@cp -f tagEventor /usr/sbin
+	@echo Executable \"tagEventor\" copied to /usr/sbin/
+	@cp -f tagEventord /etc/init.d
+	@echo Init script \"tagEventord\" copied to /etc/init.d/
+	@cd /etc/init.d
+	@echo Adding init script links to /etc/rc\?.d with update-rc.d
+	@update-rc.d -f tagEventord start 80 2 3 4 5 .
+	@cd -
