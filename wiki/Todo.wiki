@@ -1,3 +1,4 @@
+#labels Featured
 === PCSC Lite dev  - ISSUE ===
   * I still have to modify the header files of the pcsc-lite dev files to get includes to work correctly. Either modify the code or Makefile to fix this, or confirm definatively and contact the developers with a patch (I e-mailed once already)
 
