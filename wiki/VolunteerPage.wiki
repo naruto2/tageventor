@@ -37,6 +37,10 @@ There are a number of sub-areas in the software that require different knowledge
 
 The code is written in 'C'.
 
+Areas of work for software developers include:
+  * Fixing issues, see the Issues tab in this Google Code project
+  * Areas from the [Todo Todo] or [FutureIdeas future ideas] list that you'd like to work on 
+
 == Area: Testing ==
 Here I refer to formal testing (functionality, performance, reliability), and possibly programming unit tests or regression tests to help avoid introducing new issues.
 
@@ -46,7 +50,6 @@ A specific area would also be compatibility testing across tag readers, tags and
 E-mail me ('info at autelic dot org') and tell me briefly:
   * some background information about yourself (or a link)
   * in what area (from the above sections) you'd like to contribute
-  * proposing parts of the project from the [Todo Todo] list that you'd like to work on 
 
 Then I'll point you to the contributor agreements on our web site (for copyright and legal reasons and so you retain rights to your work) and when submitted I'll add you to the project as a member.
 
