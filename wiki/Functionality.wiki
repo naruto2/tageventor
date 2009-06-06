@@ -1,4 +1,3 @@
-== Functionality ==
 NOTE: As a system may have multiple readers connected to it, a number of instances of the program (in foreground or daemon) may run at the same time, providing there is only one per reader as specified with the command line option ´-n´.
 
 On start-up tagEventor it will detect reader and connect to it.

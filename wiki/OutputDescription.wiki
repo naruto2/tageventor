@@ -1,4 +1,3 @@
-== Output ==
 All errors (LOG_ERROR) and warnings (LOG_WARNING) are logged to syslog if in daemon mode, or output to STDERR in foreground mode. 
 
 Informational messages (LOG_INFO) are logged to syslog (daemon mode) or output on STDOUT (foreground mode) if the currently set verbosity level is equal or higher than the message´s level. Default verbosity is 0, so no information messages are output.

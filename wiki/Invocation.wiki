@@ -1,4 +1,3 @@
-== Invocation / Usage ==
 Usage: tagEventor *options*
   * -n *reader number*   : default = 0
   * -v *verbosity level* : default = 0 (silent), max = 3 
