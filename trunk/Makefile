@@ -1,6 +1,6 @@
 all:	tagEventor
 	@echo DONE
-	@echo Other make targets are \"clean\" and \"install\" (as root)
+	@echo Other make targets are \"clean\" and \"install\" \(as root\)
 
 #TODO define list of objects some time
 tagEventor: tagEventor.o libtagReader.a
