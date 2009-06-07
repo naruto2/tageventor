@@ -8,21 +8,22 @@ This is another major reported issue we really need to get out of the way ASAP.
 
 = Minor Improvements to Existing Functionality =
 == Daemon code review ==
-  * I´d really appreciate someone with experience on writing linux or unix daemon´s taking a look at the code in tagEventor.c for the daemon, for mutual exclusion using lock files as I´m not convinced it´s bulletproof.
-  * Also, I´d like it to check for the lockfile BEFORE it forks, so that an error message can be given to the user or script invoking it before it forks and fails. Then best to lock it again in the forked process to be sure.
+  * I'd really appreciate someone with experience on writing linux or unix daemons taking a look at the code in tagEventor.c for the daemon, for mutual exclusion using lock files as I'm not convinced it's bulletproof.
+  * Also, I'd like it to check for the lockfile BEFORE it forks, so that an error message can be given to the user or script invoking it before it forks and fails. Then best to lock it again in the forked process to be sure.
 == init scripts ==
   * The /etc/init.d script could be improved in a number of ways I think, such as catching a few corner cases that might cause failures, as well as making more standard compared to others. In doing that I think some of the logic in the application itself for daemonizing could be simplified and made more portable, as at the moment the 'C' code does what many others do in the init script.
 
-= Ease of acquiring and use =
-== Install Packages ==
-Create installation packages for supported systems, binaries first for users, maybe also create a -dev package for developers (although they can easily enough check out from the Google Code project)
-      * Debian .deb package for Ubuntu and other debian based Linux distributions
-      * Packages for other Linux distribution packages
+= Ease of acquiring =
+== Install Packages for users ==
+  * Build a Tiny Core Extension (TCE) for the Tiny Core Linux System, so tagEventor can be included in the tc-squared web-thin-client project which is based on Tiny Core
+Create binary installation packages for supported systems
+  * Debian .deb package for Ubuntu and other debian based Linux distributions
+  * Packages for other Linux distribution packages
 
 = New Functionality =
 == Security / authentication ==
-  * it seems there is some mechanism with the embedded SAM card in the tag reader to do some authentication to the reader. Not sure how it applies, works or how to implement it!
-  * I´d like to have the program also get the local PC MAC address being used, and the processor ID and maybe use them as additional security or to authenticate a client device.
+  * It seems there is some mechanism with the embedded SAM card in the tag reader to do some authentication to the reader. Not sure how it applies, works or how to implement it. Investigation required.
+  * I'd like to have the program also get the local PC MAC address being used, and the processor ID and maybe use them as additional security or to authenticate a client device.
 
 == Login / Authentication ==
 One of the common issues for inexpert or infrequent computer users (and hence a source of frustration for them and supports calls for companies) is loss of login and password info. So I suggest that for many users and uses a physical key in the form of an RFID tag (attached to a card, or keyring) or device (such as a mobile phone with NFC support) would be a good solution. Security would be derived mainly from possesion of it, and use on a known PC or tag reader.
