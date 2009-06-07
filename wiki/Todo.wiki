@@ -1,22 +1,48 @@
 #labels Featured
-=== PCSC Lite dev  - ISSUE ===
-  * I still have to modify the header files of the pcsc-lite dev files to get includes to work correctly. Either modify the code or Makefile to fix this, or confirm definatively and contact the developers with a patch (I e-mailed once already)
+= Fix Urgent Issues =
+== PCSC Lite dev  - ISSUE ==
+I still have to modify the header files of the pcsc-lite dev files to get includes to work correctly. Either modify the code or Makefile to fix this, or confirm definatively and contact the developers with a patch (I e-mailed once already)
 
-=== Starting 'X' Programs from a daemon  - ISSUE ===
+== Starting 'X' Programs from a daemon  - ISSUE ==
 This is another major reported issue we really need to get out of the way ASAP.
 
-=== Daemon code review ===
-  * IÂ´d really appreciate someone with experience on writing linux or unix daemonÂ´s taking a look at the code in tagEventor.c for the daemon, for mutual exclusion using lock files as IÂ´m not convinced itÂ´s bulletproof.
-  * Also, IÂ´d like it to check for the lockfile BEFORE it forks, so that an error message can be given to the user or script invoking it before it forks and fails. Then best to lock it again in the forked process to be sure.
+= Minor Improvements to Existing Functionality =
+== Daemon code review ==
+  * I´d really appreciate someone with experience on writing linux or unix daemon´s taking a look at the code in tagEventor.c for the daemon, for mutual exclusion using lock files as I´m not convinced it´s bulletproof.
+  * Also, I´d like it to check for the lockfile BEFORE it forks, so that an error message can be given to the user or script invoking it before it forks and fails. Then best to lock it again in the forked process to be sure.
+== init scripts ==
+  * The /etc/init.d script could be improved in a number of ways I think, such as catching a few corner cases that might cause failures, as well as making more standard compared to others. In doing that I think some of the logic in the application itself for daemonizing could be simplified and made more portable, as at the moment the 'C' code does what many others do in the init script.
 
-=== init scripts ===
-  * The init scripts could be improved a bit I think in a number of ways, such as catching a few corner cases that might cause failures, as well as making more standard compared to others. In doing that I think some of the logic in the application itself for daemonizing could be simplified and made more portable, as at the moment the 'C' code does what many others do in the init script.
+= Ease of acquiring and use =
+== Install Packages ==
+Create installation packages for supported systems, binaries first for users, maybe also create a -dev package for developers (although they can easily enough check out from the Google Code project)
+      * Debian .deb package for Ubuntu and other debian based Linux distributions
+      * Packages for other Linux distribution packages
 
-=== Security / authentication ===
+= New Functionality =
+== Security / authentication ==
   * it seems there is some mechanism with the embedded SAM card in the tag reader to do some authentication to the reader. Not sure how it applies, works or how to implement it!
-  * IÂ´d like to have the program also get the local PC MAC address being used, and the processor ID and maybe use them as additional security or to authenticate a client device.
+  * I´d like to have the program also get the local PC MAC address being used, and the processor ID and maybe use them as additional security or to authenticate a client device.
 
-=== Tag read / write ===
+== Login / Authentication ==
+One of the common issues for inexpert or infrequent computer users (and hence a source of frustration for them and supports calls for companies) is loss of login and password info. So I suggest that for many users and uses a physical key in the form of an RFID tag (attached to a card, or keyring) or device (such as a mobile phone with NFC support) would be a good solution. Security would be derived mainly from possesion of it, and use on a known PC or tag reader.
+    * Ability to use RFID key to Login / Keychain / Authenticate in new ways easing PC usage and reducing issues related to forgotten logins or passwords etc
+
+== Control Panel / User Preferences ==
+Have a graphical UI "control panel" that the user could use to administer events/actions associated with specific tags, and to enable or register new tags to the system and specify what actions for each.
+
+= Supported Hardware =
+  * Support more reader hardware
+  * Support more tag types
+
+= New Platforms and Operating Systems =
+  * Mac OS X port (shouldn't be too bad being BSD and having pcsc-lite already)
+  * Windows (XP, Vista, 7) port
+
+= Tools =
+== Tag read / write ==
   * I *think* that in the Mi-Fare tags used a few bytes can be reprogrammed. So, write a script or program to:-
     * Read the entire contents of the Mi-fare tag memory (see spec document in download section)
     * Write the bytes that can be written, and read them back to verify
+
+Send other suggestions to mailto:info@autelic.org
