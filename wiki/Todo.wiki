@@ -21,6 +21,9 @@ Create binary installation packages for supported systems
   * Packages for other Linux distribution packages
 
 = New Functionality =
+== Integration ==
+Consider a better way of generating system events than scripts. Maybe one that's more tightly integrated with each OS it runs on. This maybe related to the "control panel" functionality suggested below.
+
 == Security / authentication ==
   * It seems there is some mechanism with the embedded SAM card in the tag reader to do some authentication to the reader. Not sure how it applies, works or how to implement it. Investigation required.
   * I'd like to have the program also get the local PC MAC address being used, and the processor ID and maybe use them as additional security or to authenticate a client device.
