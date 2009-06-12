@@ -12,6 +12,8 @@ This is another major reported issue we really need to get out of the way ASAP.
   * Also, I'd like it to check for the lockfile BEFORE it forks, so that an error message can be given to the user or script invoking it before it forks and fails. Then best to lock it again in the forked process to be sure.
 == init scripts ==
   * The /etc/init.d script could be improved in a number of ways I think, such as catching a few corner cases that might cause failures, as well as making more standard compared to others. In doing that I think some of the logic in the application itself for daemonizing could be simplified and made more portable, as at the moment the 'C' code does what many others do in the init script.
+== use reader LED colors ==
+From reading the spec of the ACS reader it appears you can control the color of the LED (green, amber and red). I thought we could use this to give the user some feedback. Show that a tag was recognized and that action was launched or that an error was detected in the starting of the event/script. This might be especially useful as some events take a time to start and the user maybe tempted to place and remove the tag a few times until they see some action.
 
 = Ease of acquiring =
 == Install Packages for users ==
