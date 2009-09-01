@@ -555,6 +555,7 @@ int main(
          break;
    }
 
+#if 0 /* ADM DEBUG */
 i=0;
 while (envp[i] != NULL)
 {
@@ -562,6 +563,7 @@ snprintf(messageString,  (MAX_LOG_MESSAGE -1), "Env: %s", envp[i]);
 logMessage(LOG_INFO, 3, messageString);
 i++;
 }
+#endif
 
    while (TRUE)
    {
