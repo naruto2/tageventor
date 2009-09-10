@@ -25,7 +25,7 @@ Type "./tagEventor -h" to see the usage string.
 How to Install as a daemon
 --------------------------
 You must be able to run as root to install tagEventor on the local machine.
-If you can do this, then use "sudo make install".
+If you can do this, then use "sudo ./install-sh".
 
 This will do a number of things:
 
