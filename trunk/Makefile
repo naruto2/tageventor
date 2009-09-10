@@ -1,6 +1,8 @@
-all:	tagEventor
+all:	tagEventor cpanel
 	@echo DONE
-	@echo Other make targets are \"clean\" and \"install\" \(as root\)
+
+cpanel: cpanel.c cpanel.glade libtagReader.a
+	gcc `pkg-config --cflags --libs gtk+-2.0 gmodule-2.0` -I . -L. -ltagReader -o $@ $<
 
 #TODO define list of objects some time
 tagEventor: tagEventor.o libtagReader.a
@@ -19,16 +21,4 @@ tagReader.o: tagReader.c  tagReader.h
 clean:
 	rm -f *.o *.so.* *~
 
-install: exampleScipts/generic tagEventor tagEventord
-	@echo You must be \"root\" for install to work correctly
-	@mkdir -p /etc/tagEventor
-	@cp -f exampleScipts/generic /etc/tagEventor/
-	@echo Script \"generic\" copied to /etc/tagEventor
-	@cp -f tagEventor /usr/sbin
-	@echo Executable \"tagEventor\" copied to /usr/sbin/
-	@cp -f tagEventord /etc/init.d
-	@echo Init script \"tagEventord\" copied to /etc/init.d/
-	@cd /etc/init.d
-	@echo Adding init script links to /etc/rc\?.d with update-rc.d
-	@update-rc.d -f tagEventord start 80 2 3 4 5 .
-	@cd -
+
