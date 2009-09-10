@@ -1,0 +1,11 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Tageventor
+Comment=Tageventor daemon
+Icon=tageventor
+Exec=tageventor
+Terminal=false
+Type=Application
+Categories=
+OnlyShowIn=GNOME;XFCE;
+X-Ubuntu-Gettext-Domain=tageventor
