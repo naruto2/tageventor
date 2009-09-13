@@ -1,3 +1,5 @@
 This was built and tested on Ubuntu Linux 9.04, but it should build and run on many Linux systems that meet the SoftwareDependencies.
 
+Volunteers are currently working to make the code changes necessary to run on Mac OS X using PCSCLite, and a port to Windows is being investigated.
+
 See SupportedReadersAndTags for a list of other hardware required.
