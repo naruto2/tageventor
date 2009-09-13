@@ -1,13 +1,13 @@
 === Compile Time ===
-   * pcsclite development package
+   * *pcsclite* development package
 
-   * If you want to compile the evolving UI prototypes to see what they look like you will need Glade and it's development headers.
+   * If you want to compile the evolving UI prototypes to see what they look like you will need *Glade* and it's development headers.
 
 === Link Time ===
-  * libpcsclite to link executable.
+  * *libpcsclite* to link executable.
 
-   * If you want to compile the evolving UI prototypes to see what they look like you will need Glade and it's libraries.
+   * If you want to compile the evolving UI prototypes to see what they look like you will need *Glade* and it's libraries.
 
 === Run Time ===
-  * pcscd installed and daemon running on local machine.
-  * libccid driver installed, should be loaded by pcscd.
+  * *pcscd* installed and daemon running on local machine.
+  * *libccid* driver installed, should be loaded by pcscd.
