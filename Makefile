@@ -2,7 +2,7 @@ all:	tagEventor cpanel
 	@echo DONE
 
 cpanel: cpanel.c cpanel.glade libtagReader.a
-	gcc `pkg-config --cflags --libs gtk+-2.0 gmodule-2.0` -I . -L. -ltagReader -o $@ $<
+	gcc `pkg-config --cflags --libs gtk+-2.0 gmodule-2.0` -DICON_DIR="/usr/share/app-install/icons"  -I . -L. -ltagReader -o $@ $<
 
 #TODO define list of objects some time
 tagEventor: tagEventor.o libtagReader.a

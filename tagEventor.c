@@ -2,13 +2,13 @@
   tagEventor.c - C source code for tagEventor application / daemon
 
   Copyright 2008-2009 Autelic Association (http://www.autelic.org)
- 
+
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
   You may obtain a copy of the License at
- 
+
        http://www.apache.org/licenses/LICENSE-2.0
- 
+
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS,
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -79,7 +79,7 @@ static const char * const tagString[]  = { "IN", "OUT" };
 
 
 /************************ PRINT USAGE ***********************/
-static void printUsage( 
+static void printUsage(
 	const char 	*name
  			)
 {
@@ -95,10 +95,10 @@ static void printUsage(
 
 /************************ PARSE COMMAND LINE OPTIONS ********/
 static void   parseCommandLine(
-        int 		argc, 
+        int 		argc,
 	char 		*argv[],
 	int		*pnumber,
-	int		*pverbosityLevel, 
+	int		*pverbosityLevel,
         tDaemonOptions	*pDaemonOptions,
 	int		*pretryDelay,
         int             *ppollDelay
@@ -116,7 +116,7 @@ static void   parseCommandLine(
    *ppollDelay = POLL_DELAY_MICRO_SECONDS;
 
    while ( ((option = getopt(argc, argv, "n:v:d:r:p:h")) != EOF) && (!parseError) )
-      switch (option) 
+      switch (option)
       {
          case 'n':
             *pnumber = atoi(optarg);
@@ -183,7 +183,7 @@ static void   parseCommandLine(
 	    parseError = TRUE;
             break;
       }
- 
+
    if (parseError)
    {
       printUsage(argv[0]);
@@ -210,8 +210,8 @@ static void handleSignal(
          readerDisconnect(&reader);
          readerConnect(&reader);
          logMessage(LOG_INFO, 1, "Hangup signal received - disconnected and reconnected");
-      break;		
-	
+      break;
+
       case SIGINT: /* kill -2 or Control-C */
       case SIGTERM:/* "kill -15" or "kill" */
          readerDisconnect(&reader);
@@ -232,7 +232,7 @@ static void handleSignal(
 
 
 /************************ STOP DAEMON **************/
-static void stopDaemon( 
+static void stopDaemon(
 		       int		readerNumber
 		      )
 {
@@ -244,7 +244,7 @@ static void stopDaemon(
    sprintf(lockFilename, "%s/%s_%d.lock", DEFAULT_LOCK_FILE_DIR, DAEMON_NAME, readerNumber);
    lockFile = open( lockFilename, O_RDONLY, 0 );
    if (lockFile == -1)
-   {  
+   {
       sprintf(messageString, "Could not open lock file %s, exiting", lockFilename);
       logMessage(LOG_ERR, 0, messageString);
       sprintf(messageString, "Check you have the necessary permission for it");
@@ -252,7 +252,7 @@ static void stopDaemon(
       exit( EXIT_FAILURE );
    }
 
-   /* get the running PID in the lockfile */   
+   /* get the running PID in the lockfile */
    if (read(lockFile, pidString, 19) == -1)
    {
       sprintf(messageString, "Could not read PID from lock file %s, exiting", lockFilename);
@@ -298,7 +298,7 @@ static void getLockOrDie(
    lockFile = open( lockFilename, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH );
    if ( lockFile == -1 )
    {
-      sprintf(messageString, 
+      sprintf(messageString,
               "Could not open lock file %s, check permissions or run as root, exiting", lockFilename);
       logMessage(LOG_ERR, 0, messageString);
       exit( EXIT_FAILURE );
@@ -315,13 +315,13 @@ static void getLockOrDie(
       logMessage(LOG_ERR, 0, messageString);
       sprintf(messageString, "Probably indicates a previous copy is still running or crashed");
       logMessage(LOG_ERR, 0, messageString);
-      sprintf(messageString, "Find PID using \"cat %s\" or \"ps -ef | grep %s\". Exiting.",      
+      sprintf(messageString, "Find PID using \"cat %s\" or \"ps -ef | grep %s\". Exiting.",
              lockFilename, DAEMON_NAME);
       logMessage(LOG_ERR, 0, messageString);
       exit( EXIT_FAILURE );
    }
 
-   /* store the running PID in the lockfile */   
+   /* store the running PID in the lockfile */
    sprintf( pidString, "%d\n", getpid());
    if (write(lockFile, pidString, strlen(pidString)) != strlen(pidString) )
    {
@@ -372,12 +372,12 @@ static void daemonize (
 
    /* get a new process group for daemon */
    if ( setsid() < 0 )
-   { 
+   {
       sprintf(messageString, "Error creating new SID for daemon process %s with PID=%d on reader %d, see in /var/log/syslog", DAEMON_NAME, pid, readerNumber);
       logMessage(LOG_ERR, 0, messageString);
       exit( EXIT_FAILURE );
    }
-      
+
 
    /* change working directory to / */
    if ( (chdir("/")) < 0 )
@@ -388,13 +388,13 @@ static void daemonize (
 #if 0
    /* close unneeded descriptions in the deamon child process */
    for (i = getdtablesize(); i >= 0; i--)
-      close( i );    
+      close( i );
 
    /* close stdio */
    close ( STDIN_FILENO );
    close ( STDOUT_FILENO );
    close ( STDERR_FILENO );
-#endif 
+#endif
 
    /* make sure Iḿ the only one reading from this reader */
    getLockOrDie(readerNumber);
@@ -448,11 +448,11 @@ static int execScript(
            scriptPath, getpid());
    logMessage(LOG_INFO, 2, messageString);
    ret = execl( scriptPath, argv0, SAM_serial, tagUID, eventTypeString, NULL );
-   /* If any of the exec() functions returns, an error will have occurred. The return value is -1, 
+   /* If any of the exec() functions returns, an error will have occurred. The return value is -1,
       and the global variable errno will be set to indicate the error. */
    sprintf(messageString, "Return value from execl() of script was = %d, errno=%d", ret, errno);
    logMessage(LOG_INFO, 2, messageString);
-  
+
    /* exit the child process and return the return value, parent keeps on going */
    exit( ret );
 }
@@ -470,7 +470,7 @@ static void tagEvent (
    char		currentDir[MAX_PATH];
    char		messageString[MAX_LOG_MESSAGE];
 
-   sprintf(messageString, "Event: Tag %s - UID: %s", tagString[eventType], tagUID); 
+   sprintf(messageString, "Event: Tag %s - UID: %s", tagString[eventType], tagUID);
    logMessage(LOG_INFO, 1, messageString);
 
    /* if we are running in foreground then check current directory - for testing/development */
@@ -508,7 +508,7 @@ static void tagEvent (
 
 /************************ MAIN ******************************/
 int main(
-        int 		argc, 
+        int 		argc,
 	char 		*argv[],
  	char		*envp[]
         )
@@ -525,8 +525,9 @@ int main(
    /* some help to make sure we close whatś needed, not more */
    reader.hContext = ((SCARDCONTEXT)NULL);
    reader.hCard = ((SCARDHANDLE)NULL);
+   reader.number = 0;
 
-   parseCommandLine(argc, argv, 
+   parseCommandLine(argc, argv,
                     &(reader.number), &verbosityLevel, &daemonOptions, &retryDelaysec, &pollDelayus);
 
    /* set-up signal handlers */
@@ -554,16 +555,6 @@ int main(
       default:
          break;
    }
-
-#if 0 /* ADM DEBUG */
-i=0;
-while (envp[i] != NULL)
-{
-snprintf(messageString,  (MAX_LOG_MESSAGE -1), "Env: %s", envp[i]);
-logMessage(LOG_INFO, 3, messageString);
-i++;
-}
-#endif
 
    while (TRUE)
    {
@@ -630,13 +621,13 @@ i++;
             if (change)
             {
                PRINT_TAG_STATE(pnewTagList);
-               SWAP(pnewTagList, ppreviousTagList);            
+               SWAP(pnewTagList, ppreviousTagList);
             }
 
             /* Wait between polls */
             usleep(pollDelayus);
          }
-      }   
+      }
       /* if we got this far, we got an error. Disconnect and try reconnecting */
       /* and start from scratch */
 
