@@ -71,11 +71,13 @@ typedef enum { FOREGROUND, START_DAEMON, STOP_DAEMON } tDaemonOptions;
 
 /* This is needed by handleSignal to clean-up, so can't be local :-( */
 static  tReader         reader;
-static  int		lockFile = -1;
-static  char		lockFilename[MAX_PATH];
-static  BOOL		runningAsDaemon = FALSE;
+static  int		        lockFile = -1;
+static  char		    lockFilename[MAX_PATH];
+static  BOOL		    runningAsDaemon = FALSE;
 /* strings used for tag events, for text output and name of scipts */
 static const char * const tagString[]  = { "IN", "OUT" };
+static int			    retryDelaysec, pollDelayus;
+
 
 
 /************************ PRINT USAGE ***********************/
@@ -505,6 +507,98 @@ static void tagEvent (
 }
 /*********************  TAG EVENT ****************************/
 
+/************************ MAIN LOOP *************************/
+void
+main_loop( void )
+{
+    tTagList		tagList1, tagList2;
+    tTagList		*pnewTagList, *ppreviousTagList, *temp;
+    LONG 		    rv;
+    BOOL			change, found;
+    int			    i, j;
+    char			messageString[MAX_LOG_MESSAGE];
+
+    while (TRUE)
+    {
+       pnewTagList = &tagList1;
+       ppreviousTagList = &tagList2;
+
+       /* connect to reader */
+       rv = readerConnect(&reader);
+
+       /* Loop trying to connect to the pcscd server and find the reader */
+       while ( rv != SCARD_S_SUCCESS )
+       {
+          sprintf(messageString, "Will wait %d seconds and retry connection", retryDelaysec);
+          logMessage(LOG_WARNING, 0, messageString);
+          sleep(retryDelaysec);
+          rv = readerConnect(&reader);
+       }
+
+       /* report initial state */
+       rv = getTagList(&reader, ppreviousTagList);
+       PRINT_TAG_STATE(ppreviousTagList);
+
+       while ( rv == SCARD_S_SUCCESS )
+       {
+            /* get the list of tags on reader */
+            rv = getTagList(&reader, pnewTagList);
+            if (rv == SCARD_S_SUCCESS)
+            {
+                change = FALSE;
+
+                /* for each tags that was here before */
+                for (i = 0; i < ppreviousTagList->numTags; i++)
+                {
+                    found = FALSE;
+                    /* Look for it in the new list */
+                    for (j = 0; (j < pnewTagList->numTags); j++)
+                        if ( strcmp(ppreviousTagList->tagUID[i],
+                              pnewTagList->tagUID[j]) == 0 )
+                            found = TRUE;
+
+                    if (!found)
+                    {
+                        tagEvent(TAG_OUT, ppreviousTagList->tagUID[i], &reader);
+                        change = TRUE;
+                    }
+                }
+
+                /* check for tags that are here now */
+                for (i = 0; i < pnewTagList->numTags; i++)
+                {
+                    found = FALSE;
+                    /* Look for it in the old list */
+                    for (j = 0; ((j < ppreviousTagList->numTags) && (!found)); j++)
+                        if ( strcmp(ppreviousTagList->tagUID[j],
+                              pnewTagList->tagUID[i]) == 0 )
+                            found = TRUE;
+                    if (!found)
+                    {
+                        tagEvent(TAG_IN, pnewTagList->tagUID[i], &reader);
+                        change = TRUE;
+                    }
+                }
+
+                if (change)
+                {
+                    PRINT_TAG_STATE(pnewTagList);
+                    SWAP(pnewTagList, ppreviousTagList);
+                }
+
+                /* Wait between polls */
+                usleep(pollDelayus);
+            } /* if getTagList() was successful */
+       } /* while no error reading was returned */
+
+        /* if we got this far, we got an error. Disconnect and try reconnecting */
+        /* and start from scratch */
+
+        /* Ignore errors from disconnect as we're going to try and reconnect anyway */
+        readerDisconnect(&reader);
+    } /* Loop forever - doing our best - only way out is via a signal */
+}
+/************************ MAIN LOOP *************************/
 
 /************************ MAIN ******************************/
 int main(
@@ -513,14 +607,8 @@ int main(
  	char		*envp[]
         )
 {
-   tTagList		tagList1, tagList2;
-   tTagList		*pnewTagList, *ppreviousTagList, *temp;
-   LONG 		rv;
-   int			i, j, retryDelaysec, pollDelayus;
-   BOOL			change, found;
    tDaemonOptions	daemonOptions;
-   int			verbosityLevel;
-   char			messageString[MAX_LOG_MESSAGE];
+   int			    verbosityLevel;
 
    /* some help to make sure we close whatś needed, not more */
    reader.hContext = ((SCARDCONTEXT)NULL);
@@ -556,82 +644,9 @@ int main(
          break;
    }
 
-   while (TRUE)
-   {
-      pnewTagList = &tagList1;
-      ppreviousTagList = &tagList2;
+   /* enter the main loop to process tag events and only return to exit */
+   main_loop();
 
-      /* connect to reader */
-      rv = readerConnect(&reader);
+   return ( 0 );
 
-      /* Loop trying to connect to the pcscd server and find the reader */
-      while ( rv != SCARD_S_SUCCESS )
-      {
-         sprintf(messageString, "Will wait %d seconds and retry connection", retryDelaysec);
-         logMessage(LOG_WARNING, 0, messageString);
-         sleep(retryDelaysec);
-         rv = readerConnect(&reader);
-      }
-
-      /* report initial state */
-      rv = getTagList(&reader, ppreviousTagList);
-      PRINT_TAG_STATE(ppreviousTagList);
-
-      while ( rv == SCARD_S_SUCCESS )
-      {
-         /* get the list of tags on reader */
-         rv = getTagList(&reader, pnewTagList);
-         if (rv == SCARD_S_SUCCESS)
-         {
-            change = FALSE;
-
-            /* for each tags that was here before */
-            for (i = 0; i < ppreviousTagList->numTags; i++)
-            {
-               found = FALSE;
-               /* Look for it in the new list */
-               for (j = 0; (j < pnewTagList->numTags); j++)
-                  if ( strcmp(ppreviousTagList->tagUID[i],
-                              pnewTagList->tagUID[j]) == 0 )
-                     found = TRUE;
-
-               if (!found)
-               {
-                  tagEvent(TAG_OUT, ppreviousTagList->tagUID[i], &reader);
-                  change = TRUE;
-               }
-            }
-
-            /* check for tags that are here now */
-            for (i = 0; i < pnewTagList->numTags; i++)
-            {
-               found = FALSE;
-               /* Look for it in the old list */
-               for (j = 0; ((j < ppreviousTagList->numTags) && (!found)); j++)
-                  if ( strcmp(ppreviousTagList->tagUID[j],
-                              pnewTagList->tagUID[i]) == 0 )
-                     found = TRUE;
-               if (!found)
-               {
-                  tagEvent(TAG_IN, pnewTagList->tagUID[i], &reader);
-                  change = TRUE;
-               }
-            }
-
-            if (change)
-            {
-               PRINT_TAG_STATE(pnewTagList);
-               SWAP(pnewTagList, ppreviousTagList);
-            }
-
-            /* Wait between polls */
-            usleep(pollDelayus);
-         }
-      }
-      /* if we got this far, we got an error. Disconnect and try reconnecting */
-      /* and start from scratch */
-
-      /* Ignore errors from disconnect as we're going to try and reconnect anyway */
-      readerDisconnect(&reader);
-   } /* Loop forever - doing our best - only way out is via a signal */
 } /* main */
