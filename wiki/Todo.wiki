@@ -35,14 +35,14 @@ One of the common issues for inexpert or infrequent computer users (and hence a 
     * Ability to use RFID key to Login / Keychain / Authenticate in new ways easing PC usage and reducing issues related to forgotten logins or passwords etc
 
 == Control Panel / User Preferences ==
-Have a graphical UI "control panel" that the user could use to administer events/actions associated with specific tags, and to enable or register new tags to the system and specify what actions for each.
+Work is progressing on a GNOME/Gtk+ system tray resident application and "control panel" UI to administer events/actions associated with tags.
 
 = Supported Hardware =
-  * Support more reader hardware
+  * Support more reader hardware (work is under way on this)
   * Support more tag types
 
 = New Platforms and Operating Systems =
-  * Mac OS X port (shouldn't be too bad being BSD and having pcsc-lite already)
+  * Mac OS X port (work is under way on this)
   * Windows (XP, Vista, 7) port
 
 = Tools =
