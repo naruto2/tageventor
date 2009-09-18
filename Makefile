@@ -1,27 +1,31 @@
-all:	tagEventor cpanel
-	@echo DONE
+all: debug
+
+debug: lib/Debug/libtagReader.a bin/Debug/tagEventor bin/Debug/cpanel
 
 #TODO define list of objects some time
-tagEventor: tagEventor.o libtagReader.a
-	gcc tagEventor.o -Wall -l pcsclite  -L. -ltagReader -o $@
+bin/Debug/tagEventor: obj/Debug/tagEventor.o libtagReader.a
+	gcc obj/Debug/tagEventor.o -Wall -l pcsclite  -L. -ltagReader -o $@
+	@echo tageventor BUILT
 
 # TODO do a generic .c to .o rule sometime
-tagEventor.o: tagEventor.c tagReader.h
-	gcc -c tagEventor.c -Wall -I .
+obj/Debug/tagEventor.o: tagEventor.c tagReader.h
+	gcc -c tagEventor.c -Wall -I . -o $@
 
-cpanel: cpanel.o libtagReader.a
-	gcc cpanel.o `pkg-config --cflags --libs gtk+-2.0 gmodule-2.0` -l pcsclite  -L. -ltagReader -o $@
+bin/Debug/cpanel: obj/Debug/cpanel.o
+	gcc obj/Debug/cpanel.o `pkg-config --cflags --libs gtk+-2.0 gmodule-2.0` -l pcsclite  -L. -ltagReader -o $@
+	@echo cpanel BUILT
 
-cpanel.o: cpanel.c tagReader.h
-	gcc -c cpanel.c `pkg-config --cflags --libs gtk+-2.0 gmodule-2.0` -DICON_DIR="/usr/share/app-install/icons" -Wall -I .
+obj/Debug/cpanel.o: cpanel.c tagReader.h
+	gcc -c cpanel.c `pkg-config --cflags --libs gtk+-2.0 gmodule-2.0` -DICON_DIR="/usr/share/app-install/icons" -Wall -I . -o $@
 
-libtagReader.a: tagReader.o
-	ar rcs libtagReader.a tagReader.o
+lib/Debug/libtagReader.a: obj/Debug/tagReader.o
+	ar rcs $@ $<
+	@echo libtagReader BUILT
 
-tagReader.o: tagReader.c  tagReader.h
-	gcc -c tagReader.c -Wall -I .
+obj/Debug/tagReader.o: tagReader.c  tagReader.h
+	gcc -c tagReader.c -Wall -I . -o $@
 
 clean:
-	rm -f *.o *.so.* *~
+	rm -f obj/Debug/*.o obj/Debug/*.so.* lib/Debug/*.a *~ bin/Debug/*
 
 
