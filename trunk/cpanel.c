@@ -1,3 +1,22 @@
+/*
+  cpanel.c - C source code for tagEventor Gtk/GNOME system tray icon and
+             control panel
+
+  Copyright 2009 Autelic Association (http://www.autelic.org)
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
 #include <stdlib.h>
 #include <gtk/gtk.h>
 #include "tagReader.h"
@@ -6,19 +25,27 @@
 /* TODO: there should be a system or POSIX definition of this that should be used */
 #define MAX_PATH (1024)
 
-#define TOOL_TIP_TEXT "Tageventor: \nLeft-click for control panel.\nRight-click for actions."
+#define TOOL_TIP_TEXT   "Tageventor: \nLeft-click for control panel.\nRight-click for actions."
 #define PROGRAM_NAME    "Tageventor"
 #define DIALOG_TITLE    "Tageventor Control Panel"
 #define VERSION_STRING  "0.0.0.0"
 /* TODO find a way to get this from svn, or Make or something */
 
-typedef char	tScript[MAX_PATH];
+#define MAX_DESCRIPTION_LENGTH  (80)
+
+#define DEFAULT_WIDTH_PIX       (620)
+#define DEFAULT_HEIGHT_PIX      (250)
+
+/* TODO ignore the ICON_DIR we have passed from the compiler for now ..... */
+/* TODO we need to fix this so it works when installed (system dirs for icons) and for debug */
+/* TODO I've forgotten all my C pre-processor stuff and can't get the token concatenation to work! */
+#define ICON_PATH(FILE_NAME)		icons/ ## FILE_NAME
 
 /* where to save this type of config stuff???? via GConf or something */
 typedef struct {
-   	char		*ID;
- 	char		*script;
-	char		*description;
+   	char		*ID;            /* Max size = sizeof(uid) */
+ 	char		*script;        /* Max size = MAX_PATH */
+	char		*description;   /* Max size = MAX_DESCRIPTION_LENGTH */
 	BOOL		enabled;
 } tPanelEntry;
 
@@ -26,17 +53,19 @@ const gchar *columnHeader[4] = { "Tag ID", "Description", "Script", "Enabled" };
 
 const gchar  *authors[] = {"Andrew Mackenzie (andrew@autelic.org)", NULL };
 
-const char      *iconNameList[] = { "tageventor16x16.png",
-                                    "tageventor32x32.png",
-                                    "tageventor48x48.png",
-                                    "tageventor64x64.png",
-                                    "tageventor128x128.png" };
+const char      *iconNameList[] = {
+				"icons/tageventor16x16.png",
+				"icons/tageventor32x32.png",
+				"icons/tageventor48x48.png",
+				"icons/tageventor64x64.png",
+				"icons/tageventor128x128.png"
+				};
 
 BOOL            savePending = FALSE;
 BOOL            cpanelVisible = FALSE;
 int             numTagEntries = 0;
 tPanelEntry     *tagEntryArray; /* TODO 10 for now for testing */
-GtkWidget       *cpanelWindow = NULL, *statusBar = NULL;
+GtkWidget       *cpanelWindow = NULL, *statusBar = NULL, *applyButton = NULL;
 GtkStatusIcon   *cpanelIcon = NULL;
 guint           tagCheckTimeout;
 
@@ -106,8 +135,11 @@ closeMain(
 }
 
 
-static void destroy( GtkWidget *widget,
-                     gpointer   data )
+static void
+destroy(
+        GtkWidget *widget,
+        gpointer   data
+        )
 {
 
     /* hide the main cpanel window */
@@ -132,6 +164,7 @@ scriptChosen(
     /* get the button state and put into tagEntryArray */
 /* TODO figure this out how to get the entry !!!!     tagEntryArray[(int)entryIndex].script = gtk_toggle_button_get_active( (GtkToggleButton *)widget); */
     savePending = TRUE;
+    gtk_widget_set_sensitive( applyButton, TRUE );
 
 }
 
@@ -147,6 +180,7 @@ enableChange(
     /* get the button state and put into tagEntryArray */
     tagEntryArray[(int)entryIndex].enabled = gtk_toggle_button_get_active( (GtkToggleButton *)widget);
     savePending = TRUE;
+    gtk_widget_set_sensitive( applyButton, TRUE );
 
 }
 
@@ -160,6 +194,8 @@ saveTagConfig( const tPanelEntry *pTagEntryArray )
 
     /* now the table used to process events matches what's in the UI so we are in sync */
     savePending = FALSE;
+    gtk_widget_set_sensitive( applyButton, FALSE );
+
 }
 
 void
@@ -181,21 +217,17 @@ int
 readTagConfig( tPanelEntry **pTagEntryArray )
 {
     int     numTags, size, i;
-#define NUM_FAKE_TAGS   (10)
+#define NUM_FAKE_TAGS   (4)
 
     static    tPanelEntry fakeTags[NUM_FAKE_TAGS] = {
         { "12345678901234", "/home/andrew/test", "a fake tag for testing", TRUE },
         { "45678901234567", "/home/andrew/test2", "another fake tag for testing", FALSE },
         { "45678901234567", "/home/andrew/test2", "another fake tag for testing", FALSE },
-        { "45678901234567", "/home/andrew/test2", "another fake tag for testing", FALSE },
-        { "45678901234567", "/home/andrew/test2", "another fake tag for testing", FALSE },
-        { "45678901234567", "/home/andrew/test2", "another fake tag for testing", FALSE },
-        { "45678901234567", "/home/andrew/test2", "another fake tag for testing", FALSE },
-        { "45678901234567", "/home/andrew/test2", "another fake tag for testing", FALSE },
-        { "45678901234567", "/home/andrew/test2", "another fake tag for testing", FALSE },
         { "45678901234567", "/home/andrew/test2", "another fake tag for testing", FALSE }
         };
 
+/* TODO we should also check for duplicate tag entries, or we could allow that. Need to change code that
+   executes scripts to allow that though ... */
     /* TODO need to figure out how many tags we have before allocating memory! */
     numTags = NUM_FAKE_TAGS;
 
@@ -207,10 +239,16 @@ readTagConfig( tPanelEntry **pTagEntryArray )
 
     for (i = 0; i < numTags; i++)
     {
-/* TODO we will have to malloc each string when this is done for real */
-        (*pTagEntryArray)[i].ID = fakeTags[i].ID;
-        (*pTagEntryArray)[i].script = fakeTags[i].script;
-        (*pTagEntryArray)[i].description = fakeTags[i].description;
+        /* malloc each string for new entry added and add to tagEntryArray*/
+        (*pTagEntryArray)[i].ID = malloc( sizeof( uid ) );
+        strcpy( (*pTagEntryArray)[i].ID, fakeTags[i].ID );
+
+        (*pTagEntryArray)[i].script = malloc( MAX_PATH );
+        strcpy( (*pTagEntryArray)[i].script, fakeTags[i].script);
+
+        (*pTagEntryArray)[i].description = malloc( MAX_DESCRIPTION_LENGTH );
+        strcpy( (*pTagEntryArray)[i].description , fakeTags[i].description);
+
         (*pTagEntryArray)[i].enabled = fakeTags[i].enabled;
     }
 
@@ -224,14 +262,14 @@ tableAddRow( GtkTable *pTable, int i, char * ID, char * description, char *scrip
     GtkWidget    *label, *chooser, *enable, *entry;
     gchar       message[80];
 
-    /* Tag ID of 14 char which does not need to expand with window size */
+    /* Tag ID of upto 20 char (usually 14) which does not need to expand with window size */
     label = gtk_label_new(ID);
     /* attach a new widget into the table */
     gtk_table_attach(pTable, label, 0, 1, i+1, i+2, GTK_FILL, GTK_FILL, 5, 0 );
 
     /* description entry of upto 80 characters which can benefit from expanding horizontally*/
     entry = gtk_entry_new();
-    gtk_entry_set_max_length( (GtkEntry *)entry, 80);
+    gtk_entry_set_max_length( (GtkEntry *)entry, MAX_DESCRIPTION_LENGTH);
     gtk_entry_set_text((GtkEntry *)entry, description);
     /* attach a new widget into the table */
     gtk_table_attach(pTable, (GtkWidget *)entry, 1, 2, i+1, i+2, GTK_EXPAND | GTK_FILL, GTK_FILL, 4, 0 );
@@ -242,15 +280,20 @@ tableAddRow( GtkTable *pTable, int i, char * ID, char * description, char *scrip
     else
         sprintf(message, "Choose the file to be executed for tag with ID: %s", ID );
     chooser = gtk_file_chooser_button_new( message, GTK_FILE_CHOOSER_ACTION_OPEN );
-    gtk_file_chooser_button_set_width_chars((GtkFileChooserButton *)chooser, strlen(script) );
+
+    /* if the script is defined, try and give the filename the width required to hold it */
+    if (script)
+        gtk_file_chooser_button_set_width_chars((GtkFileChooserButton *)chooser, strlen(script) );
+    else /* otherwise it's a new blank name, so default to width of 10 characters */
+        gtk_file_chooser_button_set_width_chars((GtkFileChooserButton *)chooser, 10 );
+
 /* TODO get the users home directory path */
     gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (chooser), "/home/andrew/.tageventor");
-/* TODO set chooser text from file !!!!! */
+/* TODO set file chooser text from the tagEntryArray ... */
     /* attach a new widget into the table */
     gtk_table_attach(pTable, chooser, 2, 3, i+1, i+2, GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 2 );
     /* add a callback to the button which will be passed the index of this entry in the tagEntryArray */
-/* TODO we need a callback for when the file is selected !!! */
-g_signal_connect (G_OBJECT (chooser), "file-set", G_CALLBACK (scriptChosen), (gpointer)i);
+    g_signal_connect (G_OBJECT (chooser), "file-set", G_CALLBACK (scriptChosen), (gpointer)i);
 
     enable = gtk_check_button_new(); /* check button to enable the script for this tag */
     gtk_toggle_button_set_active( (GtkToggleButton *)enable, enabled);
@@ -259,35 +302,66 @@ g_signal_connect (G_OBJECT (chooser), "file-set", G_CALLBACK (scriptChosen), (gp
     /* add a callback to the button which will be passed the index of this entry in the tagEntryArray */
     g_signal_connect (G_OBJECT (enable), "toggled", G_CALLBACK (enableChange), (gpointer)i);
 
+    /* make the new widgets visible */
+    gtk_widget_show( label );
+    gtk_widget_show( chooser );
+    gtk_widget_show( enable );
+    gtk_widget_show( entry );
 }
 
 
-void
-addTag(
-        GtkWidget *widget,
-        gpointer *pTable
-        )
+static void
+addTagEntry(
+            GtkWidget *widget,
+            gpointer *pTable
+            )
 {
-    int i;
+    int             i, newSize;
+    tPanelEntry     *newTagEntryArray;
 
-    /* add an entry to the tabe */
+    /* increment counter of number of entries in array */
     numTagEntries++;
 
-    /* this entry's index */
-    i = (numTagEntries -1);
+    /* allocate memory for the array of tag entries found */
+    newSize = (numTagEntries * sizeof(tPanelEntry) );
+    newTagEntryArray = malloc( newSize );
+
+/* TODO figure out where to save this type of config stuff???? via GConf or something */
+
+    /* copy over all the existing tag entries in the array */
+    for (i = 0; i < (numTagEntries -1); i++)
+    {
+        newTagEntryArray[i].ID          = tagEntryArray[i].ID;
+        newTagEntryArray[i].script      = tagEntryArray[i].script;
+        newTagEntryArray[i].description = tagEntryArray[i].description;
+        newTagEntryArray[i].enabled     = tagEntryArray[i].enabled;
+    }
+
+    /* now we can safely free the memory for the previous one */
+    free( tagEntryArray );
+
+    /* now make the global variable for the entry array point to the new one */
+    tagEntryArray = newTagEntryArray;
+
+    /* malloc each string for new entry added and add to tagEntryArray*/
+    tagEntryArray[numTagEntries -1].ID = malloc( sizeof( uid ) );
+    /* NULL terminate the emptry string */
+    sprintf( tagEntryArray[numTagEntries -1].ID, "<enter tag ID>" );
+    tagEntryArray[numTagEntries -1].script = malloc( MAX_PATH );
+    /* NULL terminate the emptry string */
+    tagEntryArray[numTagEntries -1].script[0] = '\0';
+    tagEntryArray[numTagEntries -1].description = malloc( MAX_DESCRIPTION_LENGTH );
+    /* NULL terminate the emptry string */
+    sprintf( tagEntryArray[numTagEntries -1].description, "<enter description of tag>" );
+    tagEntryArray[numTagEntries -1].enabled = FALSE;
 
     /* resize the table */
     gtk_table_resize( (GtkTable *)pTable, (numTagEntries + 1), 4 );
-
-/* TODO URGENT need to resize the array and reset the new entry */
-
+    /* this entry's index */
+    i = (numTagEntries -1);
     tableAddRow((GtkTable *)pTable, i, tagEntryArray[i].ID, tagEntryArray[i].description, tagEntryArray[i].script, tagEntryArray[i].enabled );
 
-/* TODO Get this to work, actually adding the new row visibly !!!!!!!!!!! */
-
-    /* this should actually be set in each callback for each of the 4 widgets added so if you don't edit this new
-    blank entry then nothing is considered changed */
-    savePending = TRUE;
+/* TODO try and force scroll or focus on the new row so that it becomes visible */
 }
 
 static void
@@ -454,7 +528,7 @@ buildCPanel ( void  )
 {
     GtkWidget   *mainWindow;
     GtkWidget   *vbox, *scroll, *buttonBox, *table;
-    GtkWidget   *applyButton, *helpButton, *closeButton, *aboutButton, *addButton;
+    GtkWidget   *helpButton, *closeButton, *aboutButton, *addButton;
     GError      *pError;
 
     /******************************* Main Application Window ************************/
@@ -462,7 +536,7 @@ buildCPanel ( void  )
     mainWindow = gtk_window_new( GTK_WINDOW_TOPLEVEL );
     gtk_window_set_title( (GtkWindow *)mainWindow, PROGRAM_NAME );
     /* Smallest height possible then should expand to hold what's needed */
-    gtk_window_set_default_size( (GtkWindow *)mainWindow, 540, 250 );
+    gtk_window_set_default_size( (GtkWindow *)mainWindow, DEFAULT_WIDTH_PIX, DEFAULT_HEIGHT_PIX );
 
     /* set the icon for the window */
     gtk_window_set_icon_from_file( (GtkWindow *)mainWindow, iconNameList[0], &pError );
@@ -483,6 +557,8 @@ buildCPanel ( void  )
      * or if we return FALSE in the "delete_event" callback. */
     g_signal_connect (G_OBJECT (mainWindow), "destroy",
 		      G_CALLBACK (destroy), NULL);
+
+/* TODO think about closing main window on iconify also, */
 
     /* this will be triggered when escape key is used */
     /* TODO: this is invalid. is there a way to close it with escape key ?
@@ -525,7 +601,7 @@ buildCPanel ( void  )
 
     /* When the button receives the "clicked" signal, it will call the
      * function applyChanges() passing it NULL as its argument. */
-    g_signal_connect (G_OBJECT (addButton), "released", G_CALLBACK (addTag), table);
+    g_signal_connect (G_OBJECT (addButton), "released", G_CALLBACK (addTagEntry), table);
 
     /******************************* Button Box ***************************************/
     /* create the box for the buttons */
@@ -571,6 +647,9 @@ buildCPanel ( void  )
     /* When the button receives the "clicked" signal, it will call the
      * function applyChanges() passing it NULL as its argument. */
     g_signal_connect (G_OBJECT (applyButton), "released", G_CALLBACK (applyChanges), NULL);
+
+    /* make this button only clickable when there is a pending change to apply */
+    gtk_widget_set_sensitive( applyButton, FALSE);
 
     /* This packs the hbutton box into the vbox (a gtk container). */
     gtk_box_pack_start(GTK_BOX(vbox), buttonBox, FALSE, TRUE, 3);
@@ -654,7 +733,7 @@ buildCPanelIcon( void )
     GtkStatusIcon   *icon;
     GtkWidget       *popupMenu, *quitMenuItem, *aboutMenuItem;
 
-    icon = gtk_status_icon_new_from_file( "tageventorStatusIcon22x22.png" );
+    icon = gtk_status_icon_new_from_file( "icons/tageventorStatusIcon22x22.png" );
 
     gtk_status_icon_set_tooltip_text( icon, TOOL_TIP_TEXT );
 /* TODO add logic in polling to add minimal status info to the tool tip */
