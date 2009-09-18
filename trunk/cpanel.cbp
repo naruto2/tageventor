@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="cpanel" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/cpanel" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="0" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/cpanel" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="0" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+			<Add option="`pkg-config gtk+-2.0 --cflags`" />
+			<Add directory="/home/andrew/tageventor/trunk" />
+			<Add directory="/usr/include/PCSC" />
+		</Compiler>
+		<Linker>
+			<Add option="`pkg-config gtk+-2.0 --libs`" />
+			<Add library="/home/andrew/tageventor/trunk/libtagReader.a" />
+			<Add library="libpcsclite.a" />
+			<Add directory="/home/andrew/tageventor/trunk" />
+		</Linker>
+		<Unit filename="cpanel.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="tageventor128x128.png" />
+		<Unit filename="tageventor16x16.png" />
+		<Unit filename="tageventor32x32.png" />
+		<Unit filename="tageventor48x48.png" />
+		<Unit filename="tageventor64x64.png" />
+		<Unit filename="tageventorStatusIcon22x22.png" />
+		<Extensions>
+			<code_completion />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
