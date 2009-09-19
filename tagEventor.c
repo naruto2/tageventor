@@ -29,10 +29,15 @@
 
 #include <tagReader.h>
 
+#include "tagEventor.h"
+
+#include "systemTray.h"
+
 /************************* CONSTANTS ************************/
 #define RETRY_DELAY_SECONDS (10)
-#define POLL_DELAY_MICRO_SECONDS (1000000)
-#define MICROSLEEP_MAX (1000000)
+#define POLL_DELAY_MILLI_SECONDS (1000)
+#define POLL_DELAY_MILLI_SECONDS_MAX (1000)
+
 #define DEFAULT_LOCK_FILE_DIR "/var/run/tagEventor"
 #define DEFAULT_COMMAND_DIR "/etc/tagEventor"
 #define DAEMON_NAME "tagEventord"
@@ -41,8 +46,6 @@
 /* Tag event types */
 #define TAG_IN  (0)
 #define TAG_OUT (1)
-
-#define MAX_PATH (1024)
 
 /*************************** MACROS ************************/
 #define SWAP(first, second)\
@@ -64,7 +67,7 @@
 
 
 /*************    TYPEDEFS TO THIS FILE     **********************/
-typedef enum { FOREGROUND, START_DAEMON, STOP_DAEMON } tDaemonOptions;
+typedef enum { FOREGROUND, START_DAEMON, STOP_DAEMON, SYSTEM_TRAY } tRunOptions;
 
 
 /************* VARIABLES STATIC TO THIS FILE  ********************/
@@ -74,11 +77,13 @@ static  tReader         reader;
 static  int		        lockFile = -1;
 static  char		    lockFilename[MAX_PATH];
 static  BOOL		    runningAsDaemon = FALSE;
+static int              numTagEntries = 0;
+static tPanelEntry      *tagEntryArray; /* TODO 10 for now for testing */
+
+
 /* strings used for tag events, for text output and name of scipts */
 static const char * const tagString[]  = { "IN", "OUT" };
-static int			    retryDelaysec, pollDelayus;
-
-
+static int			    retryDelaysec, pollDelayms;
 
 /************************ PRINT USAGE ***********************/
 static void printUsage(
@@ -86,8 +91,8 @@ static void printUsage(
  			)
 {
 
-   fprintf(stderr, "Usage: %s <options>\n\t-n <reader number>   : default = 0\n\t-v <verbosity level> : default = 0 (silent), max = 3 \n\t-d start | stop : start or stop daemon, default = foreground\n\t-r <secs> : retry delay to connect to reader (seconds), default = %d\n\t-p <usecs> : tag polling delay (micro seconds), default = %d\n\t-h : print this message\n",
-           name, RETRY_DELAY_SECONDS, POLL_DELAY_MICRO_SECONDS);
+   fprintf(stderr, "Usage: %s <options>\n\t-n <reader number>   : default = 0\n\t-v <verbosity level> : default = 0 (silent), max = 3 \n\t-d start | stop : start or stop daemon, default = foreground\n\t-r <secs> : retry delay to connect to reader (seconds), default = %d\n\t-p <usecs> : tag polling delay (milli seconds), default = %d\n\t-h : print this message\n",
+           name, RETRY_DELAY_SECONDS, POLL_DELAY_MILLI_SECONDS);
 
 }
 
@@ -96,15 +101,16 @@ static void printUsage(
 
 
 /************************ PARSE COMMAND LINE OPTIONS ********/
-static void   parseCommandLine(
-        int 		argc,
-	char 		*argv[],
-	int		*pnumber,
-	int		*pverbosityLevel,
-        tDaemonOptions	*pDaemonOptions,
-	int		*pretryDelay,
-        int             *ppollDelay
- 			)
+static void
+parseCommandLine(
+                int 		    argc,
+                char 		    *argv[],
+                int		        *pnumber,
+                int		        *pverbosityLevel,
+                tRunOptions     *pRunOptions,
+                int		        *pretryDelay,
+                int             *ppollDelay
+                )
 {
 
    BOOL		parseError = FALSE;
@@ -113,13 +119,14 @@ static void   parseCommandLine(
    /* Set default values */
    *pnumber = 0;
    *pverbosityLevel = 0;
-   *pDaemonOptions = FOREGROUND;
+   *pRunOptions = FOREGROUND;
    *pretryDelay = RETRY_DELAY_SECONDS;
-   *ppollDelay = POLL_DELAY_MICRO_SECONDS;
+   *ppollDelay = POLL_DELAY_MILLI_SECONDS;
 
    while ( ((option = getopt(argc, argv, "n:v:d:r:p:h")) != EOF) && (!parseError) )
       switch (option)
       {
+         /* 'n' option is for reader number to connect to */
          case 'n':
             *pnumber = atoi(optarg);
             if (*pnumber  < 0)
@@ -129,6 +136,8 @@ static void   parseCommandLine(
                fprintf(stderr, "Reader number has been forced to %d\n", *pnumber);
             }
             break;
+
+         /* 'v' option is for verbosity level */
          case 'v':
             *pverbosityLevel = atoi(optarg);
             if (*pverbosityLevel  < 0)
@@ -138,17 +147,24 @@ static void   parseCommandLine(
                fprintf(stderr, "Verbosity level has been forced to %d\n", *pverbosityLevel);
             }
             break;
+
          case 'd':
             if (strcmp(optarg, "start") == 0)
-               *pDaemonOptions = START_DAEMON;
+               *pRunOptions = START_DAEMON;
             else if (strcmp(optarg, "stop") == 0)
-                  *pDaemonOptions = STOP_DAEMON;
-               else
-               {
-                  parseError = TRUE;
-                  fprintf(stderr, "Invalid parameter for -d daemon option\n");
-               }
+                  *pRunOptions = STOP_DAEMON;
+#ifdef BUILD_SYSTEM_TRAY
+                 else if (strcmp(optarg, "tray") == 0)
+                  *pRunOptions = SYSTEM_TRAY;
+#endif
+                      else
+                      {
+                          parseError = TRUE;
+                          fprintf(stderr, "Invalid parameter for -d daemon option\n");
+                      }
             break;
+
+         /* 'r' option is for the retry delay between trying to connect to reader */
          case 'r':
             *pretryDelay = atoi(optarg);
             if (*pretryDelay < 0)
@@ -158,24 +174,27 @@ static void   parseCommandLine(
                fprintf(stderr, "Retry delay has been forced to %d\n", *pretryDelay);
             }
             break;
+
+         /* 'p' option is for the delay in polling in useconds */
          case 'p':
             *ppollDelay = atoi(optarg);
             /* make sure not exceed limit of usleep */
-            if (*ppollDelay > MICROSLEEP_MAX)
+            if (*ppollDelay > POLL_DELAY_MILLI_SECONDS_MAX)
             {
-               *ppollDelay = MICROSLEEP_MAX;
+               *ppollDelay = POLL_DELAY_MILLI_SECONDS_MAX;
                fprintf(stderr, "Poll delay must be greater or equal to 0\n");
                fprintf(stderr, "Poll delay has been forced to %d\n", *ppollDelay);
             }
 
             if (*ppollDelay < 0)
             {
-               *ppollDelay = POLL_DELAY_MICRO_SECONDS;
+               *ppollDelay = POLL_DELAY_MILLI_SECONDS;
                fprintf(stderr, "Poll delay must be greater or equal to 0\n");
                fprintf(stderr, "Poll delay has been forced to %d\n", *ppollDelay);
             }
             break;
 
+         /* 'h' option is to request print out help */
          case 'h':
             printUsage(argv[0]);
             exit ( 0 );
@@ -336,7 +355,8 @@ static void getLockOrDie(
 
 
 /************************ DAEMONIZE *************************/
-static void daemonize (
+static void
+daemonize (
 		int		readerNumber
 		)
 {
@@ -460,13 +480,132 @@ static int execScript(
 }
 /*********************  EXEC SCRIPT **************************/
 
+int
+tagTableAddEntry( void )
+{
+
+    int             i, newSize;
+    tPanelEntry     *newTagEntryArray;
+
+    /* increment counter of number of entries in array */
+    numTagEntries++;
+
+    /* allocate memory for the array of tag entries found */
+    newSize = (numTagEntries * sizeof(tPanelEntry) );
+    newTagEntryArray = malloc( newSize );
+
+/* TODO figure out where to save this type of config stuff???? via GConf or something */
+
+    /* copy over all the existing tag entries in the array */
+    for (i = 0; i < (numTagEntries -1); i++)
+    {
+        newTagEntryArray[i].ID          = tagEntryArray[i].ID;
+        newTagEntryArray[i].script      = tagEntryArray[i].script;
+        newTagEntryArray[i].description = tagEntryArray[i].description;
+        newTagEntryArray[i].enabled     = tagEntryArray[i].enabled;
+    }
+
+    /* now we can safely free the memory for the previous one */
+    free( tagEntryArray );
+
+    /* now make the global variable for the entry array point to the new one */
+    tagEntryArray = newTagEntryArray;
+
+    /* malloc each string for new entry added and add to tagEntryArray*/
+    tagEntryArray[numTagEntries -1].ID = malloc( sizeof( uid ) );
+    /* paste in some text for now, although it's not yet editable by the user */
+    sprintf( tagEntryArray[numTagEntries -1].ID, "<tag ID>" );
+    tagEntryArray[numTagEntries -1].script = malloc( MAX_PATH );
+    /* NULL terminate the emptry string */
+    tagEntryArray[numTagEntries -1].script[0] = '\0';
+    tagEntryArray[numTagEntries -1].description = malloc( MAX_DESCRIPTION_LENGTH );
+    /* NULL terminate the emptry string */
+    sprintf( tagEntryArray[numTagEntries -1].description, "<description of tag>" );
+    tagEntryArray[numTagEntries -1].enabled = FALSE;
+
+    return( numTagEntries );
+}
+
+
+void
+tagTableSave( void )
+{
+
+/* TODO where to save this type of config stuff???? via GConf or something */
+
+}
+
+void
+tagTableEntryEnable( int index, char enable )
+
+{
+
+    tagEntryArray[index].enabled = enable;
+
+}
+
+const tPanelEntry *
+tagEntryGet(
+            int index
+            )
+{
+
+    return( &(tagEntryArray[index]) );
+
+}
+
+int
+tagTableRead( void )
+{
+    int     numTags, size, i;
+#define NUM_FAKE_TAGS   (4)
+
+    static    tPanelEntry fakeTags[NUM_FAKE_TAGS] = {
+        { "12345678901234", "/home/andrew/test", "a fake tag for testing", TRUE },
+        { "45678901234567", "/home/andrew/test2", "another fake tag for testing", FALSE },
+        { "45678901234567", "/home/andrew/test2", "another fake tag for testing", FALSE },
+        { "45678901234567", "/home/andrew/test2", "another fake tag for testing", FALSE }
+        };
+
+/* TODO we should also check for duplicate tag entries, or we could allow that. Need to change code that
+   executes scripts to allow that though ... */
+/* TODO read the current config from the widgets into a temporary table, checking syntax for each
+            and maybe checking execute permissions, etc */
+
+    /* TODO need to figure out how many tags we have before allocating memory! */
+    numTags = NUM_FAKE_TAGS;
+
+    /* allocate memory for the array of tag entries found */
+    size = (numTags * sizeof(tPanelEntry) );
+    tagEntryArray = malloc( size ); /* TODO check about alignment and need to pad out */
+
+/* TODO figure out where to save this type of config stuff???? via GConf or something */
+
+    for (i = 0; i < numTags; i++)
+    {
+        /* malloc each string for new entry added and add to tagEntryArray*/
+        tagEntryArray[i].ID = malloc( sizeof( uid ) );
+        tagEntryArray[i].script = malloc( MAX_PATH );
+        tagEntryArray[i].description = malloc( MAX_DESCRIPTION_LENGTH );
+
+        strcpy( tagEntryArray[i].ID, fakeTags[i].ID );
+        strcpy( tagEntryArray[i].script, fakeTags[i].script);
+        strcpy( tagEntryArray[i].description , fakeTags[i].description);
+        tagEntryArray[i].enabled = fakeTags[i].enabled;
+    }
+
+    return( numTags );
+
+}
+
 
 /*********************  TAG EVENT ****************************/
-static void tagEvent (
-		int	  	eventType,
-                uid       	tagUID,
-                const tReader	*preader
-              )
+static void
+tagEvent(
+            int	  	        eventType,
+            uid       	    tagUID,
+            const tReader	*preader
+        )
 {
    char		filePath[MAX_PATH];
    char		currentDir[MAX_PATH];
@@ -507,9 +646,61 @@ static void tagEvent (
 }
 /*********************  TAG EVENT ****************************/
 
-/************************ MAIN LOOP *************************/
-void
-main_loop( void )
+
+char
+tagPoll( void  *data )
+{
+    /* TODO need to put some control in about message length to ensure don't */
+    /* go past the end of this string.... */
+    char                statusMessage[80];
+    uid                 ID;
+    tTagList	        TagList;
+    LONG 		        rvalue;
+    int                 i;
+    static BOOL         connected = FALSE; /* we start, not being connected */
+
+    /* if not already connected, then try and connect */
+    if ( connected == FALSE )
+    {
+        /* connect to reader */
+        rvalue = readerConnect(&reader);
+
+        if ( rvalue == SCARD_S_SUCCESS )
+            connected = TRUE;
+        else
+            sprintf(statusMessage, "Could not connect to tag reader.");
+    }
+
+    /* we might be connected since before this function was called */
+    /* or due to the attempt just above. Handle both the same */
+    if ( connected == TRUE )
+    {
+        rvalue = getTagList(&reader, &TagList);
+
+        if ( rvalue == SCARD_S_SUCCESS )
+        {
+            sprintf(statusMessage, "Connected to reader, %d tags:", (int)TagList.numTags);
+            for (i=0; i<TagList.numTags; i++)
+            {
+                sprintf( ID, " %s", TagList.tagUID[i]);
+                strcat( statusMessage, ID );
+            }
+        }
+        else
+            sprintf(statusMessage, "Connected to reader, problems reading.");
+    }
+
+#ifdef BUILD_SYSTEM_TRAY
+    systemTraySetStatus( connected, statusMessage );
+#endif
+
+    /* return TRUE to indicate that this function should be called again */
+    return ( TRUE );
+
+}
+
+static void
+pollTags( void )
 {
     tTagList		tagList1, tagList2;
     tTagList		*pnewTagList, *ppreviousTagList, *temp;
@@ -587,7 +778,7 @@ main_loop( void )
                 }
 
                 /* Wait between polls */
-                usleep(pollDelayus);
+                usleep(pollDelayms * 1000);
             } /* if getTagList() was successful */
        } /* while no error reading was returned */
 
@@ -603,11 +794,10 @@ main_loop( void )
 /************************ MAIN ******************************/
 int main(
         int 		argc,
-	char 		*argv[],
- 	char		*envp[]
+        char 		*argv[]
         )
 {
-   tDaemonOptions	daemonOptions;
+   tRunOptions	runOptions;
    int			    verbosityLevel;
 
    /* some help to make sure we close whatś needed, not more */
@@ -616,7 +806,7 @@ int main(
    reader.number = 0;
 
    parseCommandLine(argc, argv,
-                    &(reader.number), &verbosityLevel, &daemonOptions, &retryDelaysec, &pollDelayus);
+                    &(reader.number), &verbosityLevel, &runOptions, &retryDelaysec, &pollDelayms);
 
    /* set-up signal handlers */
    signal(SIGTERM,  handleSignal); /* software termination signal from kill */
@@ -629,7 +819,7 @@ int main(
    readerSetOptions( verbosityLevel, FALSE );
 
    /* if requested to start as daemon, daemonize ourselves here */
-   switch (daemonOptions)
+   switch (runOptions)
    {
       case START_DAEMON:
          /* will convert oursevles into a daemon and return if successful */
@@ -640,12 +830,23 @@ int main(
          stopDaemon(reader.number);
          exit( 0 );
          break;
+      case FOREGROUND:
+         /* enter the loop to poll for tag and execute events and only return to exit */
+         pollTags();
+         break;
+      case SYSTEM_TRAY:
+#ifdef BUILD_SYSTEM_TRAY
+         /* build the status icon in the system tray area */
+         startSystemTray( &argc, &argv, &tagPoll );
+#endif
+         break;
       default:
          break;
    }
 
-   /* enter the main loop to process tag events and only return to exit */
-   main_loop();
+   /* be a good citizen and clean-up on our way out System Tray version might get this far */
+   /* the other versions will all exit via a signal handler elsewhere */
+   readerDisconnect(&reader);
 
    return ( 0 );
 

@@ -16,12 +16,6 @@ echo Script \"scripts/generic\" copied to /etc/tagEventor/
 cp -f bin/Debug/tagEventor /usr/sbin
 echo Executable \"bin/Debug/tagEventor\" copied to /usr/sbin/
 
-# TODO once the two binaries are merged, we can remove one of these.
-# TODO during this early stages I prefer to build, and hence install, two binaries
-# TODO change make to build a release binary and install it insteadcp -f cpanel /usr/sbin
-cp -f bin/Debug/cpanel /usr/sbin
-echo Executable \"bin/Debug/cpanel\" copied to /usr/sbin/
-
 # copy the init script to the system directory so that tag eventor will be started as a daemon
 # TODO once we merge binaries and have a GNOME item running, this could be removed or disabled.
 cp -f tagEventord /etc/init.d
@@ -36,4 +30,9 @@ cd -
 ####### GNOME Specific install options
 # put a desktop link in the right place and it will start executable with each GNOME session
 # TODO when we merge binaries, this may need changing. At the moment it starts the cpanel binary.
-cp tageventor.desktop /etc/xdg/autostart/
+cp tagEventor.desktop /etc/xdg/autostart/
+echo tagEventor.desktop copied into "/etc/xdg/autostart/" so it is started with each GNOME session
+
+# copy the required icons to a place where GNOME can find them
+cp icons/*.png /usr/share/app-install/icons/
+echo Copied procgram icons into "/usr/share/app-install/icons/"
