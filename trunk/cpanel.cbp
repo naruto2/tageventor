@@ -2,18 +2,22 @@
 <CodeBlocks_project_file>
 	<FileVersion major="1" minor="6" />
 	<Project>
-		<Option title="cpanel" />
+		<Option title="tagEventor" />
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="Debug">
-				<Option output="bin/Debug/cpanel" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/Debug/tagEventor" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/Debug/" />
 				<Option type="0" />
 				<Option compiler="gcc" />
+				<Option parameters="-d tray" />
 				<Compiler>
 					<Add option="-g" />
 				</Compiler>
+				<Linker>
+					<Add library="/home/andrew/tageventor/trunk/lib/Debug/libtagReader.a" />
+				</Linker>
 			</Target>
 			<Target title="Release">
 				<Option output="bin/Release/cpanel" prefix_auto="1" extension_auto="1" />
@@ -25,30 +29,40 @@
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
+					<Add library="/home/andrew/tageventor/trunk/lib/Release/libtagReader.a" />
 				</Linker>
 			</Target>
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
 			<Add option="`pkg-config gtk+-2.0 --cflags`" />
+			<Add option="-DBUILD_SYSTEM_TRAY" />
+			<Add option="-DBUILD_CONTROL_PANEL" />
+			<Add option="-DBUILD_ABOUT_DIALOG" />
 			<Add directory="/home/andrew/tageventor/trunk" />
 			<Add directory="/usr/include/PCSC" />
 		</Compiler>
 		<Linker>
 			<Add option="`pkg-config gtk+-2.0 --libs`" />
-			<Add library="/home/andrew/tageventor/trunk/libtagReader.a" />
 			<Add library="libpcsclite.a" />
 			<Add directory="/home/andrew/tageventor/trunk" />
 		</Linker>
-		<Unit filename="cpanel.c">
+		<Unit filename="aboutDialog.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="tageventor128x128.png" />
-		<Unit filename="tageventor16x16.png" />
-		<Unit filename="tageventor32x32.png" />
-		<Unit filename="tageventor48x48.png" />
-		<Unit filename="tageventor64x64.png" />
-		<Unit filename="tageventorStatusIcon22x22.png" />
+		<Unit filename="aboutDialog.h" />
+		<Unit filename="controlPanel.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="controlPanel.h" />
+		<Unit filename="systemTray.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="systemTray.h" />
+		<Unit filename="tagEventor.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="tagEventor.h" />
 		<Extensions>
 			<code_completion />
 			<debugger />
