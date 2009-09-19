@@ -1,9 +1,9 @@
 [Desktop Entry]
 Encoding=UTF-8
 Name=Tageventor
-Comment=Tageventor daemon
-Icon=tageventor
-Exec=tageventor
+Comment=Tageventor
+Icon=tageventor16x16.png
+Exec=/home/andrew/tageventor/trunk/bin/Debug/cpanel
 Terminal=false
 Type=Application
 Categories=
