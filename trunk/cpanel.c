@@ -345,7 +345,7 @@ addTagEntry(
 
     /* malloc each string for new entry added and add to tagEntryArray*/
     tagEntryArray[numTagEntries -1].ID = malloc( sizeof( uid ) );
-    /* NULL terminate the emptry string */
+    /* paste in some text for now, although it's not yet editable by the user */
     sprintf( tagEntryArray[numTagEntries -1].ID, "<enter tag ID>" );
     tagEntryArray[numTagEntries -1].script = malloc( MAX_PATH );
     /* NULL terminate the emptry string */
@@ -733,7 +733,8 @@ buildCPanelIcon( void )
     GtkStatusIcon   *icon;
     GtkWidget       *popupMenu, *quitMenuItem, *aboutMenuItem;
 
-    icon = gtk_status_icon_new_from_file( "icons/tageventorStatusIcon22x22.png" );
+/* TODO fix all this stuff related to icon paths */
+    icon = gtk_status_icon_new_from_file( "/home/andrew/tageventor/trunk/icons/tageventorStatusIcon22x22.png" );
 
     gtk_status_icon_set_tooltip_text( icon, TOOL_TIP_TEXT );
 /* TODO add logic in polling to add minimal status info to the tool tip */
