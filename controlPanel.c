@@ -1,5 +1,5 @@
 /*
-  cpanel.c - C source code for tagEventor Gtk/GNOME control panel
+  controlPanel.c - C source code for tagEventor Gtk/GNOME control panel
 
   Copyright 2009 Autelic Association (http://www.autelic.org)
 
@@ -25,7 +25,7 @@
 #include "systemTray.h"
 
 #include "controlPanel.h"
-
+#include "controlPanelHelp.h"
 #include "tagEventor.h"
 
 #include "aboutDialog.h"
@@ -36,6 +36,7 @@
 
 static const gchar *columnHeader[4] = { "Tag ID", "Description", "Script", "Enabled" };
 
+/*
 static const char      *iconNameList[] = {
 				"icons/tageventor16x16.png",
 				"icons/tageventor32x32.png",
@@ -43,6 +44,7 @@ static const char      *iconNameList[] = {
 				"icons/tageventor64x64.png",
 				"icons/tageventor128x128.png"
 				};
+*/
 
 static char            savePending = FALSE;
 static char            cpanelVisible = FALSE;
@@ -148,16 +150,6 @@ destroy(
 
     /* hide the main cpanel window */
     hideCPanelWindow();
-
-}
-
-void
-showHelp( void )
-{
-
-/* TODO write the help dialog ! */
-/* put it into it's own source file also */
-/* compile in a text file ??? */
 
 }
 
@@ -337,7 +329,7 @@ buildCPanel ( void  )
     gtk_window_set_default_size( (GtkWindow *)mainWindow, DEFAULT_WIDTH_PIX, DEFAULT_HEIGHT_PIX );
 
     /* set the icon for the window */
-    gtk_window_set_icon_from_file( (GtkWindow *)mainWindow, iconNameList[0], &pError );
+    gtk_window_set_icon_from_file( (GtkWindow *)mainWindow, "icons/tageventor48x48.png", &pError );
 /* TODO pass in a full list when I figure out how to create the PixBufs from files!
     gtk_window_set_icon_list( window, iconList );
     */
@@ -401,6 +393,7 @@ buildCPanel ( void  )
     /* create the box for the buttons */
     buttonBox = gtk_hbox_new( FALSE, 0);
 
+#ifdef BUILD_CONTROL_PANEL_HELP
     /********************************************* Help Button ***********************/
     helpButton = gtk_button_new_from_stock( "gtk-help" );
 
@@ -409,7 +402,8 @@ buildCPanel ( void  )
 
     /* When the button receives the "clicked" signal, it will call the
      * function applyChanges() passing it NULL as its argument. */
-    g_signal_connect (G_OBJECT (helpButton), "released", G_CALLBACK (showHelp), NULL);
+    g_signal_connect (G_OBJECT (helpButton), "released", G_CALLBACK (controlPanelHelpShow), NULL);
+#endif
 
 #ifdef BUILD_ABOUT_DIALOG
     /********************************************* About Button ***********************/

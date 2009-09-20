@@ -217,9 +217,10 @@ parseCommandLine(
 
 
 /***************** HANDLE SIGNALS ***************************/
-static void handleSignal(
-		         int	sig
-		        )
+static void
+handleSignal(
+	         int	sig
+	        )
 {
 
    switch( sig )
@@ -253,9 +254,10 @@ static void handleSignal(
 
 
 /************************ STOP DAEMON **************/
-static void stopDaemon(
-		       int		readerNumber
-		      )
+static void
+stopDaemon(
+	       int		readerNumber
+	      )
 {
    char		messageString[MAX_LOG_MESSAGE];
    char 	pidString[20];
@@ -307,9 +309,10 @@ static void stopDaemon(
 /********************** GET LOCK OR DIE *********************/
 /* This runs in the forked daemon process */
 /* make sure we are the only running copy for this reader number */
-static void getLockOrDie(
-		int		readerNumber
-		)
+static void
+getLockOrDie(
+            int		readerNumber
+            )
 {
    char 	pidString[20];
    char		messageString[MAX_LOG_MESSAGE];
@@ -549,16 +552,27 @@ tagEntryGet(
             int index
             )
 {
-
-    return( &(tagEntryArray[index]) );
-
+    /* first check we have an array of entries at all !*/
+    if ( tagEntryArray == NULL )
+        return (NULL);
+    else /* then check the index is within bounds */
+    {
+        if ( ( index >= 0) && ( index < numTagEntries ) )
+            return( &(tagEntryArray[index]) );
+        else
+            return (NULL);
+    }
 }
 
 int
 tagTableRead( void )
 {
-    int     numTags, size, i;
+    int size;
+
+#ifdef DEBUG
 #define NUM_FAKE_TAGS   (4)
+
+    int i;
 
     static    tPanelEntry fakeTags[NUM_FAKE_TAGS] = {
         { "12345678901234", "/home/andrew/test", "a fake tag for testing", TRUE },
@@ -567,21 +581,30 @@ tagTableRead( void )
         { "45678901234567", "/home/andrew/test2", "another fake tag for testing", FALSE }
         };
 
+
+    /* TODO need to figure out how many tags we have before allocating memory! */
+    numTagEntries = NUM_FAKE_TAGS;
+#else
+    numTagEntries = 0;
+#endif
+
 /* TODO we should also check for duplicate tag entries, or we could allow that. Need to change code that
    executes scripts to allow that though ... */
 /* TODO read the current config from the widgets into a temporary table, checking syntax for each
             and maybe checking execute permissions, etc */
 
-    /* TODO need to figure out how many tags we have before allocating memory! */
-    numTags = NUM_FAKE_TAGS;
+    if ( numTagEntries == 0 )
+        tagEntryArray = NULL;
+    else
+    {
+        /* allocate memory for the array of tag entries found */
+        size = (numTagEntries * sizeof(tPanelEntry) );
+        tagEntryArray = malloc( size ); /* TODO check about alignment and need to pad out */
+    }
 
-    /* allocate memory for the array of tag entries found */
-    size = (numTags * sizeof(tPanelEntry) );
-    tagEntryArray = malloc( size ); /* TODO check about alignment and need to pad out */
-
-/* TODO figure out where to save this type of config stuff???? via GConf or something */
-
-    for (i = 0; i < numTags; i++)
+#ifdef DEBUG
+/* TODO figure out where to read/save this type of config stuff???? via GConf or something */
+    for (i = 0; i < numTagEntries; i++)
     {
         /* malloc each string for new entry added and add to tagEntryArray*/
         tagEntryArray[i].ID = malloc( sizeof( uid ) );
@@ -593,8 +616,9 @@ tagTableRead( void )
         strcpy( tagEntryArray[i].description , fakeTags[i].description);
         tagEntryArray[i].enabled = fakeTags[i].enabled;
     }
+#endif
 
-    return( numTags );
+    return( numTagEntries );
 
 }
 
@@ -618,12 +642,14 @@ tagEvent(
    if (!runningAsDaemon)
    {
       /* first steps to build a full path */
-      getcwd(currentDir, 100);
-      sprintf(filePath, "%s/%s", currentDir, tagUID);
+      if ( getcwd(currentDir, MAX_PATH) != NULL )
+      {
+        sprintf(filePath, "%s/%s", currentDir, tagUID);
 
-      /* if returned 0 then it worked (as far as we know, so exit here */
-      if ( execScript(filePath, tagUID, preader->SAM_serial, tagUID, tagString[eventType]) == 0 )
-         return;
+        /* if returned 0 then it worked (as far as we know, so exit here */
+        if ( execScript(filePath, tagUID, preader->SAM_serial, tagUID, tagString[eventType]) == 0 )
+            return;
+      }
    }
 
    /* This part tries a couple of options in the system directory DEFAULT_COMMAND_DIR */
@@ -647,6 +673,8 @@ tagEvent(
 /*********************  TAG EVENT ****************************/
 
 
+/* TODO for now this is only used for the GUI version, untill I merge both parts
+   of this code */
 char
 tagPoll( void  *data )
 {
