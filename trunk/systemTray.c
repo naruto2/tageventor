@@ -74,6 +74,12 @@ iconQuit( void )
 }
 
 static void
+controlPanelDialogShow( void )
+{
+    controlPanelActivate();
+}
+
+static void
 iconPopupMenu(GtkStatusIcon *status_icon,
               guint          button,
               guint          activate_time,
@@ -97,6 +103,10 @@ startSystemTray(
     GtkWidget       *aboutMenuItem;
 #endif
 
+#ifdef BUILD_CONTROL_PANEL
+    GtkWidget       *controlPanelMenuItem;
+#endif
+
     /* Init GTK+ it might modify significantly the command line options */
     gtk_init( argc, argv );
 
@@ -114,10 +124,18 @@ startSystemTray(
     g_signal_connect (G_OBJECT (systemTrayIcon), "activate", G_CALLBACK (controlPanelActivate), NULL);
 #endif
 
+    /* now create the pop-up menu that is shown by right-clicking the systemTray icon */
+    /* create the menu item */
     popupMenu = gtk_menu_new();
 
     /* Now add entries to the menu */
-/* TODO move about into own source file  */
+#ifdef BUILD_CONTROL_PANEL
+    controlPanelMenuItem = gtk_menu_item_new_with_label( "Control Panel" );
+    gtk_menu_shell_append( GTK_MENU_SHELL( popupMenu ), controlPanelMenuItem );
+    g_signal_connect (G_OBJECT (controlPanelMenuItem), "activate", G_CALLBACK (controlPanelDialogShow), NULL );
+    gtk_widget_show( controlPanelMenuItem );
+#endif
+
 #ifdef BUILD_ABOUT_DIALOG
     aboutMenuItem = gtk_menu_item_new_with_label( "About" );
     gtk_menu_shell_append( GTK_MENU_SHELL( popupMenu ), aboutMenuItem );
