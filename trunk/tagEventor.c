@@ -36,7 +36,7 @@
 /************************* CONSTANTS ************************/
 #define RETRY_DELAY_SECONDS (10)
 #define POLL_DELAY_MILLI_SECONDS (1000)
-#define POLL_DELAY_MILLI_SECONDS_MAX (1000)
+#define POLL_DELAY_MILLI_SECONDS_MAX (5000)
 
 #define DEFAULT_LOCK_FILE_DIR "/var/run/tagEventor"
 #define DEFAULT_COMMAND_DIR "/etc/tagEventor"
@@ -55,17 +55,6 @@
    second = temp;\
    }
 
-#define PRINT_TAG_STATE(pTagList) \
-        {\
-        char	string[MAX_LOG_MESSAGE];\
-        int tagIndex;\
-        sprintf(string, "State: %d Tag(s)   ", (int)pTagList->numTags);\
-        for (tagIndex = 0; tagIndex < pTagList->numTags; tagIndex++)\
-           sprintf(string, " - %s", pTagList->tagUID[tagIndex]);\
-        logMessage(LOG_INFO, 2, string);\
-        }
-
-
 /*************    TYPEDEFS TO THIS FILE     **********************/
 typedef enum { FOREGROUND, START_DAEMON, STOP_DAEMON, SYSTEM_TRAY } tRunOptions;
 
@@ -83,7 +72,14 @@ static tPanelEntry      *tagEntryArray; /* TODO 10 for now for testing */
 
 /* strings used for tag events, for text output and name of scipts */
 static const char * const tagString[]  = { "IN", "OUT" };
-static int			    retryDelaysec, pollDelayms;
+static int			pollDelayms;
+
+static tTagList		tagList1, tagList2;
+
+/* make each pointer point to an allocated tag list that can be filled */
+static tTagList		*pnewTagList = &tagList1, *ppreviousTagList = &tagList2;
+static BOOL         connected = FALSE; /* at the start, we are not connected */
+static BOOL         tagListChanged = FALSE;
 
 /************************ PRINT USAGE ***********************/
 static void printUsage(
@@ -91,8 +87,8 @@ static void printUsage(
  			)
 {
 
-   fprintf(stderr, "Usage: %s <options>\n\t-n <reader number>   : default = 0\n\t-v <verbosity level> : default = 0 (silent), max = 3 \n\t-d start | stop : start or stop daemon, default = foreground\n\t-r <secs> : retry delay to connect to reader (seconds), default = %d\n\t-p <usecs> : tag polling delay (milli seconds), default = %d\n\t-h : print this message\n",
-           name, RETRY_DELAY_SECONDS, POLL_DELAY_MILLI_SECONDS);
+   fprintf(stderr, "Usage: %s <options>\n\t-n <reader number>   : default = 0\n\t-v <verbosity level> : default = 0 (silent), max = 3 \n\t-d start | stop | tray (start or stop daemon, default = foreground)\n\t-p <usecs> : tag polling delay (milli seconds), default = %d, max = %d\n\t-h : print this message\n",
+           name, POLL_DELAY_MILLI_SECONDS, POLL_DELAY_MILLI_SECONDS_MAX);
 
 }
 
@@ -108,7 +104,6 @@ parseCommandLine(
                 int		        *pnumber,
                 int		        *pverbosityLevel,
                 tRunOptions     *pRunOptions,
-                int		        *pretryDelay,
                 int             *ppollDelay
                 )
 {
@@ -120,10 +115,9 @@ parseCommandLine(
    *pnumber = 0;
    *pverbosityLevel = 0;
    *pRunOptions = FOREGROUND;
-   *pretryDelay = RETRY_DELAY_SECONDS;
    *ppollDelay = POLL_DELAY_MILLI_SECONDS;
 
-   while ( ((option = getopt(argc, argv, "n:v:d:r:p:h")) != EOF) && (!parseError) )
+   while ( ((option = getopt(argc, argv, "n:v:d:p:h")) != EOF) && (!parseError) )
       switch (option)
       {
          /* 'n' option is for reader number to connect to */
@@ -162,17 +156,6 @@ parseCommandLine(
                           parseError = TRUE;
                           fprintf(stderr, "Invalid parameter for -d daemon option\n");
                       }
-            break;
-
-         /* 'r' option is for the retry delay between trying to connect to reader */
-         case 'r':
-            *pretryDelay = atoi(optarg);
-            if (*pretryDelay < 0)
-            {
-               *pretryDelay = RETRY_DELAY_SECONDS;
-               fprintf(stderr, "Retry delay must be greater or equal to 0\n");
-               fprintf(stderr, "Retry delay has been forced to %d\n", *pretryDelay);
-            }
             break;
 
          /* 'p' option is for the delay in polling in useconds */
@@ -623,13 +606,13 @@ tagTableRead( void )
 }
 
 
-/*********************  TAG EVENT ****************************/
+/*********************  TAG EVENT DISPATCH **********************/
 static void
-tagEvent(
-            int	  	        eventType,
-            uid       	    tagUID,
-            const tReader	*preader
-        )
+tagEventDispatch(
+                int	  	        eventType,
+                uid       	    tagUID,
+                const tReader	*preader
+                )
 {
    char		filePath[MAX_PATH];
    char		currentDir[MAX_PATH];
@@ -672,152 +655,108 @@ tagEvent(
 }
 /*********************  TAG EVENT ****************************/
 
-
-/* TODO for now this is only used for the GUI version, untill I merge both parts
-   of this code */
-char
-tagPoll( void  *data )
+static char
+tagListCheck( void *data )
 {
-    /* TODO need to put some control in about message length to ensure don't */
-    /* go past the end of this string.... */
-    char                statusMessage[80];
-    uid                 ID;
-    tTagList	        TagList;
-    LONG 		        rvalue;
-    int                 i;
-    static BOOL         connected = FALSE; /* we start, not being connected */
-
-    /* if not already connected, then try and connect */
-    if ( connected == FALSE )
-    {
-        /* connect to reader */
-        rvalue = readerConnect(&reader);
-
-        if ( rvalue == SCARD_S_SUCCESS )
-            connected = TRUE;
-        else
-            sprintf(statusMessage, "Could not connect to tag reader.");
-    }
-
-    /* we might be connected since before this function was called */
-    /* or due to the attempt just above. Handle both the same */
-    if ( connected == TRUE )
-    {
-        rvalue = getTagList(&reader, &TagList);
-
-        if ( rvalue == SCARD_S_SUCCESS )
-        {
-            sprintf(statusMessage, "Connected to reader, %d tags:", (int)TagList.numTags);
-            for (i=0; i<TagList.numTags; i++)
-            {
-                sprintf( ID, " %s", TagList.tagUID[i]);
-                strcat( statusMessage, ID );
-            }
-        }
-        else
-            sprintf(statusMessage, "Connected to reader, problems reading.");
-    }
-
-#ifdef BUILD_SYSTEM_TRAY
-    systemTraySetStatus( connected, statusMessage );
-#endif
-
-    /* return TRUE to indicate that this function should be called again */
-    return ( TRUE );
-
-}
-
-static void
-pollTags( void )
-{
-    tTagList		tagList1, tagList2;
-    tTagList		*pnewTagList, *ppreviousTagList, *temp;
+    tTagList        *temp;
     LONG 		    rv;
-    BOOL			change, found;
+    BOOL			found;
+    uid             ID;
     int			    i, j;
     char			messageString[MAX_LOG_MESSAGE];
 
-    while (TRUE)
+    if ( connected == FALSE )
     {
-       pnewTagList = &tagList1;
-       ppreviousTagList = &tagList2;
+        if ( readerConnect(&reader) == SCARD_S_SUCCESS )
+        {
+            connected = TRUE;
 
-       /* connect to reader */
-       rv = readerConnect(&reader);
+            /* get initial state to prime the pump for the later comparison */
+            getTagList(&reader, ppreviousTagList);
+        }
+        else
+        {
+            sprintf( messageString, "Could not connect to tag reader." );
+        }
+    } /* if ( connected == FALSE ) */
 
-       /* Loop trying to connect to the pcscd server and find the reader */
-       while ( rv != SCARD_S_SUCCESS )
-       {
-          sprintf(messageString, "Will wait %d seconds and retry connection", retryDelaysec);
-          logMessage(LOG_WARNING, 0, messageString);
-          sleep(retryDelaysec);
-          rv = readerConnect(&reader);
-       }
+    /* we may have just connected, or been connected from a previous call */
+    if ( connected == TRUE )
+    {
+        /* get the list of tags on reader */
+        rv = getTagList(&reader, pnewTagList);
 
-       /* report initial state */
-       rv = getTagList(&reader, ppreviousTagList);
-       PRINT_TAG_STATE(ppreviousTagList);
+        if (rv != SCARD_S_SUCCESS)
+        {
+            /* reading tags is not working */
+            connected = FALSE;
 
-       while ( rv == SCARD_S_SUCCESS )
-       {
-            /* get the list of tags on reader */
-            rv = getTagList(&reader, pnewTagList);
-            if (rv == SCARD_S_SUCCESS)
+            sprintf( messageString, "Connected to reader, problems reading.");
+
+            /* disconnect and let it re-connect next time around */
+            readerDisconnect( &reader );
+        }
+        else
+        {
+            sprintf( messageString, "Connected to reader, %d tags:", (int)(pnewTagList->numTags) );
+            for (i=0; i < pnewTagList->numTags; i++)
             {
-                change = FALSE;
+                sprintf( ID, " %s", pnewTagList->tagUID[i]);
+                strcat( messageString, ID );
+            }
 
-                /* for each tags that was here before */
-                for (i = 0; i < ppreviousTagList->numTags; i++)
+            /* for each tags that was here before */
+            for (i = 0; i < ppreviousTagList->numTags; i++)
+            {
+                found = FALSE;
+                /* Look for it in the new list */
+                for (j = 0; (j < pnewTagList->numTags); j++)
+                    if ( strcmp(ppreviousTagList->tagUID[i],
+                          pnewTagList->tagUID[j]) == 0 )
+                        found = TRUE;
+
+                if (!found)
                 {
-                    found = FALSE;
-                    /* Look for it in the new list */
-                    for (j = 0; (j < pnewTagList->numTags); j++)
-                        if ( strcmp(ppreviousTagList->tagUID[i],
-                              pnewTagList->tagUID[j]) == 0 )
-                            found = TRUE;
-
-                    if (!found)
-                    {
-                        tagEvent(TAG_OUT, ppreviousTagList->tagUID[i], &reader);
-                        change = TRUE;
-                    }
+                    tagListChanged = TRUE;
+                    tagEventDispatch(TAG_OUT, ppreviousTagList->tagUID[i], &reader);
                 }
+            }
 
-                /* check for tags that are here now */
-                for (i = 0; i < pnewTagList->numTags; i++)
+            /* check for tags that are here now */
+            for (i = 0; i < pnewTagList->numTags; i++)
+            {
+                found = FALSE;
+                /* Look for it in the old list */
+                for (j = 0; ((j < ppreviousTagList->numTags) && (!found)); j++)
+                    if ( strcmp(ppreviousTagList->tagUID[j],
+                          pnewTagList->tagUID[i]) == 0 )
+                        found = TRUE;
+                if (!found)
                 {
-                    found = FALSE;
-                    /* Look for it in the old list */
-                    for (j = 0; ((j < ppreviousTagList->numTags) && (!found)); j++)
-                        if ( strcmp(ppreviousTagList->tagUID[j],
-                              pnewTagList->tagUID[i]) == 0 )
-                            found = TRUE;
-                    if (!found)
-                    {
-                        tagEvent(TAG_IN, pnewTagList->tagUID[i], &reader);
-                        change = TRUE;
-                    }
+                    tagListChanged = TRUE;
+                    tagEventDispatch(TAG_IN, pnewTagList->tagUID[i], &reader);
                 }
+            }
 
-                if (change)
-                {
-                    PRINT_TAG_STATE(pnewTagList);
-                    SWAP(pnewTagList, ppreviousTagList);
-                }
+            /* the next time around the loop the previous state should be the current one */
+            /* and make the new one point to a different list so it can be overwritten */
+            SWAP(pnewTagList, ppreviousTagList);
+            tagListChanged = FALSE;
+        } /* if getTagList() was successful */
+    } /* if ( connected == TRUE ) */
 
-                /* Wait between polls */
-                usleep(pollDelayms * 1000);
-            } /* if getTagList() was successful */
-       } /* while no error reading was returned */
+#ifdef BUILD_SYSTEM_TRAY
+    systemTraySetStatus( connected, messageString );
+#endif
 
-        /* if we got this far, we got an error. Disconnect and try reconnecting */
-        /* and start from scratch */
+    if ( connected )
+        logMessage(LOG_INFO, 0, messageString);
+    else
+        logMessage(LOG_WARNING, 0, messageString);
 
-        /* Ignore errors from disconnect as we're going to try and reconnect anyway */
-        readerDisconnect(&reader);
-    } /* Loop forever - doing our best - only way out is via a signal */
+    /* keep calling me */
+    return( TRUE );
 }
-/************************ MAIN LOOP *************************/
 
 /************************ MAIN ******************************/
 int main(
@@ -834,7 +773,7 @@ int main(
    reader.number = 0;
 
    parseCommandLine(argc, argv,
-                    &(reader.number), &verbosityLevel, &runOptions, &retryDelaysec, &pollDelayms);
+                    &(reader.number), &verbosityLevel, &runOptions, &pollDelayms);
 
    /* set-up signal handlers */
    signal(SIGTERM,  handleSignal); /* software termination signal from kill */
@@ -859,13 +798,15 @@ int main(
          exit( 0 );
          break;
       case FOREGROUND:
-         /* enter the loop to poll for tag and execute events and only return to exit */
-         pollTags();
+         /* enter the loop to poll for tag and execute events */
+         /* Loop forever - doing our best - only way out is via a signal */
+         while ( tagListCheck( NULL ) )
+             usleep(pollDelayms * 1000);
          break;
       case SYSTEM_TRAY:
 #ifdef BUILD_SYSTEM_TRAY
          /* build the status icon in the system tray area */
-         startSystemTray( &argc, &argv, &tagPoll );
+         startSystemTray( &argc, &argv, &tagListCheck );
 #endif
          break;
       default:
