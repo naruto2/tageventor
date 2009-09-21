@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <gtk/gtk.h>
 #include "tagEventor.h"
+#include "systemTray.h"
 
 #define VERSION_STRING  "0.0.0.0"
 /* TODO find a way to get this from svn, or Make or something */
@@ -57,13 +58,11 @@ aboutDialogShow( void )
 {
 
     GtkWidget   *aboutDialog;
-    GError      *pError;
 
     aboutDialog = gtk_about_dialog_new();
 
     /* set the icon for the window */
-/* TODO fix all the icon path stuff */
-    gtk_window_set_icon_from_file( (GtkWindow *)aboutDialog, "icons/tageventor48x48.png", &pError );
+    gtk_window_set_icon_name( (GtkWindow *)aboutDialog, ICON_NAME_CONNECTED );
 
     gtk_about_dialog_set_program_name( (GtkAboutDialog *)aboutDialog, PROGRAM_NAME );
 

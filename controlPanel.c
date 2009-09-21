@@ -35,17 +35,6 @@
 
 
 static const gchar *columnHeader[4] = { "Tag ID", "Description", "Script", "Enabled" };
-
-/*
-static const char      *iconNameList[] = {
-				"icons/tageventor16x16.png",
-				"icons/tageventor32x32.png",
-				"icons/tageventor48x48.png",
-				"icons/tageventor64x64.png",
-				"icons/tageventor128x128.png"
-				};
-*/
-
 static char             savePending = FALSE;
 static char             cpanelVisible = FALSE;
 static GtkWidget        *cpanelWindow = NULL, *statusBar = NULL, *applyButton = NULL;
@@ -199,7 +188,7 @@ tableAddRow( GtkTable *pTable, int i )
     GtkWidget           *label, *chooser, *enable, *entry;
     gchar               message[80];
     const tPanelEntry   *pTagEntry;
-    char		        currentDir[MAX_PATH];
+    char		        currentDir[PATH_MAX];
 
     /* get a pointer to this entry in the table */
     pTagEntry = tagEntryGet( i );
@@ -229,10 +218,12 @@ tableAddRow( GtkTable *pTable, int i )
     else /* otherwise it's a new blank name, so default to width of 10 characters */
         gtk_file_chooser_button_set_width_chars((GtkFileChooserButton *)chooser, 10 );
 
-/* TODO get the users home directory path */
-    if ( getcwd(currentDir, MAX_PATH) != NULL )
+    /* get the users home directory path */
+    if ( getcwd(currentDir, PATH_MAX) != NULL )
         gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (chooser), currentDir );
+
 /* TODO set file chooser text from the tagEntryArray ... */
+
     /* attach a new widget into the table */
     gtk_table_attach(pTable, chooser, 2, 3, i+1, i+2, GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 2 );
     /* add a callback to the button which will be passed the index of this entry in the tagEntryArray */
@@ -338,7 +329,6 @@ buildCPanel ( void  )
     GtkWidget   *mainWindow;
     GtkWidget   *vbox, *scroll, *buttonBox, *table;
     GtkWidget   *helpButton, *closeButton, *aboutButton, *addButton;
-    GError      *pError;
     int         numEntries;
 
     /******************************* Main Application Window ************************/
@@ -348,10 +338,7 @@ buildCPanel ( void  )
     gtk_window_set_default_size( (GtkWindow *)mainWindow, DEFAULT_WIDTH_PIX, DEFAULT_HEIGHT_PIX );
 
     /* set the icon for the window */
-    gtk_window_set_icon_from_file( (GtkWindow *)mainWindow, "icons/tageventor48x48.png", &pError );
-/* TODO pass in a full list when I figure out how to create the PixBufs from files!
-    gtk_window_set_icon_list( window, iconList );
-    */
+    gtk_window_set_icon_name( (GtkWindow *)mainWindow, ICON_NAME_CONNECTED );
 
     /* When the window is given the "delete" signal (this is given
      * by the window manager, usually by the "close" option, or on the

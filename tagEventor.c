@@ -26,6 +26,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <sys/stat.h>  /* for umask() */
+#include <limits.h>
 
 #include <tagReader.h>
 
@@ -69,7 +70,7 @@ typedef enum { FOREGROUND, START_DAEMON, STOP_DAEMON, SYSTEM_TRAY } tRunOptions;
 /* This is needed by handleSignal to clean-up, so can't be local :-( */
 static  tReader         reader;
 static  int		        lockFile = -1;
-static  char		    lockFilename[MAX_PATH];
+static  char		    lockFilename[PATH_MAX];
 static  BOOL		    runningAsDaemon = FALSE;
 static int              numTagEntries = 0;
 static tPanelEntry      *tagEntryArray; /* TODO 10 for now for testing */
@@ -491,7 +492,7 @@ tagTableAddEntry( void )
     tagEntryArray[numTagEntries -1].ID = malloc( sizeof( uid ) );
     /* paste in some text for now, although it's not yet editable by the user */
     sprintf( tagEntryArray[numTagEntries -1].ID, "<tag ID>" );
-    tagEntryArray[numTagEntries -1].script = malloc( MAX_PATH );
+    tagEntryArray[numTagEntries -1].script = malloc( PATH_MAX );
     /* NULL terminate the emptry string */
     tagEntryArray[numTagEntries -1].script[0] = '\0';
     tagEntryArray[numTagEntries -1].description = malloc( MAX_DESCRIPTION_LENGTH );
@@ -581,7 +582,7 @@ tagTableRead( void )
     {
         /* malloc each string for new entry added and add to tagEntryArray*/
         tagEntryArray[i].ID = malloc( sizeof( uid ) );
-        tagEntryArray[i].script = malloc( MAX_PATH );
+        tagEntryArray[i].script = malloc( PATH_MAX );
         tagEntryArray[i].description = malloc( MAX_DESCRIPTION_LENGTH );
 
         strcpy( tagEntryArray[i].ID, fakeTags[i].ID );
@@ -604,8 +605,8 @@ tagEventDispatch(
                 const tReader	*preader
                 )
 {
-   char		filePath[MAX_PATH];
-   char		currentDir[MAX_PATH];
+   char		filePath[PATH_MAX];
+   char		currentDir[PATH_MAX];
    char		messageString[MAX_LOG_MESSAGE];
 
    sprintf(messageString, "Event: Tag %s - UID: %s", tagString[eventType], tagUID);
@@ -615,7 +616,7 @@ tagEventDispatch(
    if (!runningAsDaemon)
    {
       /* first steps to build a full path */
-      if ( getcwd(currentDir, MAX_PATH) != NULL )
+      if ( getcwd(currentDir, PATH_MAX) != NULL )
       {
         sprintf(filePath, "%s/scripts/%s", currentDir, tagUID);
 

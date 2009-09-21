@@ -19,15 +19,12 @@
 
 #define MAX_DESCRIPTION_LENGTH  (80)
 
-/* TODO: there should be a system or POSIX definition of this that should be used */
-#define MAX_PATH (1024)
-
 #define PROGRAM_NAME    "Tageventor"
 
 /* where to save this type of config stuff???? via GConf or something */
 typedef struct {
    	char		*ID;            /* Max size = sizeof(uid) */
- 	char		*script;        /* Max size = MAX_PATH */
+ 	char		*script;        /* Max size = PATH_MAX */
 	char		*description;   /* Max size = MAX_DESCRIPTION_LENGTH */
 	char		enabled;
 } tPanelEntry;

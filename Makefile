@@ -4,6 +4,15 @@ Debug: bin/Debug/tagEventor
 
 Release: bin/Release/tagEventor
 
+###### Build Flags
+# The following flags can be used to build the (in development) additional GUI components
+# NOTE that for now it's 100% Gtk+ specific and I haven't looked at Gtk+ on non-Linux platforms
+# Add these flags to the cflags on the gcc command line with the -D option
+# BUILD_SYSTEM_TRAY
+# BUILD_CONTROL_PANEL (requires BUILD_SYSTEM_TRAY to be defined to be useful)
+# BUILD_ABOUT_DIALOG (can be used with both/either BUILD_SYSTEM_TRAY or BUILD_CONTROL_PANEL)
+# BUILD_CONTROL_PANEL_HELP (requires BUILD_CONTROL_PANEL to be defined to be useful)
+
 ###### Debug version
 #TODO define list of objects some time
 bin/Debug/tagEventor: lib/Debug/libtagReader.a obj/Debug/tagEventor.o obj/Debug/aboutDialog.o obj/Debug/controlPanel.o obj/Debug/systemTray.o

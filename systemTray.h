@@ -20,6 +20,9 @@
 #ifdef BUILD_SYSTEM_TRAY
 
 #define SYSTEM_TRAY_ICON_MESSAGE_MAX    (80)
+#define ICON_INSTALL_DIR            "/usr/share/tageventor/icons/"
+#define ICON_NAME_CONNECTED         "tageventor"
+#define ICON_NAME_NOT_CONNECTED     "tageventorNoReader"
 
 /* define the function we must implement for tagEventor.c to start system tray icon */
 extern void startSystemTray( int     *argc, char    ***argv, int (*pollFunction)( void  *data ) );
