@@ -21,14 +21,14 @@
 #include <stdlib.h>
 #include <gtk/gtk.h>
 #include <string.h>
-
+#include <unistd.h>
 #include "controlPanel.h"
 
 #include "aboutDialog.h"
 
 #include "systemTray.h"
 
-#define TOOL_TIP_TEXT   "Tageventor: \nLeft-click for control panel.\nRight-click for actions."
+#define TOOL_TIP_TEXT               "Tageventor: \nLeft-click for control panel.\nRight-click for actions."
 
 static GtkStatusIcon    *systemTrayIcon = NULL;
 
@@ -41,9 +41,9 @@ systemTraySetStatus(
     gchar   toolTipText[strlen(TOOL_TIP_TEXT) + SYSTEM_TRAY_ICON_MESSAGE_MAX];
 
     if ( connected )
-        gtk_status_icon_set_from_file( systemTrayIcon, "icons/tageventor48x48.png" );
+        gtk_status_icon_set_from_icon_name( systemTrayIcon, ICON_NAME_CONNECTED );
     else
-        gtk_status_icon_set_from_file( systemTrayIcon, "icons/tageventor48x48NoReader.png" );
+        gtk_status_icon_set_from_icon_name( systemTrayIcon, ICON_NAME_NOT_CONNECTED );
 
     /* push the message into the tool tip for the status icon */
     sprintf( toolTipText, "%s\n%s", TOOL_TIP_TEXT, message );
@@ -99,6 +99,10 @@ startSystemTray(
                 )
 {
     GtkWidget       *popupMenu, *quitMenuItem;
+#ifdef DEBUG
+    char		    currentDir[ PATH_MAX + 10 ];
+#endif
+
 #ifdef BUILD_ABOUT_DIALOG
     GtkWidget       *aboutMenuItem;
 #endif
@@ -110,11 +114,23 @@ startSystemTray(
     /* Init GTK+ it might modify significantly the command line options */
     gtk_init( argc, argv );
 
-	/* add application specific icons to search path - I'm not sure this is needed the way we work....*/
-/* gtk_icon_theme_append_search_path (gtk_icon_theme_get_default (), " $PWD " );
-*/
+#ifdef DEBUG
+    /* this might be useful for use during development */
+    if ( ( getcwd( currentDir, PATH_MAX ) ) != NULL )
+    {
+        /* add 'icons' on the end of it */
+        strcat( currentDir, "/icons" );
+        gtk_icon_theme_prepend_search_path (gtk_icon_theme_get_default (), currentDir );
+    }
+#endif
+
+	/* make sure the directory where we install icons is in the icon search path */
+/* TODO I can't get this to find them in the subdirectories correctly,
+        currently have copied them into root icon directory as a klude till I figure it out */
+    gtk_icon_theme_append_search_path (gtk_icon_theme_get_default(), ICON_INSTALL_DIR );
+
     /* until we actually connect to a reader set the icon to show not connected to one */
-    systemTrayIcon = gtk_status_icon_new_from_file( "icons/tageventor48x48NoReader.png" );
+    systemTrayIcon = gtk_status_icon_new_from_icon_name( ICON_NAME_NOT_CONNECTED );
 
     /* Set the basic tooltip info. Tag polling routine may update it with more info */
     gtk_status_icon_set_tooltip_text( systemTrayIcon, TOOL_TIP_TEXT );

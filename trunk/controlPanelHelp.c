@@ -19,7 +19,7 @@
 #ifdef BUILD_CONTROL_PANEL_HELP
 
 #include "controlPanelHelp.h"
-
+#include "systemTray.h"
 #include <gtk/gtk.h>
 
 static void
@@ -51,13 +51,11 @@ controlPanelHelpShow( void )
 {
 
     GtkWidget   *controlPanelHelpDialog;
-    GError      *pError;
 
     controlPanelHelpDialog = gtk_dialog_new();
 
     /* set the icon for the window */
-/* TODO fix all the icon path stuff */
-    gtk_window_set_icon_from_file( (GtkWindow *)controlPanelHelpDialog, "icons/tageventor48x48.png", &pError );
+    gtk_window_set_icon_name( (GtkWindow *)controlPanelHelpDialog, ICON_NAME_CONNECTED );
 
     /* add a close button Response ID for it is 0, although we won't use it */
     gtk_dialog_add_button( (GtkDialog *)controlPanelHelpDialog, "Close", 0 );
