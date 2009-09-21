@@ -22,7 +22,8 @@
 #define SYSTEM_TRAY_ICON_MESSAGE_MAX    (80)
 
 /* define the function we must implement for tagEventor.c to start system tray icon */
-extern void startSystemTray( int     *argc, char    ***argv, char (*pollFunction)( void  *data ) );
+extern void startSystemTray( int     *argc, char    ***argv, int (*pollFunction)( void  *data ) );
 
 extern void systemTraySetStatus( char connected, const char *message );
+
 #endif

@@ -17,8 +17,8 @@
 */
 
 #ifdef BUILD_CONTROL_PANEL
-
 #include <stdlib.h>
+#include <unistd.h>
 #include <gtk/gtk.h>
 #include <string.h>
 
@@ -46,10 +46,15 @@ static const char      *iconNameList[] = {
 				};
 */
 
-static char            savePending = FALSE;
-static char            cpanelVisible = FALSE;
-static GtkWidget       *cpanelWindow = NULL, *statusBar = NULL, *applyButton = NULL;
+static char             savePending = FALSE;
+static char             cpanelVisible = FALSE;
+static GtkWidget        *cpanelWindow = NULL, *statusBar = NULL, *applyButton = NULL;
+static GtkWidget        *instructionLabel;
 
+
+/* This will be called by the systemTray when it wants to quit, and hence asks us here */
+/* to quite too. before doing so we check our status. If we have something to do then  */
+/* we pop-up the dialogs to do it, and we tell the systemTray to not quit just yet     */
 char
 controlPanelQuit( void )
 {
@@ -93,10 +98,13 @@ hideCPanelWindow( void )
 
 /* Call back for the close button */
 static void
-closeWindow( void )
+closeSignalHandler(
+                   GtkDialog    *dialog,
+                   gpointer   user_data
+                   )
 {
     /* if there's nothing to be applied then it's OK to close window ASAP */
-    if ( !savePending )
+    if ( savePending == FALSE )
         hideCPanelWindow();
     else
     {
@@ -105,6 +113,7 @@ closeWindow( void )
 
 }
 
+/* This get's called when the user closes the window using the Window Manager 'X' box */
 static char
 deleteSignalHandler(
             GtkWidget *widget,
@@ -113,33 +122,18 @@ deleteSignalHandler(
             )
 {
 
-    if ( !savePending )
+    if ( savePending == FALSE )
     {
-        /* If you return FALSE in the "deleteSignalHandler"
-           GTK will emit the "destroy" signal. */
+        /* If you return FALSE GTK will propograte event and we'll get a "destroy" signal. */
         return( FALSE );
     }
     else
     {
-      /* Returning TRUE means you don't want the window to be destroyed. */
+      /* Returning TRUE means you don't want the event propograted further. */
 /* TODO Pop-up the window here */
         return( TRUE );
     }
 }
-
-/* this handles the escape key */
-static void
-closeMain(
-        GtkDialog   *dialog,
-        gpointer   user_data
-        )
-{
-
-    /* re use the handler for the CLOSE button */
-    closeWindow();
-
-}
-
 
 static void
 destroy(
@@ -205,6 +199,7 @@ tableAddRow( GtkTable *pTable, int i )
     GtkWidget           *label, *chooser, *enable, *entry;
     gchar               message[80];
     const tPanelEntry   *pTagEntry;
+    char		        currentDir[MAX_PATH];
 
     /* get a pointer to this entry in the table */
     pTagEntry = tagEntryGet( i );
@@ -235,7 +230,8 @@ tableAddRow( GtkTable *pTable, int i )
         gtk_file_chooser_button_set_width_chars((GtkFileChooserButton *)chooser, 10 );
 
 /* TODO get the users home directory path */
-    gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (chooser), "/home/andrew/.tageventor");
+    if ( getcwd(currentDir, MAX_PATH) != NULL )
+        gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (chooser), currentDir );
 /* TODO set file chooser text from the tagEntryArray ... */
     /* attach a new widget into the table */
     gtk_table_attach(pTable, chooser, 2, 3, i+1, i+2, GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 2 );
@@ -258,6 +254,27 @@ tableAddRow( GtkTable *pTable, int i )
 
 
 static void
+addColumnHeaders(
+                GtkTable *pTable
+                )
+{
+    int i;
+    GtkWidget           *label;
+
+    /* add the four column labels in the table*/
+    for (i = 0; i < 4; i++)
+    {
+        label = gtk_label_new( columnHeader[i] );
+
+        /* attach a new widget into the table in column 'i', row 0 */
+        gtk_table_attach(pTable, label, i, i+1, 0, 1, GTK_FILL, GTK_FILL, 5, 3 );
+
+        gtk_widget_show( label );
+    }
+}
+
+
+static void
 addTagEntry(
             GtkWidget *widget,
             gpointer *pTable
@@ -267,8 +284,17 @@ addTagEntry(
 
     numEntries = tagTableAddEntry();
 
-    /* resize the table - with an extra row for the header */
+    /* resize the table widget - with an extra row for the header */
     gtk_table_resize( (GtkTable *)pTable, (numEntries + 1), 4 );
+
+    /* if this is the first tag / row we add then put in the column headers */
+    if ( numEntries == 1 )
+    {
+        /* delete the label that was put in earlier with instruction */
+        gtk_widget_destroy( instructionLabel );
+
+        addColumnHeaders( (GtkTable *)pTable );
+    }
 
     /* this entry's index */
     i = (numEntries -1);
@@ -278,38 +304,31 @@ addTagEntry(
 }
 
 static void
-fillTable( GtkTable *pTable, int numTags )
+fillTable(
+            GtkTable    *pTable,
+            int         numTags
+            )
 {
     int         i;
-    GtkWidget    *label;
 
     if ( numTags == 0 )
     {
-        label = gtk_label_new( "No Tags configured. Use the 'Add' button below to configure a tag" );
-        gtk_table_attach(pTable, label, 0, 1, 0, 1, GTK_FILL | GTK_EXPAND, GTK_FILL | GTK_EXPAND, 10, 10 );
-
-        return;
+        instructionLabel = gtk_label_new( "No Tags configured. Use the 'Add' button below to configure a tag" );
+        gtk_table_attach(pTable, instructionLabel, 0, 1, 0, 1, GTK_FILL | GTK_EXPAND, GTK_FILL | GTK_EXPAND, 10, 10 );
     }
-
-    /* resize the table to be big enough to hold all entries */
-    /* Row 0  =  Column headers */
-    /* So we need numConfigTags + 1 rows, and 4 columns */
-    gtk_table_resize( (GtkTable *)pTable, (numTags + 1), 4 );
-
-    /* add the four column labels in the table*/
-    for (i = 0; i < 4; i++)
+    else
     {
-        /* create the text label */
-        label = gtk_label_new( columnHeader[i] );
+        /* resize the table to be big enough to hold all entries */
+        /* Row 0  =  Column headers */
+        /* So we need numConfigTags + 1 rows, and 4 columns */
+        gtk_table_resize( (GtkTable *)pTable, (numTags + 1), 4 );
 
-        /* attach a new widget into the table in column 'i', row 0 */
-        gtk_table_attach(pTable, label, i, i+1, 0, 1, GTK_FILL, GTK_FILL, 5, 3 );
+        addColumnHeaders( (GtkTable *)pTable );
+
+        /* add a new row of widgets for each tag script configuration found */
+        for (i = 0; i < numTags; i++)
+            tableAddRow(pTable, i );
     }
-
-    /* add a new row of widgets for each tag script configuration found */
-    for (i = 0; i < numTags; i++)
-        tableAddRow(pTable, i );
-
 }
 
 
@@ -336,11 +355,19 @@ buildCPanel ( void  )
 
     /* When the window is given the "delete" signal (this is given
      * by the window manager, usually by the "close" option, or on the
-     * titlebar), we ask it to call the delete_event () function
-     * as defined above. The data passed to the callback
-     * function is NULL and is ignored in the callback function. */
+     * titlebar) */
     g_signal_connect (G_OBJECT (mainWindow), "delete_event",
 		      G_CALLBACK (deleteSignalHandler), NULL);
+
+/* TODO this event no longer seems to be sent ! */
+/* something to do with signalhandlers in tagEventor.c ? */
+    g_signal_connect (G_OBJECT (mainWindow), "delete",
+                    G_CALLBACK (deleteSignalHandler), NULL);
+
+/* TODO see if we can get this signal to work, never sent either ¿¿ */
+/* should be sent when the Escape key is pressed to close the dialog */
+    g_signal_connect (G_OBJECT (mainWindow), "close",
+                    G_CALLBACK (closeSignalHandler), NULL);
 
     /* Here we connect the "destroy" event to a signal handler.
      * This event occurs when we call gtk_widget_destroy() on the window,
@@ -348,8 +375,6 @@ buildCPanel ( void  )
     g_signal_connect (G_OBJECT (mainWindow), "destroy",
 		      G_CALLBACK (destroy), NULL);
 
-    /* this will be triggered when escape key is used */
-    g_signal_connect ( G_OBJECT (mainWindow), "close", G_CALLBACK (closeMain), NULL );
 
     /******************************* Vertical Box ***********************************/
     /* vertical box to hold things, Not homogeneous sizes and spaceing 0 */
@@ -426,7 +451,7 @@ buildCPanel ( void  )
     /* When the button receives the "clicked" signal, it will call the
      * function applyChanges() passing it NULL as its argument. */
      /* TODO can't get this signal to work and close things! */
-    g_signal_connect (G_OBJECT (closeButton), "released", G_CALLBACK (closeWindow), NULL);
+    g_signal_connect (G_OBJECT (closeButton), "released", G_CALLBACK (closeSignalHandler), NULL);
 
     /********************************************* Apply Button ***********************/
     applyButton = gtk_button_new_from_stock( "gtk-apply" );
@@ -469,7 +494,7 @@ controlPanelActivate( void )
             /* check to see if it's on top level for user, if so, then hide it */
             /* thus clicking on the status icon toggles it, like skype */
             if (gtk_window_is_active( (GtkWindow *)cpanelWindow ) )
-                closeWindow();
+                closeSignalHandler( NULL, NULL );
         }
         else
         /* it's build, but not visible, so pop it up to the top! */
