@@ -2,7 +2,7 @@
 Encoding=UTF-8
 Name=Tageventor
 Comment=Tageventor
-Icon=tageventor16x16.png
+Icon=tageventor48x48.png
 Exec=tagEventor -d tray
 Terminal=false
 Type=Application

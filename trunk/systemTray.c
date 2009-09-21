@@ -95,7 +95,7 @@ void
 startSystemTray(
                 int     *argc,
                 char    ***argv,
-                char    (*pollFunction)( void *data )
+                int    (*pollFunction)( void *data )
                 )
 {
     GtkWidget       *popupMenu, *quitMenuItem;
@@ -154,8 +154,8 @@ startSystemTray(
     /* make sure the icon is shown */
     gtk_status_icon_set_visible( systemTrayIcon, TRUE );
 
-    /* add a timeout to check for tags */
-    g_timeout_add( 1000, pollFunction, NULL );
+    /* add a timeout to check for tags, TRUE to ask it to update system tray */
+    g_timeout_add( 1000, pollFunction, (gpointer)TRUE );
 
     /* Start main loop processing UI events */
     gtk_main();

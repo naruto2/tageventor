@@ -14,16 +14,18 @@
 				<Option parameters="-d tray" />
 				<Compiler>
 					<Add option="-g" />
+					<Add option="-DDEBUG" />
 				</Compiler>
 				<Linker>
 					<Add library="/home/andrew/tageventor/trunk/lib/Debug/libtagReader.a" />
 				</Linker>
 			</Target>
 			<Target title="Release">
-				<Option output="bin/Release/cpanel" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/Release/tagEventor" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/Release/" />
 				<Option type="0" />
 				<Option compiler="gcc" />
+				<Option parameters="-d tray" />
 				<Compiler>
 					<Add option="-O2" />
 				</Compiler>
@@ -32,6 +34,13 @@
 					<Add library="/home/andrew/tageventor/trunk/lib/Release/libtagReader.a" />
 				</Linker>
 			</Target>
+			<Target title="libtagReader">
+				<Option output="lib/Release/libtagReader" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="" />
+				<Option type="2" />
+				<Option compiler="gcc" />
+				<Option createDefFile="1" />
+			</Target>
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
@@ -39,6 +48,7 @@
 			<Add option="-DBUILD_SYSTEM_TRAY" />
 			<Add option="-DBUILD_CONTROL_PANEL" />
 			<Add option="-DBUILD_ABOUT_DIALOG" />
+			<Add option="-DBUILD_CONTROL_PANEL_HELP" />
 			<Add directory="/home/andrew/tageventor/trunk" />
 			<Add directory="/usr/include/PCSC" />
 		</Compiler>
@@ -49,20 +59,56 @@
 		</Linker>
 		<Unit filename="aboutDialog.c">
 			<Option compilerVar="CC" />
+			<Option target="Debug" />
+			<Option target="Release" />
 		</Unit>
-		<Unit filename="aboutDialog.h" />
+		<Unit filename="aboutDialog.h">
+			<Option target="Debug" />
+			<Option target="Release" />
+		</Unit>
 		<Unit filename="controlPanel.c">
 			<Option compilerVar="CC" />
+			<Option target="Debug" />
+			<Option target="Release" />
 		</Unit>
-		<Unit filename="controlPanel.h" />
+		<Unit filename="controlPanel.h">
+			<Option target="Debug" />
+			<Option target="Release" />
+		</Unit>
+		<Unit filename="controlPanelHelp.c">
+			<Option compilerVar="CC" />
+			<Option target="Debug" />
+			<Option target="Release" />
+		</Unit>
+		<Unit filename="controlPanelHelp.h">
+			<Option target="Debug" />
+			<Option target="Release" />
+		</Unit>
 		<Unit filename="systemTray.c">
 			<Option compilerVar="CC" />
+			<Option target="Debug" />
+			<Option target="Release" />
 		</Unit>
-		<Unit filename="systemTray.h" />
+		<Unit filename="systemTray.h">
+			<Option target="Debug" />
+			<Option target="Release" />
+		</Unit>
 		<Unit filename="tagEventor.c">
 			<Option compilerVar="CC" />
+			<Option target="Debug" />
+			<Option target="Release" />
 		</Unit>
-		<Unit filename="tagEventor.h" />
+		<Unit filename="tagEventor.h">
+			<Option target="Debug" />
+			<Option target="Release" />
+		</Unit>
+		<Unit filename="tagReader.c">
+			<Option compilerVar="CC" />
+			<Option target="libtagReader" />
+		</Unit>
+		<Unit filename="tagReader.h">
+			<Option target="libtagReader" />
+		</Unit>
 		<Extensions>
 			<code_completion />
 			<debugger />

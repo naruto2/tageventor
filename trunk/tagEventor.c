@@ -55,6 +55,11 @@
    second = temp;\
    }
 
+#ifdef BUILD_SYSTEM_TRAY
+#define USAGE_STRING "Usage: %s <options>\n\t-n <reader number>   : default = 0\n\t-v <verbosity level> : default = 0 (silent), max = 3 \n\t-d start | stop | tray (daemon options: default = foreground)\n\t-p <msecs> : tag polling delay, default = %d, max = %d\n\t-h : print this message\n"
+#else
+#define USAGE_STRING "Usage: %s <options>\n\t-n <reader number>   : default = 0\n\t-v <verbosity level> : default = 0 (silent), max = 3 \n\t-d start | stop (daemon options: default = foreground)\n\t-p <msecs> : tag polling delay, default = %d, max = %d\n\t-h : print this message\n"
+#endif
 /*************    TYPEDEFS TO THIS FILE     **********************/
 typedef enum { FOREGROUND, START_DAEMON, STOP_DAEMON, SYSTEM_TRAY } tRunOptions;
 
@@ -80,21 +85,6 @@ static tTagList		tagList1, tagList2;
 static tTagList		*pnewTagList = &tagList1, *ppreviousTagList = &tagList2;
 static BOOL         connected = FALSE; /* at the start, we are not connected */
 static BOOL         tagListChanged = FALSE;
-
-/************************ PRINT USAGE ***********************/
-static void printUsage(
-	const char 	*name
- 			)
-{
-
-   fprintf(stderr, "Usage: %s <options>\n\t-n <reader number>   : default = 0\n\t-v <verbosity level> : default = 0 (silent), max = 3 \n\t-d start | stop | tray (start or stop daemon, default = foreground)\n\t-p <usecs> : tag polling delay (milli seconds), default = %d, max = %d\n\t-h : print this message\n",
-           name, POLL_DELAY_MILLI_SECONDS, POLL_DELAY_MILLI_SECONDS_MAX);
-
-}
-
-/************************ PRINT USAGE ***********************/
-
-
 
 /************************ PARSE COMMAND LINE OPTIONS ********/
 static void
@@ -154,7 +144,7 @@ parseCommandLine(
                       else
                       {
                           parseError = TRUE;
-                          fprintf(stderr, "Invalid parameter for -d daemon option\n");
+                          fprintf(stderr, "Invalid parameter for '-d' daemon option\n");
                       }
             break;
 
@@ -179,7 +169,7 @@ parseCommandLine(
 
          /* 'h' option is to request print out help */
          case 'h':
-            printUsage(argv[0]);
+                fprintf(stderr, USAGE_STRING, argv[0], POLL_DELAY_MILLI_SECONDS, POLL_DELAY_MILLI_SECONDS_MAX);
             exit ( 0 );
             break;
 
@@ -190,7 +180,7 @@ parseCommandLine(
 
    if (parseError)
    {
-      printUsage(argv[0]);
+      fprintf(stderr, USAGE_STRING, argv[0], POLL_DELAY_MILLI_SECONDS, POLL_DELAY_MILLI_SECONDS_MAX);
       exit( EXIT_FAILURE );
    }
 
@@ -627,7 +617,7 @@ tagEventDispatch(
       /* first steps to build a full path */
       if ( getcwd(currentDir, MAX_PATH) != NULL )
       {
-        sprintf(filePath, "%s/%s", currentDir, tagUID);
+        sprintf(filePath, "%s/scripts/%s", currentDir, tagUID);
 
         /* if returned 0 then it worked (as far as we know, so exit here */
         if ( execScript(filePath, tagUID, preader->SAM_serial, tagUID, tagString[eventType]) == 0 )
@@ -655,8 +645,8 @@ tagEventDispatch(
 }
 /*********************  TAG EVENT ****************************/
 
-static char
-tagListCheck( void *data )
+static int
+tagListCheck( void *updateSystemTray )
 {
     tTagList        *temp;
     LONG 		    rv;
@@ -746,11 +736,12 @@ tagListCheck( void *data )
     } /* if ( connected == TRUE ) */
 
 #ifdef BUILD_SYSTEM_TRAY
-    systemTraySetStatus( connected, messageString );
+    if ( updateSystemTray )
+        systemTraySetStatus( connected, messageString );
 #endif
 
     if ( connected )
-        logMessage(LOG_INFO, 0, messageString);
+        logMessage(LOG_INFO, 2, messageString);
     else
         logMessage(LOG_WARNING, 0, messageString);
 
@@ -798,13 +789,16 @@ int main(
          exit( 0 );
          break;
       case FOREGROUND:
-         /* enter the loop to poll for tag and execute events */
+         /* enter the loop to poll for tag and execute events, FALSE to not update system tray */
          /* Loop forever - doing our best - only way out is via a signal */
-         while ( tagListCheck( NULL ) )
+         while ( tagListCheck( FALSE  ) )
              usleep(pollDelayms * 1000);
          break;
       case SYSTEM_TRAY:
 #ifdef BUILD_SYSTEM_TRAY
+/* TODO arguably, we could/should move into background when run like this */
+/* it's not a problem for GNOME as it starts other process, but when executing this */
+/* option from the command line it stays in the foreground */
          /* build the status icon in the system tray area */
          startSystemTray( &argc, &argv, &tagListCheck );
 #endif

@@ -66,4 +66,4 @@ obj/Release/tagReader.o: tagReader.c  tagReader.h
 # Clean up all stray editor back-up files, any .o or .a left around in this directory
 # Remove all built object files (.o and .a) and compiled and linked binaries
 clean:
-	rm -f  *~ *.o *.a obj/Debug/*.o lib/Debug/*.a bin/Debug/* obj/Release/*.o lib/Release/*.a bin/Release/*
+	rm -f  *~ *.o *.a obj/Debug/*.o lib/Debug/*.a bin/Debug/* obj/Release/*.o lib/Release/*.a bin/Release/* scripts/*~
