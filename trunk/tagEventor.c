@@ -28,7 +28,11 @@
 #include <sys/stat.h>  /* for umask() */
 #include <limits.h>
 
-#include <tagReader.h>
+#ifdef __MAC_OS_X_VERSION_MAX_ALLOWED
+	#include "tagReader.h"
+#else
+	#include <tagReader.h>
+#endif
 
 #include "tagEventor.h"
 

@@ -111,6 +111,7 @@ static const BYTE APDU_LED_RED[] = ACS_LED_RED;
 static const BYTE APDU_GET_READER_FIRMWARE[] = ACS_GET_READER_FIRMWARE;
 
 /* This is the array of firmware string of supported readers */
+static const int SUPPORTED_READER_ARRAY_COUNT = 1;
 static const char * const SUPPORTED_READER_ARRAY[] = { "ACR122U" };
 
 /* for the PCSC subtype ACS ACR38U use the T0 protocol - from RFIDiot */
@@ -423,11 +424,11 @@ LONG readerConnect (
    sprintf(messageString, "Firmware: %s", pbRecvBuffer);
    logMessage(LOG_INFO, 3, messageString);
 
-   for (i = 0; (i < sizeof(SUPPORTED_READER_ARRAY)) & !readerSupported ; i++)
-   {
+   for (i = 0; (i < SUPPORTED_READER_ARRAY_COUNT) & !readerSupported ; i++)
+   { 
       if (strncmp(((char *)pbRecvBuffer),
           SUPPORTED_READER_ARRAY[i],
-          sizeof(SUPPORTED_READER_ARRAY[i])) == 0)
+          sizeof(SUPPORTED_READER_ARRAY[i])-1) == 0)
          readerSupported = TRUE;
    }
    if (!readerSupported)
