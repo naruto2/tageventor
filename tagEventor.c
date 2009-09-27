@@ -792,7 +792,7 @@ int main(
    /* here we are always foreground, not a daemon, it maybe recalled from the daemon */
    readerSetOptions( verbosityLevel, FALSE );
 
-    /* load the table of rules */
+	/* load the table of rules */
     tagTableRead();
 
    /* if requested to start as daemon, daemonize ourselves here */
