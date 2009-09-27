@@ -12,7 +12,7 @@ Usage: tagEventor *options*
 
   * -v verbosity level: sets the verbosity of output. Messages are output if the verbosity level meets or exceed the level of the message. i.e. 0 is no output, 3 is the maximum.
 
-  * -d start|stop|tray: start or stop the daemon process for the given reader (default = 0) and remove the lock-file.
+  * -d start|stop|tray: start or stop the daemon process remove the lock-file.
 
   * - p poll_time: this is the time in milliseconds between each poll of the card reader. Default is 1,000, or 1 second.
 
