@@ -1,9 +1,16 @@
 == How to make ==
+=== Linux command line version ===
 Type "make" at the command prompt in the source directory :-)
 
-You should get appropriate output from the make file and be left with a tagEventor executable object in the current working directory.
+You should get appropriate output from the make file and be left with tagEventor executables in ./bin/Debug/ and ./bin/Release
 
-=== Build Issues ===
+=== Linux Gtk+ / GNOME GUI version ===
+Currently this is build using the Code::Blocks IDE. Open the project in the trunk directory and "build" your selected target. Later this maybe added as an option to the makefile for command line building
+
+=== Mac OS X command-line version ===
+Open the tagEventor.xcode project in XCode and build it.
+
+=== Known Build Issues ===
 I continue to have issues with the way the PCSCLite header files include their other internal library header files. They use #include <> for example for wintypes.h, and I think it should be #include "". I modified them to do that and then everything builds no problem. I also think that´s the recommended way to include files inside a library known to be in the same directory. The <> construct is used to tell the compiler to seach in standard system include directories....I´ve mentioned to the developers and will be double checking....
 
 This is reported in the projects issue tracking system as issue id=2
@@ -13,14 +20,16 @@ Type "./tagEventor -h" at the command prompt in the source directory, this will 
 
 "./tagEventor" will start it in foreground mode with all the default options, with verbosity level = 0, or zero informational output (errors WILL BE output on STDERR).
 
-== How to Install as a daemon ==
+== How to Install ==
 You must have root permissions to install tagEventor on the local machine.
-If you can do this, then type "sudo make install".
+If you can do this, then type "sudo sh ./install-sh".
 
 This will do a number of things:
 
   # Copy the "tagEventor" binary you build above into /usr/sbin/. Check this has worked and that you can execute it from there with "/usr/sbin/tagEventor"
   # Create (if needed) the /etc/tagEventor directory, and copy the "generic" script into it.
+  # Copy a GNOME desktop autostartup file into the diretcory required to start tagEventor with each GNOME GUI session. 
+  # Copy the icon files into the system directories.
   # Copies the "tagEventord" init shell script into /etc/init.d for use in starting as a system daemon. This script can be run manually from here also to start and stop the daemon as init would do. e.g. Use "sudo /etc/init.d/tagEventord start|stop|reload|restart" (one of those four options)
   # It then creates appropriate links in the different runlevel directories (/etc/rc?.d). Each link points to the same tagEventord script in /etc/init.d. FYI it uses the command "update-rc.d -f tagEventord start 80 2 3 4 5 ." to do this
 
