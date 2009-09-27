@@ -6,3 +6,18 @@ Get Icon theme and search path stuff to work...
 
 Wwhen we start up as system tray, try and ensure we are the only instance running.
 Maybe pop-up an error when another is detected, with it's PID
+
+Build:
+Avoid use of pkg-config (use correct flags directly) and fix problem with -lpcsclite so that the Mac version can also be built from the command line with "make".
+
+Scripts:
+Modify the example scripts somehow so that they also run on Mac OS X, where for example Xmessage (used by the "generic" script) is not present.
+
+Install:
+Check the install script and directories for Mac OS X and make the necessary changes.
+
+Mac OS X GUI: 
+Investigate Gtk+ on Mac OS X (seems to only work with dependencies that require Leopard or Snow Leopard), or other ways to have the UI version also work.
+
+Man page:
+Write something useful in the man page, and then modify the install script to copy it to the appropriate location.
