@@ -34,10 +34,10 @@
 #define DEFAULT_HEIGHT_PIX      (250)
 
 
-static const gchar *columnHeader[4] = { "Tag ID", "Description", "Script", "Enabled" };
+#define NUM_COLUMNS             (5)
+static const gchar      *columnHeader[NUM_COLUMNS] = { "Rule Description", "Tag ID Match", "Folder", "Match", "Enabled" };
 static char             savePending = FALSE;
-static char             cpanelVisible = FALSE;
-static GtkWidget        *cpanelWindow = NULL, *statusBar = NULL, *applyButton = NULL;
+static GtkWidget        *cpanelWindow = NULL, *statusBar = NULL, *applyButton = NULL, *closeButton = NULL;
 static GtkWidget        *instructionLabel;
 
 
@@ -66,7 +66,7 @@ controlPanelSetStatus(
 {
 
     /* put the result onto the status bar */
-    if ( cpanelWindow && cpanelVisible )
+    if ( cpanelWindow )
         gtk_statusbar_push((GtkStatusbar *)statusBar, 0, (gchar *)message);
 
 }
@@ -76,10 +76,9 @@ hideCPanelWindow( void )
 {
 
     /* hide the main window if it exists ADN is visible */
-    if ( cpanelWindow && cpanelVisible )
+    if ( cpanelWindow )
     {
         gtk_widget_hide(cpanelWindow);
-        cpanelVisible = FALSE;
     }
 
 }
@@ -89,17 +88,25 @@ hideCPanelWindow( void )
 static void
 closeSignalHandler(
                    GtkDialog    *dialog,
-                   gpointer   user_data
+                   gpointer     user_data
                    )
 {
-    /* if there's nothing to be applied then it's OK to close window ASAP */
-    if ( savePending == FALSE )
-        hideCPanelWindow();
-    else
-    {
-/* TODO Pop-up the window here */
-    }
+    /* if the button was sensitive and could be pressed then it's OK to close window ASAP */
+    hideCPanelWindow();
+}
 
+/* Call back for the cancel button */
+static void
+cancelSignalHandler(
+                   GtkDialog    *dialog,
+                   gpointer     user_data
+                   )
+{
+/* TODO we should (arguable, reset the tag array back to the way it was when the Control Panel was opened,
+   or when the last save was made..... so that the changes aren't kept around in memory forever
+*/
+    /* OK to close window ASAP */
+    hideCPanelWindow();
 }
 
 /* This get's called when the user closes the window using the Window Manager 'X' box */
@@ -134,20 +141,73 @@ destroy(
     /* hide the main cpanel window */
     hideCPanelWindow();
 
+    /* it seems that when this get's called the widget actually get's destroyed */
+    /* so, show it's not existant and on next activate it will get re-built */
+    cpanelWindow = NULL;
+
+}
+
+static void
+setSavePending( unsigned char pending )
+{
+
+    savePending = pending;
+    gtk_widget_set_sensitive( applyButton, pending );
+    gtk_widget_set_sensitive( closeButton, !pending );
+
 }
 
 /* Callback for when each entry's file selection is changed */
 static void
-scriptChosen(
+folderChosen(
+             GtkWidget *widget,
+             gpointer   entryIndex
+             )
+{
+    gchar *folderName;
+
+    /* get the button state and put into tagEntryArray */
+
+    /* get the name of the folder chosen by the user via the dialog */
+    folderName = gtk_file_chooser_get_current_folder ( (GtkFileChooser *) widget );
+
+/* TODO note that this MIGHT not be in ASCII according to the manual
+File Names and Encodings
+When the user is finished selecting files in a GtkFileChooser, your program can get the
+selected names either as filenames or as URIs. For URIs, the normal escaping rules are
+applied if the URI contains non-ASCII characters. However, filenames are always returned
+in the character set specified by the G_FILENAME_ENCODING environment variable.
+Please see the Glib documentation for more details about this variable.
+
+Important
+This means that while you can pass the result of gtk_file_chooser_get_filename() to
+open(2) or fopen(3), you may not be able to directly set it as the text of a GtkLabel
+widget unless you convert it first to UTF-8, which all GTK+ widgets expect.
+You should use g_filename_to_utf8() to convert filenames into strings that can be
+passed to GTK+ widgets.
+*/
+
+/*
+then set the tagentry using the index
+*/
+
+    setSavePending( TRUE );
+
+}
+
+/* callback for match drop down */
+static void
+matchChosen(
              GtkWidget *widget,
              gpointer   entryIndex
              )
 {
 
-    /* get the button state and put into tagEntryArray */
+/* Get the new statr and save it into the tag Array */
 /* TODO figure this out how to get the entry !!!!     tagEntryArray[(int)entryIndex].script = gtk_toggle_button_get_active( (GtkToggleButton *)widget); */
-    savePending = TRUE;
-    gtk_widget_set_sensitive( applyButton, TRUE );
+
+    /* change means a save is now needed */
+    setSavePending( TRUE );
 
 }
 
@@ -163,8 +223,9 @@ enableChange(
     /* get the button state and put into tagEntryArray */
 /* TODO check that casting this is correct, and it's not the destination of the pointer */
     tagTableEntryEnable( (int)entryIndex, gtk_toggle_button_get_active( (GtkToggleButton *)widget) );
-    savePending = TRUE;
-    gtk_widget_set_sensitive( applyButton, TRUE );
+
+    /* change means a save is now needed */
+    setSavePending( TRUE );
 
 }
 
@@ -177,70 +238,136 @@ applyChanges( void )
     tagTableSave();
 
     /* now the table used to process events matches what's in the UI so we are in sync */
-    savePending = FALSE;
-    gtk_widget_set_sensitive( applyButton, FALSE );
+    /* change means a save is now needed */
+    setSavePending( FALSE );
 
 }
 
 static void
+matchMenuPopup(
+             GtkWidget      *widget,
+             guint          button,
+             guint          activate_time,
+             gpointer       popupMenu
+              )
+{
+
+    gtk_menu_popup( (GtkMenu *)popupMenu, NULL, NULL, NULL, NULL, button, activate_time );
+
+}
+
+
+static void
 tableAddRow( GtkTable *pTable, int i )
 {
-    GtkWidget           *label, *chooser, *enable, *entry;
-    gchar               message[80];
+    GtkWidget           *label, *chooser, *enable, *description;
+    GtkWidget           *matchMenu, *matchMenuItem;
+    GError              *pError;
+
     const tPanelEntry   *pTagEntry;
-    char		        currentDir[PATH_MAX];
 
     /* get a pointer to this entry in the table */
     pTagEntry = tagEntryGet( i );
 
-    /* Tag ID of upto 20 char (usually 14) which does not need to expand with window size */
-    label = gtk_label_new(pTagEntry->ID);
-    /* attach a new widget into the table */
-    gtk_table_attach(pTable, label, 0, 1, i+1, i+2, GTK_FILL, GTK_FILL, 5, 0 );
-
     /* description entry of upto 80 characters which can benefit from expanding horizontally*/
-    entry = gtk_entry_new();
-    gtk_entry_set_max_length( (GtkEntry *)entry, MAX_DESCRIPTION_LENGTH);
-    gtk_entry_set_text((GtkEntry *)entry, pTagEntry->description);
+    description = gtk_entry_new();
+    gtk_entry_set_max_length( (GtkEntry *)description, MAX_DESCRIPTION_LENGTH);
+    gtk_entry_set_text((GtkEntry *)description, pTagEntry->description);
     /* attach a new widget into the table */
-    gtk_table_attach(pTable, (GtkWidget *)entry, 1, 2, i+1, i+2, GTK_EXPAND | GTK_FILL, GTK_FILL, 4, 0 );
+    gtk_table_attach(pTable, (GtkWidget *)description, 0, 1, i+1, i+2, GTK_EXPAND | GTK_FILL, GTK_FILL, 4, 0 );
 
-    /* file chooser for script associated with this tag, which may have long name and so expand*/
-    if ( pTagEntry->ID == NULL )
-        sprintf(message, "Choose the file to be executed for tag" );
-    else
-        sprintf(message, "Choose the file to be executed for tag with ID: %s", pTagEntry->ID );
-    chooser = gtk_file_chooser_button_new( message, GTK_FILE_CHOOSER_ACTION_OPEN );
+    /* Tag ID match regexp of upto 20 char which does not need to expand with window size */
+    label = gtk_label_new(pTagEntry->IDRegex);
+    gtk_label_set_width_chars( (GtkLabel *)label, 20 );
+    gtk_label_set_max_width_chars( (GtkLabel *)label, 20 );
+    /* attach a new widget into the table */
+    gtk_table_attach(pTable, label, 1, 2, i+1, i+2, GTK_FILL, GTK_FILL, 5, 0 );
 
-    /* if the script is defined, try and give the filename the width required to hold it */
-    if (pTagEntry->script)
-        gtk_file_chooser_button_set_width_chars((GtkFileChooserButton *)chooser, strlen(pTagEntry->script) );
-    else /* otherwise it's a new blank name, so default to width of 10 characters */
-        gtk_file_chooser_button_set_width_chars((GtkFileChooserButton *)chooser, 10 );
+    /* file chooser for folder to look for script in, which may have long name and so expand*/
+    chooser = gtk_file_chooser_button_new( "Navigate to the folder to search in for scripts, then press Open", GTK_FILE_CHOOSER_ACTION_OPEN );
+/* TODO I think this should be GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER but it doesn't work as I expected
+   opening only a list of bookmarks not a full dialog, so we may have to create a custom dialog and then
+   use gtk_file_chooser_button_new_with_dialog() to attach the dialog to this button */
 
-    /* get the users home directory path */
-    if ( getcwd(currentDir, PATH_MAX) != NULL )
-        gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (chooser), currentDir );
-
-/* TODO set file chooser text from the tagEntryArray ... */
+    /* if the folder is defined, configure the widget with that folder as if selected by user */
+    if (pTagEntry->folder)
+    {
+/* TODO NOTE: Manuel says we should really convert to UTF for use in a widget
+g_filename_to_utf8 ()
+gchar*              g_filename_to_utf8                  (const gchar *opsysstring,
+                                                         gssize len,
+                                                         gsize *bytes_read,
+                                                         gsize *bytes_written,
+                                                         GError **error);
+*/
+        gtk_file_chooser_set_filename( GTK_FILE_CHOOSER (chooser), pTagEntry->folder );
+    }
+/* TODO add a file filter to only allow selection of folders ? */
 
     /* attach a new widget into the table */
-    gtk_table_attach(pTable, chooser, 2, 3, i+1, i+2, GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 2 );
+    gtk_table_attach(pTable, chooser, 2, 3, i+1, i+2, GTK_FILL, GTK_FILL, 0, 2 );
     /* add a callback to the button which will be passed the index of this entry in the tagEntryArray */
-    g_signal_connect (G_OBJECT (chooser), "file-set", G_CALLBACK (scriptChosen), (gpointer)i);
+    g_signal_connect (G_OBJECT (chooser), "file-set", G_CALLBACK (folderChosen), (gpointer)i);
+
+
+    /* for executing events better to restrict folders to those on the local file syste */
+    gtk_file_chooser_set_local_only( GTK_FILE_CHOOSER (chooser), TRUE );
+    /* otherwise it's a new blank name, so default to width of 10 characters */
+    gtk_file_chooser_button_set_width_chars((GtkFileChooserButton *)chooser, 10 );
+    /* add a short-cut to the dialog to help the user find folders related to tagEventor */
+    gtk_file_chooser_add_shortcut_folder( GTK_FILE_CHOOSER (chooser), DEFAULT_COMMAND_DIR, &pError );
+
+
+    /*  add the match option menu */
+    matchMenu = gtk_menu_new();
+
+    matchMenuItem = gtk_radio_menu_item_new_with_label( NULL, "Tag ID" );
+    gtk_menu_shell_append( GTK_MENU_SHELL( matchMenu ), matchMenuItem );
+    g_signal_connect (G_OBJECT (matchMenuItem), "toggled", G_CALLBACK (matchChosen), (gpointer)TAG_ID_MATCH );
+    gtk_widget_show( matchMenuItem );
+
+    matchMenuItem = gtk_menu_item_new_with_label( "'generic'" );
+    gtk_menu_shell_append( GTK_MENU_SHELL( matchMenu ), matchMenuItem );
+    g_signal_connect (G_OBJECT (matchMenuItem), "activate", G_CALLBACK (matchChosen), (gpointer)GENERIC_MATCH );
+    gtk_widget_show( matchMenuItem );
+
+    matchMenuItem = gtk_menu_item_new_with_label( "SAM ID" );
+    gtk_menu_shell_append( GTK_MENU_SHELL( matchMenu ), matchMenuItem );
+    g_signal_connect (G_OBJECT (matchMenuItem), "activate", G_CALLBACK (matchChosen), (gpointer)SAM_ID_MATCH );
+    gtk_widget_show( matchMenuItem );
+
+    matchMenuItem = gtk_menu_item_new_with_label( "SAM Serial Number" );
+    gtk_menu_shell_append( GTK_MENU_SHELL( matchMenu ), matchMenuItem );
+    g_signal_connect (G_OBJECT (matchMenuItem), "activate", G_CALLBACK (matchChosen), (gpointer)SAM_SERIAL_MATCH );
+    gtk_widget_show( matchMenuItem );
+
+    matchMenuItem = gtk_menu_item_new_with_label( "Reader Number" );
+    gtk_menu_shell_append( GTK_MENU_SHELL( matchMenu ), matchMenuItem );
+    g_signal_connect (G_OBJECT (matchMenuItem), "activate", G_CALLBACK (matchChosen), (gpointer)READER_NUM_MATCH );
+    gtk_widget_show( matchMenuItem );
+
+    /* connect menu to the event that will be used  */
+/* TODO what is the right signal ??? */
+    g_signal_connect (G_OBJECT (matchMenu), "activate", G_CALLBACK (matchMenuPopup), matchMenu );
+
+    gtk_widget_show( matchMenu );
+
+    gtk_table_attach(pTable, matchMenu, 3, 4, i+1, i+2, GTK_FILL, GTK_FILL, 0, 0 );
 
     enable = gtk_check_button_new(); /* check button to enable the script for this tag */
     gtk_toggle_button_set_active( (GtkToggleButton *)enable, pTagEntry->enabled);
     /* attach a new widget into the table */
-    gtk_table_attach(pTable, enable, 3, 4, i+1, i+2, GTK_FILL, GTK_FILL, 0, 0 );
+    gtk_table_attach(pTable, enable, 4, 5, i+1, i+2, GTK_FILL, GTK_FILL, 0, 0 );
     /* add a callback to the button which will be passed the index of this entry in the tagEntryArray */
     g_signal_connect (G_OBJECT (enable), "toggled", G_CALLBACK (enableChange), (gpointer)i);
 
     /* make the new widgets visible */
     gtk_widget_show( label );
     gtk_widget_show( chooser );
+    gtk_widget_show( description );
+    gtk_widget_show( matchMenu );
     gtk_widget_show( enable );
-    gtk_widget_show( entry );
+
 }
 
 
@@ -253,7 +380,7 @@ addColumnHeaders(
     GtkWidget           *label;
 
     /* add the four column labels in the table*/
-    for (i = 0; i < 4; i++)
+    for (i = 0; i < NUM_COLUMNS; i++)
     {
         label = gtk_label_new( columnHeader[i] );
 
@@ -276,7 +403,7 @@ addTagEntry(
     numEntries = tagTableAddEntry();
 
     /* resize the table widget - with an extra row for the header */
-    gtk_table_resize( (GtkTable *)pTable, (numEntries + 1), 4 );
+    gtk_table_resize( (GtkTable *)pTable, (numEntries + 1), NUM_COLUMNS );
 
     /* if this is the first tag / row we add then put in the column headers */
     if ( numEntries == 1 )
@@ -312,7 +439,7 @@ fillTable(
         /* resize the table to be big enough to hold all entries */
         /* Row 0  =  Column headers */
         /* So we need numConfigTags + 1 rows, and 4 columns */
-        gtk_table_resize( (GtkTable *)pTable, (numTags + 1), 4 );
+        gtk_table_resize( (GtkTable *)pTable, (numTags + 1), NUM_COLUMNS );
 
         addColumnHeaders( (GtkTable *)pTable );
 
@@ -328,7 +455,7 @@ buildCPanel ( void  )
 {
     GtkWidget   *mainWindow;
     GtkWidget   *vbox, *scroll, *buttonBox, *table;
-    GtkWidget   *helpButton, *closeButton, *aboutButton, *addButton;
+    GtkWidget   *helpButton, *aboutButton, *addButton, *cancelButton;
     int         numEntries;
 
     /******************************* Main Application Window ************************/
@@ -370,9 +497,7 @@ buildCPanel ( void  )
     /* This packs the vbox into the window (a gtk container). */
     gtk_container_add (GTK_CONTAINER (mainWindow), vbox);
 
-    /******************************* Tag Config ************************************/
-    /* load the tag configuration into memory before creating the table to show it */
-    numEntries = tagTableRead( );
+    numEntries = tagTableNumber( );
 
     /******************************* Table ******************************************/
     /* create the scolled window that will hold the viewport and table */
@@ -450,12 +575,25 @@ buildCPanel ( void  )
      * function applyChanges() passing it NULL as its argument. */
     g_signal_connect (G_OBJECT (applyButton), "released", G_CALLBACK (applyChanges), NULL);
 
-    /* make this button only clickable when there is a pending change to apply */
-    gtk_widget_set_sensitive( applyButton, FALSE);
-
     /* This packs the hbutton box into the vbox (a gtk container). */
     gtk_box_pack_start(GTK_BOX(vbox), buttonBox, FALSE, TRUE, 3);
+
+    /********************************************* Cancel Button ***********************/
+    cancelButton = gtk_button_new_from_stock( "gtk-cancel" );
+
+    /* This packs the button into the hbutton box  (a gtk container). */
+    gtk_box_pack_end( GTK_BOX(buttonBox), cancelButton, FALSE, TRUE, 3);
+
+    /* When the button receives the "clicked" signal, it will call the
+     * function applyChanges() passing it NULL as its argument. */
+    g_signal_connect (G_OBJECT (cancelButton), "released", G_CALLBACK (cancelSignalHandler), NULL);
+
     /**************************** End of buttons **************************************/
+    /* This packs the hbutton box into the vbox (a gtk container). */
+    gtk_box_pack_start(GTK_BOX(vbox), buttonBox, FALSE, TRUE, 3);
+
+    /* at start-up there cannot be any pending changes made to be saved */
+    setSavePending( FALSE );
 
     /**************************** Status Bar ******************************************/
     /* create the status bar */
@@ -475,21 +613,16 @@ controlPanelActivate( void )
     /* if it exists i.e. has been built */
     if ( cpanelWindow )
     {
-        /* if it's already visible */
-        if ( cpanelVisible )
-        {
-            /* check to see if it's on top level for user, if so, then hide it */
-            /* thus clicking on the status icon toggles it, like skype */
-            if (gtk_window_is_active( (GtkWindow *)cpanelWindow ) )
-                closeSignalHandler( NULL, NULL );
-        }
+        /* check to see if it's on top level for user, if so, then hide it */
+        /* thus clicking on the status icon toggles it, like skype */
+        if (gtk_window_is_active( (GtkWindow *)cpanelWindow ) )
+            closeSignalHandler( NULL, NULL );
         else
-        /* it's build, but not visible, so pop it up to the top! */
+        /* it's built, but not visible, so pop it up to the top! */
         {
             /* make sure it always become visible for the user as could be hidden
                on another workspace, iconized etc */
             gtk_window_present( (GtkWindow *)cpanelWindow );
-            cpanelVisible = TRUE;
         }
     }
     else
@@ -500,7 +633,6 @@ controlPanelActivate( void )
 
         /* Show window, and recursively all contained widgets */
         gtk_widget_show_all( cpanelWindow );
-        cpanelVisible = TRUE;
     }
 
 }

@@ -28,7 +28,7 @@
 
 #include "systemTray.h"
 
-#define TOOL_TIP_TEXT               "Tageventor: \nLeft-click for control panel.\nRight-click for actions."
+#define TOOL_TIP_TEXT               "Tageventor: \nLeft-click for control panel.\nRight-click for menu."
 
 static GtkStatusIcon    *systemTrayIcon = NULL;
 
@@ -71,12 +71,6 @@ iconQuit( void )
     exit( 0 );
 #endif
 
-}
-
-static void
-controlPanelDialogShow( void )
-{
-    controlPanelActivate();
 }
 
 static void
@@ -148,7 +142,7 @@ startSystemTray(
 #ifdef BUILD_CONTROL_PANEL
     controlPanelMenuItem = gtk_menu_item_new_with_label( "Control Panel" );
     gtk_menu_shell_append( GTK_MENU_SHELL( popupMenu ), controlPanelMenuItem );
-    g_signal_connect (G_OBJECT (controlPanelMenuItem), "activate", G_CALLBACK (controlPanelDialogShow), NULL );
+    g_signal_connect (G_OBJECT (controlPanelMenuItem), "activate", G_CALLBACK (controlPanelActivate), NULL );
     gtk_widget_show( controlPanelMenuItem );
 #endif
 
