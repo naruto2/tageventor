@@ -42,7 +42,6 @@ Work is progressing on a GNOME/Gtk+ system tray resident application and "contro
   * Support more tag types
 
 = New Platforms and Operating Systems =
-  * Mac OS X port (work is under way on this)
   * Windows (XP, Vista, 7) port
 
 = Tools =
