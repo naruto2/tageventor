@@ -23,8 +23,9 @@
 #include "tagEventor.h"
 #include "systemTray.h"
 
-#define VERSION_STRING  "0.0.0.0"
-/* TODO find a way to get this from svn, or Make or something */
+#ifndef VERSION_STRING
+#define VERSION_STRING  "0.0 development"
+#endif
 
 static const gchar  *authors[] = {"Andrew Mackenzie (andrew@autelic.org)", NULL };
 

@@ -28,14 +28,8 @@
 #include <sys/stat.h>  /* for umask() */
 #include <limits.h>
 
-#ifdef __MAC_OS_X_VERSION_MAX_ALLOWED
-	#include "tagReader.h"
-#else
-	#include <tagReader.h>
-#endif
-
+#include "tagReader.h"
 #include "tagEventor.h"
-
 #include "systemTray.h"
 
 /************************* CONSTANTS ************************/
@@ -43,14 +37,13 @@
 #define POLL_DELAY_MILLI_SECONDS (1000)
 #define POLL_DELAY_MILLI_SECONDS_MAX (5000)
 
-#define DEFAULT_LOCK_FILE_DIR "/var/run/tagEventor"
-#define DEFAULT_COMMAND_DIR "/etc/tagEventor"
-#define DAEMON_NAME "tagEventord"
 #define SCRIPT_DOES_NOT_EXIST (127)
 
 /* Tag event types */
 #define TAG_IN  (0)
 #define TAG_OUT (1)
+
+#define NUM_DEFAULT_COMMANDS   (3)
 
 /*************************** MACROS ************************/
 #define SWAP(first, second)\
@@ -71,18 +64,25 @@ typedef enum { FOREGROUND, START_DAEMON, STOP_DAEMON, SYSTEM_TRAY } tRunOptions;
 
 /************* VARIABLES STATIC TO THIS FILE  ********************/
 
+/* this is the list of built-in commands, in the reverse order of which they will be tried */
+static    tPanelEntry defaultCommands[NUM_DEFAULT_COMMANDS] = {
+   { "*", DEFAULT_COMMAND_DIR, GENERIC_MATCH,    "Match any tag, then run script named 'generic' in command dir",    TRUE },
+   { "*", DEFAULT_COMMAND_DIR, TAG_ID_MATCH,     "Match any tag, then run script with name $tagID in command dir",   TRUE },
+   { "*", "./scripts",         TAG_ID_MATCH,     "Match any tag, then run script with name $tagID in './scripts/'",  TRUE },
+        };
+
 /* This is needed by handleSignal to clean-up, so can't be local :-( */
-static  tReader         reader;
-static  int		        lockFile = -1;
-static  char		    lockFilename[PATH_MAX];
-static  BOOL		    runningAsDaemon = FALSE;
-static int              numTagEntries = 0;
-static tPanelEntry      *tagEntryArray; /* TODO 10 for now for testing */
+static  tReader     reader;
+static  int		    lockFile = -1;
+static  char		lockFilename[PATH_MAX];
+static  BOOL		runningAsDaemon = FALSE;
+static  int         numTagEntries = 0;
+static  tPanelEntry *tagEntryArray;
 
 
 /* strings used for tag events, for text output and name of scipts */
 static const char * const tagString[]  = { "IN", "OUT" };
-static int			pollDelayms;
+static int		    pollDelayms;
 
 static tTagList		tagList1, tagList2;
 
@@ -412,54 +412,6 @@ daemonize (
 }
 /*********************  DAEMONIZE ****************************/
 
-/*********************  EXEC SCRIPT **************************/
-static int execScript(
-			const char * scriptPath,
-			const char * argv0,
-			const char * SAM_serial,
-			const char * tagUID,
-			const char * eventTypeString
-			)
-{
-   struct stat 	sts;
-   int		pid;
-   char		messageString[MAX_LOG_MESSAGE];
-   int		ret;
-
-   /* check if the file exists */
-   if ((stat (scriptPath, &sts)) == -1)
-      return(SCRIPT_DOES_NOT_EXIST);
-
-   /* fork a copy of myself for executing the script in the child process using exec() */
-   pid = fork();
-   if ( pid < 0 )
-   { /* PARENT process - fork error */
-      sprintf(messageString, "Error forking for script execution, fork() returned %d", pid);
-      logMessage(LOG_ERR, 0, messageString);
-      return ( pid ); /* TODO , not sure returning that is correct...check later */
-   }
-
-   if ( pid > 0 ) /* PARENT process - fork worked */
-   {
-      sprintf(messageString, "Fork of child process successful with child pid=%d", pid);
-      logMessage(LOG_INFO, 3, messageString);
-      return( 0 );  /* success = 0 */
-   }
-
-   /* If we got this far, then "pid" = 0 and we are in the child process */
-   sprintf(messageString, "Attempting to execl() tag event script %s in child process with pid=%d",
-           scriptPath, getpid());
-   logMessage(LOG_INFO, 2, messageString);
-   ret = execl( scriptPath, argv0, SAM_serial, tagUID, eventTypeString, NULL );
-   /* If any of the exec() functions returns, an error will have occurred. The return value is -1,
-      and the global variable errno will be set to indicate the error. */
-   sprintf(messageString, "Return value from execl() of script was = %d, errno=%d", ret, errno);
-   logMessage(LOG_INFO, 2, messageString);
-
-   /* exit the child process and return the return value, parent keeps on going */
-   exit( ret );
-}
-/*********************  EXEC SCRIPT **************************/
 
 int
 tagTableAddEntry( void )
@@ -480,10 +432,11 @@ tagTableAddEntry( void )
     /* copy over all the existing tag entries in the array */
     for (i = 0; i < (numTagEntries -1); i++)
     {
-        newTagEntryArray[i].ID          = tagEntryArray[i].ID;
-        newTagEntryArray[i].script      = tagEntryArray[i].script;
-        newTagEntryArray[i].description = tagEntryArray[i].description;
-        newTagEntryArray[i].enabled     = tagEntryArray[i].enabled;
+        newTagEntryArray[i].IDRegex         = tagEntryArray[i].IDRegex;
+        newTagEntryArray[i].folder          = tagEntryArray[i].folder;
+        newTagEntryArray[i].scriptMatchType = tagEntryArray[i].scriptMatchType;
+        newTagEntryArray[i].description     = tagEntryArray[i].description;
+        newTagEntryArray[i].enabled         = tagEntryArray[i].enabled;
     }
 
     /* now we can safely free the memory for the previous one */
@@ -493,16 +446,18 @@ tagTableAddEntry( void )
     tagEntryArray = newTagEntryArray;
 
     /* malloc each string for new entry added and add to tagEntryArray*/
-    tagEntryArray[numTagEntries -1].ID = malloc( sizeof( uid ) );
+    tagEntryArray[numTagEntries -1].IDRegex = malloc( sizeof( uid ) );
     /* paste in some text for now, although it's not yet editable by the user */
-    sprintf( tagEntryArray[numTagEntries -1].ID, "<tag ID>" );
-    tagEntryArray[numTagEntries -1].script = malloc( PATH_MAX );
-    /* NULL terminate the emptry string */
-    tagEntryArray[numTagEntries -1].script[0] = '\0';
+    sprintf( tagEntryArray[numTagEntries -1].IDRegex, "Tag ID Match Regexp" );
+    tagEntryArray[numTagEntries -1].folder = malloc( PATH_MAX );
+    /* initialize */
+    sprintf( tagEntryArray[numTagEntries -1].folder, DEFAULT_COMMAND_DIR );
     tagEntryArray[numTagEntries -1].description = malloc( MAX_DESCRIPTION_LENGTH );
     /* NULL terminate the emptry string */
-    sprintf( tagEntryArray[numTagEntries -1].description, "<description of tag>" );
+    sprintf( tagEntryArray[numTagEntries -1].description, "A generic tagID match command" );
     tagEntryArray[numTagEntries -1].enabled = FALSE;
+
+    tagEntryArray[numTagEntries -1].scriptMatchType = TAG_ID_MATCH;
 
     return( numTagEntries );
 }
@@ -543,63 +498,105 @@ tagEntryGet(
 }
 
 int
+tagTableNumber( void )
+{
+    return ( numTagEntries );
+}
+
+static int
 tagTableRead( void )
 {
     int size;
-
-#ifdef DEBUG
-#define NUM_FAKE_TAGS   (4)
-
     int i;
-
-    static    tPanelEntry fakeTags[NUM_FAKE_TAGS] = {
-        { "12345678901234", "/home/andrew/test", "a fake tag for testing", TRUE },
-        { "45678901234567", "/home/andrew/test2", "another fake tag for testing", FALSE },
-        { "45678901234567", "/home/andrew/test2", "another fake tag for testing", FALSE },
-        { "45678901234567", "/home/andrew/test2", "another fake tag for testing", FALSE }
-        };
 
 
     /* TODO need to figure out how many tags we have before allocating memory! */
-    numTagEntries = NUM_FAKE_TAGS;
-#else
-    numTagEntries = 0;
-#endif
+    numTagEntries = NUM_DEFAULT_COMMANDS;
 
 /* TODO we should also check for duplicate tag entries, or we could allow that. Need to change code that
    executes scripts to allow that though ... */
 /* TODO read the current config from the widgets into a temporary table, checking syntax for each
             and maybe checking execute permissions, etc */
 
-    if ( numTagEntries == 0 )
-        tagEntryArray = NULL;
-    else
-    {
-        /* allocate memory for the array of tag entries found */
-        size = (numTagEntries * sizeof(tPanelEntry) );
-        tagEntryArray = malloc( size ); /* TODO check about alignment and need to pad out */
-    }
+    /* allocate memory for the array of tag entries found */
+    size = (numTagEntries * sizeof(tPanelEntry) );
+    tagEntryArray = malloc( size ); /* TODO check about alignment and need to pad out */
 
-#ifdef DEBUG
 /* TODO figure out where to read/save this type of config stuff???? via GConf or something */
     for (i = 0; i < numTagEntries; i++)
     {
         /* malloc each string for new entry added and add to tagEntryArray*/
-        tagEntryArray[i].ID = malloc( sizeof( uid ) );
-        tagEntryArray[i].script = malloc( PATH_MAX );
+        tagEntryArray[i].IDRegex = malloc( sizeof( uid ) );
+        tagEntryArray[i].folder = malloc( PATH_MAX );
         tagEntryArray[i].description = malloc( MAX_DESCRIPTION_LENGTH );
 
-        strcpy( tagEntryArray[i].ID, fakeTags[i].ID );
-        strcpy( tagEntryArray[i].script, fakeTags[i].script);
-        strcpy( tagEntryArray[i].description , fakeTags[i].description);
-        tagEntryArray[i].enabled = fakeTags[i].enabled;
+	/* load the array up with the default commands */
+        strcpy( tagEntryArray[i].IDRegex,      defaultCommands[i].IDRegex );
+        strcpy( tagEntryArray[i].folder,       defaultCommands[i].folder);
+        strcpy( tagEntryArray[i].description , defaultCommands[i].description);
+        tagEntryArray[i].enabled =             defaultCommands[i].enabled;
+        tagEntryArray[i].scriptMatchType =     defaultCommands[i].scriptMatchType;
     }
-#endif
 
     return( numTagEntries );
 
 }
 
+/*********************  EXEC SCRIPT **************************/
+static int
+execScript(
+	const char * folderName,   /* without a trailing '/' */
+	const char * fileName,
+	const char * argv0,
+	const char * SAM_serial,
+	const char * tagUID,
+	const char * eventTypeString,
+	const char * ruleDescription
+	)
+{
+   struct stat 	sts;
+   int		pid;
+   char		messageString[MAX_LOG_MESSAGE];
+   int		ret;
+   char		scriptPath[PATH_MAX];
+
+   /* build a full path */
+   sprintf( scriptPath, "%s/%s", folderName, fileName );
+
+   /* check if the file exists */
+   if ((stat (scriptPath, &sts)) == -1)
+      return(SCRIPT_DOES_NOT_EXIST);
+
+   /* fork a copy of myself for executing the script in the child process using exec() */
+   pid = fork();
+   if ( pid < 0 )
+   { /* PARENT process - fork error */
+      sprintf(messageString, "Error forking for script execution, fork() returned %d", pid);
+      logMessage(LOG_ERR, 0, messageString);
+      return ( pid ); /* TODO , not sure returning that is correct...check later */
+   }
+
+   if ( pid > 0 ) /* PARENT process - fork worked */
+   {
+      sprintf(messageString, "Fork of child process successful with child pid=%d", pid);
+      logMessage(LOG_INFO, 3, messageString);
+      return( 0 );  /* success = 0 */
+   }
+
+   /* If we got this far, then "pid" = 0 and we are in the child process */
+   sprintf(messageString, "Attempting to execl() tag event script %s in child process with pid=%d",
+           scriptPath, getpid());
+   logMessage(LOG_INFO, 2, messageString);
+   ret = execl( scriptPath, argv0, SAM_serial, tagUID, eventTypeString, NULL );
+   /* If any of the exec() functions returns, an error will have occurred. The return value is -1,
+      and the global variable errno will be set to indicate the error. */
+   sprintf(messageString, "Return value from execl() of script was = %d, errno=%d", ret, errno);
+   logMessage(LOG_INFO, 2, messageString);
+
+   /* exit the child process and return the return value, parent keeps on going */
+   exit( ret );
+}
+/*********************  EXEC SCRIPT **************************/
 
 /*********************  TAG EVENT DISPATCH **********************/
 static void
@@ -609,46 +606,60 @@ tagEventDispatch(
                 const tReader	*preader
                 )
 {
-   char		filePath[PATH_MAX];
-   char		currentDir[PATH_MAX];
-   char		messageString[MAX_LOG_MESSAGE];
+    char	        messageString[MAX_LOG_MESSAGE];
+    int             ruleIndex;
+    char            scriptName[PATH_MAX];
 
-   sprintf(messageString, "Event: Tag %s - UID: %s", tagString[eventType], tagUID);
-   logMessage(LOG_INFO, 1, messageString);
+    sprintf(messageString, "Event: Tag %s - UID: %s", tagString[eventType], tagUID);
+    logMessage(LOG_INFO, 1, messageString);
 
-   /* if we are running in foreground then check current directory - for testing/development */
-   if (!runningAsDaemon)
-   {
-      /* first steps to build a full path */
-      if ( getcwd(currentDir, PATH_MAX) != NULL )
-      {
-        sprintf(filePath, "%s/scripts/%s", currentDir, tagUID);
 
-        /* if returned 0 then it worked (as far as we know, so exit here */
-        if ( execScript(filePath, tagUID, preader->SAM_serial, tagUID, tagString[eventType]) == 0 )
-            return;
-      }
-   }
+    /* run through the list of rules:
+           - try to match tags detected tag with regex in rule for tagID
+             IF matches
+                 - try to find and execute a script
+        done in reverse order, ending with most generic rules */
+    for (ruleIndex = (numTagEntries-1); ruleIndex >= 0; ruleIndex--)
+    {
+        if ( tagEntryArray[ruleIndex].enabled )
+        {
+#if 0  /* TODO need to figure out how to do the regular expression matching */
+            tagEntryArray[ruleIndex].IDRegex
+#endif
 
-   /* This part tries a couple of options in the system directory DEFAULT_COMMAND_DIR */
+            switch ( tagEntryArray[ruleIndex].scriptMatchType )
+            {
+                case TAG_ID_MATCH:
+                    strcpy( scriptName, tagUID );
+                break;
+                case GENERIC_MATCH:
+                    sprintf( scriptName, "generic" );
+                break;
+                case SAM_ID_MATCH:
+                    strcpy( scriptName, preader->SAM_id );
+                break;
+                case SAM_SERIAL_MATCH:
+                    strcpy( scriptName, preader->SAM_serial );
+                break;
+                case READER_NUM_MATCH:
+                    sprintf( scriptName, "%d", preader->number );
+                break;
+                default:
+                    logMessage(LOG_ERR, 0, "Invalid 'scriptMatchType' no script execution attempted" );
+                    return;
+                break;
+            }
 
-   /* try a script of with the name of the tagUID in system directory */
-   sprintf(filePath, "%s/%s", DEFAULT_COMMAND_DIR, tagUID);
+            if (execScript( tagEntryArray[ruleIndex].folder, scriptName, tagUID, preader->SAM_serial, tagUID, tagString[eventType],
+                            tagEntryArray[ruleIndex].description) == 0)
+                return;
+        }
+    }
 
-   /* if that worked, then we´re done */
-   if (execScript(filePath, tagUID, preader->SAM_serial, tagUID, tagString[eventType]) == 0 )
-      return;
-
-   /* then try a generic one before giving up */
-   sprintf(filePath, "%s/generic", DEFAULT_COMMAND_DIR);
-
-   /* if that worked, then we´re done */
-   if (execScript(filePath, tagUID, preader->SAM_serial, tagUID, tagString[eventType]) == 0 )
-      return;
-
+   /* if we got this far, then nothing worked */
    logMessage(LOG_ERR, 0, "Failed to execute a script for tag event" );
 }
-/*********************  TAG EVENT ****************************/
+/*********************  TAG EVENT DISPATCH ****************************/
 
 static int
 tagListCheck( void *updateSystemTray )
@@ -693,7 +704,7 @@ tagListCheck( void *updateSystemTray )
         }
         else
         {
-            sprintf( messageString, "Connected to reader, %d tags:", (int)(pnewTagList->numTags) );
+            sprintf( messageString, "Connected to reader %d, %d tags:", reader.number, (int)(pnewTagList->numTags) );
             for (i=0; i < pnewTagList->numTags; i++)
             {
                 sprintf( ID, " %s", pnewTagList->tagUID[i]);
@@ -781,11 +792,14 @@ int main(
    /* here we are always foreground, not a daemon, it maybe recalled from the daemon */
    readerSetOptions( verbosityLevel, FALSE );
 
+    /* load the table of rules */
+    tagTableRead();
+
    /* if requested to start as daemon, daemonize ourselves here */
    switch (runOptions)
    {
       case START_DAEMON:
-         /* will convert oursevles into a daemon and return if successful */
+         /* will fork a daemon and return if successful */
          daemonize(reader.number);
          break;
       case STOP_DAEMON:

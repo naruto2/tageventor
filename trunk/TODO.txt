@@ -1,0 +1,8 @@
+Add the regexp matching of the tagID inside tagEventDispatch()
+
+Improve the install script, and have it check and use options. Install things optionally not all at once.
+
+Get Icon theme and search path stuff to work...
+
+Wwhen we start up as system tray, try and ensure we are the only instance running.
+Maybe pop-up an error when another is detected, with it's PID

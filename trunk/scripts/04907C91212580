@@ -15,7 +15,6 @@ if [[ $3 = "IN" ]]
 then
    url="\"openURL(http://autelicdemoapp.autelic.org/tagEvent?sam="$1"&uid="$2"&type="$3")\""
    /usr/bin/opera  --fullscreen --nosession --nomail --remote $url 2>&1 &> /dev/null
-#   /usr/bin/opera  --nosession --remote $url
 else
    exit 0
 fi

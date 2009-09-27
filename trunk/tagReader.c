@@ -2,13 +2,13 @@
   tagReader.c - C source code for tagReader library
 
   Copyright 2008-2009 Autelic Association (http://www.autelic.org)
- 
+
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
   You may obtain a copy of the License at
- 
+
        http://www.apache.org/licenses/LICENSE-2.0
- 
+
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS,
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -110,8 +110,11 @@ static const BYTE APDU_LED_RED[] = ACS_LED_RED;
 
 static const BYTE APDU_GET_READER_FIRMWARE[] = ACS_GET_READER_FIRMWARE;
 
-/* This is the array of firmware string of supported readers */
+/* This is the array of firmware strings of supported readers */
+/* This constant is entered by hand to overcome an issue with Mac OS X */
 static const int SUPPORTED_READER_ARRAY_COUNT = 1;
+/* If you add a supported reader to the array below, then modify the   */
+/* SUPPORTED_READER_ARRAY_COUNT to match                               */
 static const char * const SUPPORTED_READER_ARRAY[] = { "ACR122U" };
 
 /* for the PCSC subtype ACS ACR38U use the T0 protocol - from RFIDiot */
@@ -147,7 +150,7 @@ static  BOOL            runningInBackground = FALSE;
 /* type = LOG_WARNING (something unexpected, not a big problem) */
 /* type = LOG_ERR (something went wrong that was´t expected     */
 /* type = LOG_INFO (just info */
-void logMessage( int		type, 
+void logMessage( int		type,
                  int		messageLevel,
 	         const char 	*message
 	       )
@@ -173,7 +176,7 @@ void logMessage( int		type,
          if ( verbosityLevel >= messageLevel )
          {
             if (runningInBackground)
-               syslog( type, "INFO [%d]: %s", messageLevel, message); 
+               syslog( type, "INFO [%d]: %s", messageLevel, message);
             else
                fprintf( stdout,  "INFO [%d]: %s\n", messageLevel, message);
          }
@@ -185,7 +188,7 @@ void logMessage( int		type,
 
 
 /**************************** READER SET OPTIONS *********/
-LONG readerSetOptions ( 
+LONG readerSetOptions (
 		int		verbosity,
 		BOOL		background
 		 )
@@ -207,7 +210,7 @@ LONG readerSetOptions (
 
 /**************************** APDU SEND ************************/
 static LONG apduSend (
-                SCARDHANDLE   		hCard, 
+                SCARDHANDLE   		hCard,
 		const BYTE    	        *apdu,
 		DWORD			apduLength,
 		BYTE			*pbRecvBuffer,
@@ -246,8 +249,8 @@ static LONG apduSend (
         /* remember the size of the input buffer passed to us, so we don't exceed */
 	rBufferMax = *dwRecvLength;
 
-	rv = SCardTransmit(hCard, 
-                           pioSendPci, pbSendBuffer, dwSendLength, 
+	rv = SCardTransmit(hCard,
+                           pioSendPci, pbSendBuffer, dwSendLength,
                            &pioRecvPci, pbRecvBuffer, dwRecvLength);
         PCSC_ERROR(rv, "SCardTransmit");
 
@@ -269,7 +272,7 @@ static LONG apduSend (
            /* are their response bytes to get? */
            if (pbRecvBuffer[SW2] > 0)
            {
-              sprintf(messageString, "Requesting Response Data (%d)", 
+              sprintf(messageString, "Requesting Response Data (%d)",
                       pbRecvBuffer[SW2]);
               logMessage(LOG_INFO, 3, messageString);
 
@@ -278,7 +281,7 @@ static LONG apduSend (
               /* the second response byte tells us how many bytes are pending */
 	      /* add that value at the end of the GET_RESPONSE APDU */
               pbSendBuffer[sizeof(APDU_GET_RESPONSE)] = pbRecvBuffer[SW2];
-              dwSendLength = sizeof(APDU_GET_RESPONSE) + 1; 
+              dwSendLength = sizeof(APDU_GET_RESPONSE) + 1;
 
               /* specify the maximum size of the buffer */
 	      *dwRecvLength = rBufferMax;
@@ -303,7 +306,7 @@ static LONG apduSend (
 
 
 /************************* READER CONNECT **********************/
-LONG readerConnect ( 
+LONG readerConnect (
                   tReader	*pReader
                  )
 {
@@ -312,7 +315,7 @@ LONG readerConnect (
 			dwAtrLen,
 			dwReaderLen,
 			dwState,
-			dwProt;    
+			dwProt;
    int                  nbReaders;
    char 		*ptr;
    DWORD 		dwActiveProtocol;
@@ -329,7 +332,7 @@ LONG readerConnect (
    /* try and connect to the pcscd server if not already connected */
    if (!pReader->hContext)
    {
-      rv = SCardEstablishContext(SCARD_SCOPE_SYSTEM, NULL, NULL, 
+      rv = SCardEstablishContext(SCARD_SCOPE_SYSTEM, NULL, NULL,
                                  &(pReader->hContext));
       PCSC_ERROR(rv, "SCardEstablishContext");
       if (rv != SCARD_S_SUCCESS)
@@ -347,7 +350,7 @@ LONG readerConnect (
 
    /* malloc enough memory for dwReader string */
    mszReaders = malloc(sizeof(char)*dwReaders);
-	
+
    /* now get the list into the mszReaders array */
    rv = SCardListReaders(pReader->hContext, NULL, mszReaders, &dwReaders);
    PCSC_ERROR(rv, "SCardListReaders");
@@ -400,7 +403,7 @@ LONG readerConnect (
 
    dwActiveProtocol = -1;
    rv = SCardConnect(pReader->hContext, readers[pReader->number],
-                     SCARD_SHARE_SHARED, SCARD_PROTOCOL_T0 , 
+                     SCARD_SHARE_SHARED, SCARD_PROTOCOL_T0 ,
                      &(pReader->hCard), &dwActiveProtocol);
    PCSC_ERROR(rv, "SCardConnect");
    if (rv != SCARD_S_SUCCESS)
@@ -410,7 +413,7 @@ LONG readerConnect (
 
    /* Get firmware version and check it's a ACR122* */
    dwRecvLength = sizeof(pbRecvBuffer);
-   rv = apduSend(pReader->hCard, APDU_GET_READER_FIRMWARE, 
+   rv = apduSend(pReader->hCard, APDU_GET_READER_FIRMWARE,
                  sizeof(APDU_GET_READER_FIRMWARE),
                  pbRecvBuffer, &dwRecvLength);
    if (rv != SCARD_S_SUCCESS)
@@ -420,12 +423,12 @@ LONG readerConnect (
    /* to check we are compatible with it - or have tested with it      */
 
    /* NULL terminate the BYTE array for subsequent string compares */
-   pbRecvBuffer[dwRecvLength] = '\0';   
+   pbRecvBuffer[dwRecvLength] = '\0';
    sprintf(messageString, "Firmware: %s", pbRecvBuffer);
    logMessage(LOG_INFO, 3, messageString);
 
    for (i = 0; (i < SUPPORTED_READER_ARRAY_COUNT) & !readerSupported ; i++)
-   { 
+   {
       if (strncmp(((char *)pbRecvBuffer),
           SUPPORTED_READER_ARRAY[i],
           sizeof(SUPPORTED_READER_ARRAY[i])-1) == 0)
@@ -458,7 +461,7 @@ LONG readerConnect (
    if ( (pbAtr[SW1] != 0x3B) || (pbAtr[SW2] != 0x00) )
    {
       dwRecvLength = sizeof(pbRecvBuffer);
-      rv = apduSend(pReader->hCard, APDU_GET_SAM_SERIAL, 
+      rv = apduSend(pReader->hCard, APDU_GET_SAM_SERIAL,
                      sizeof(APDU_GET_SAM_SERIAL),
                      pbRecvBuffer, &dwRecvLength);
       if (rv == SCARD_S_SUCCESS)
@@ -590,7 +593,7 @@ LONG getTagList(
       if (rv == SCARD_S_SUCCESS)
       {
          /* ACS_TAG_FOUND = {0xD5, 0x4B}  */
-         if ( (pbRecvBuffer[SW1] == 0xD5) && 
+         if ( (pbRecvBuffer[SW1] == 0xD5) &&
               (pbRecvBuffer[SW2] == 0x4B) &&
               (pbRecvBuffer[2] != 0x00) )
          {
@@ -607,7 +610,7 @@ LONG getTagList(
 
                sprintf(messageString, "Tag ID:   %s", ptagList->tagUID[i]);
                logMessage(LOG_INFO, 2, messageString);
-    
+
                /* first one ? */
                if ( i == 0 )
                   (ptagList->numTags)++; /* got first one */
@@ -618,11 +621,11 @@ LONG getTagList(
                   for (other = 0; ((other < i) && (!known)) ; other++)
                   {
                      /* is this tag id already in our list? */
-                     if (strcmp(ptagList->tagUID[i], 
+                     if (strcmp(ptagList->tagUID[i],
                                 ptagList->tagUID[other]) == 0)
                         known = TRUE;
                   }
-                  if (!known) 
+                  if (!known)
                     (ptagList->numTags)++; /* got another one */
                }
             }

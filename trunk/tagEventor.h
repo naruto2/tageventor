@@ -19,18 +19,30 @@
 
 #define MAX_DESCRIPTION_LENGTH  (80)
 
-#define PROGRAM_NAME    "Tageventor"
+#define PROGRAM_NAME    "tagEventor"
+#define DEFAULT_LOCK_FILE_DIR "/var/run/tagEventor"
+#define DEFAULT_COMMAND_DIR "/etc/tagEventor"
+#define DAEMON_NAME "tagEventord"
+
 
 /* where to save this type of config stuff???? via GConf or something */
 typedef struct {
-   	char		*ID;            /* Max size = sizeof(uid) */
- 	char		*script;        /* Max size = PATH_MAX */
-	char		*description;   /* Max size = MAX_DESCRIPTION_LENGTH */
+   	char		*IDRegex;         /* specific ID or a regular expression - Max size = sizeof(uid) */
+	char		*folder;          /* folder where to look for script     - Max size = PATH_MAX */
+	int		    scriptMatchType;  /* type of match to use for script name */
+	char		*description;     /* Max size = MAX_DESCRIPTION_LENGTH */
 	char		enabled;
 } tPanelEntry;
 
+/* different options for matching script names */
+#define TAG_ID_MATCH		(1)
+#define GENERIC_MATCH		(2)
+#define SAM_ID_MATCH	    (3)
+#define SAM_SERIAL_MATCH    (4)
+#define READER_NUM_MATCH	(5)
+
 extern int  tagTableAddEntry( void );
 extern void tagTableSave( void );
-extern int  tagTableRead( void );
+extern int  tagTableNumber( void );
 extern void tagTableEntryEnable( int index, char enable );
 extern const tPanelEntry *tagEntryGet( int index );
