@@ -2,6 +2,7 @@ Usage: tagEventor *options*
   * -n *reader number*   : default = 0
   * -v *verbosity level* : default = 0 (silent), max = 3 
   * -d start | stop : start or stop daemon, default = foreground
+  * -d start | stop | tray: start or stop daemon, start system tray icon, default = foreground - This is only available if the Gtk+ GUI version was built 
   * -r *secs* : retry delay to connect to reader (seconds), default = 10
   * -p *usecs* : tag polling delay (micro seconds), default = 1000000
   * -h : print this message
@@ -21,5 +22,3 @@ Usage: tagEventor *options*
   * - p poll_time: this is the time in microseconds between each poll of the card reader. Default is 1000,000 (1Million), or 1 second.
 
   * -h: print the help or usage message
-
-
