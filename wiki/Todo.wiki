@@ -1,10 +1,7 @@
 #labels Featured
 = Fix Urgent Issues =
 == PCSC Lite dev  - ISSUE ==
-I still have to modify the header files of the pcsc-lite dev files to get includes to work correctly. Either modify the code or Makefile to fix this, or confirm definatively and contact the developers with a patch (I e-mailed once already)
-
-== Starting 'X' Programs from a daemon  - ISSUE ==
-This is another major reported issue we really need to get out of the way ASAP.
+I still have to modify the header files of the pcsc-lite dev files to get includes to work correctly. Either modify the code or Makefile to fix this, or confirm definatively and contact the developers with a patch (I e-mailed once already.
 
 = Minor Improvements to Existing Functionality =
 == Daemon code review ==
@@ -21,10 +18,11 @@ From reading the spec of the ACS reader it appears you can control the color of 
 Create binary installation packages for supported systems
   * Debian .deb package for Ubuntu and other debian based Linux distributions
   * Packages for other Linux distribution packages
+  * Add a Mac OS X Installer from the xcode project.
 
 = New Functionality =
 == Integration ==
-Consider a better way of generating system events than scripts. Maybe one that's more tightly integrated with each OS it runs on. This maybe related to the "control panel" functionality suggested below.
+Consider a better way of generating system events than scripts. Maybe one that's more tightly integrated with each OS it runs on.
 
 == Security / authentication ==
   * It seems there is some mechanism with the embedded SAM card in the tag reader to do some authentication to the reader. Not sure how it applies, works or how to implement it. Investigation required.
@@ -35,7 +33,7 @@ One of the common issues for inexpert or infrequent computer users (and hence a 
     * Ability to use RFID key to Login / Keychain / Authenticate in new ways easing PC usage and reducing issues related to forgotten logins or passwords etc
 
 == Control Panel / User Preferences ==
-Work is progressing on a GNOME/Gtk+ system tray resident application and "control panel" UI to administer events/actions associated with tags.
+Work is progressing on a GNOME/Gtk+ system tray resident application and "control panel" UI to administer rules associated with tags.
 
 = Supported Hardware =
   * Support more reader hardware (work is under way on this)
