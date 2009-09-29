@@ -45,27 +45,27 @@ echo ""
 
 # copy the required icons to a place where GNOME can find them without .svn directories!
 # delete older icons first
-rm -rf /usr/share/tageventor/icons/hicolor/*
+rm -rf /usr/share/tagEventor/icons/hicolor/*
 
 echo "Installing icons"
 # NOTE: This path is also in the code, so if you change one, change both
-mkdir -p /usr/share/tageventor/icons/hicolor/16x16
-cp -R ./icons/hicolor/16x16/*.png /usr/share/tageventor/icons/hicolor/16x16/
+mkdir -p /usr/share/tagEventor/icons/hicolor/16x16
+cp -R ./icons/hicolor/16x16/*.png /usr/share/tagEventor/icons/hicolor/16x16/
 
-mkdir -p /usr/share/tageventor/icons/hicolor/22x22
-cp -R ./icons/hicolor/22x22/*.png /usr/share/tageventor/icons/hicolor/22x22/
+mkdir -p /usr/share/tagEventor/icons/hicolor/22x22
+cp -R ./icons/hicolor/22x22/*.png /usr/share/tagEventor/icons/hicolor/22x22/
 
-mkdir -p /usr/share/tageventor/icons/hicolor/32x32
-cp -R ./icons/hicolor/32x32/*.png /usr/share/tageventor/icons/hicolor/32x32/
+mkdir -p /usr/share/tagEventor/icons/hicolor/32x32
+cp -R ./icons/hicolor/32x32/*.png /usr/share/tagEventor/icons/hicolor/32x32/
 
-mkdir -p /usr/share/tageventor/icons/hicolor/48x48
-cp -R ./icons/hicolor/48x48/*.png /usr/share/tageventor/icons/hicolor/48x48/
+mkdir -p /usr/share/tagEventor/icons/hicolor/48x48
+cp -R ./icons/hicolor/48x48/*.png /usr/share/tagEventor/icons/hicolor/48x48/
 
-mkdir -p /usr/share/tageventor/icons/hicolor/64x64
-cp -R ./icons/hicolor/64x64/*.png /usr/share/tageventor/icons/hicolor/64x64/
+mkdir -p /usr/share/tagEventor/icons/hicolor/64x64
+cp -R ./icons/hicolor/64x64/*.png /usr/share/tagEventor/icons/hicolor/64x64/
 
-mkdir -p /usr/share/tageventor/icons/hicolor/128x128
-cp -R ./icons/hicolor/128x128/*.png /usr/share/tageventor/icons/hicolor/128x128/
+mkdir -p /usr/share/tagEventor/icons/hicolor/128x128
+cp -R ./icons/hicolor/128x128/*.png /usr/share/tagEventor/icons/hicolor/128x128/
 
-echo Copied ./icons/ into "/usr/share/tageventor"
+echo Copied ./icons/ into "/usr/share/tagEventor"
 echo ""
