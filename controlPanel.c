@@ -244,20 +244,6 @@ applyChanges( void )
 }
 
 static void
-matchMenuPopup(
-             GtkWidget      *widget,
-             guint          button,
-             guint          activate_time,
-             gpointer       popupMenu
-              )
-{
-
-    gtk_menu_popup( (GtkMenu *)popupMenu, NULL, NULL, NULL, NULL, button, activate_time );
-
-}
-
-
-static void
 tableAddRow( GtkTable *pTable, int i )
 {
     GtkWidget           *label, *chooser, *enable, *description;
