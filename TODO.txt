@@ -16,8 +16,15 @@ Modify the example scripts somehow so that they also run on Mac OS X, where for 
 Install:
 Check the install script and directories for Mac OS X and make the necessary changes.
 
-Mac OS X GUI: 
+Mac OS X GUI:
 Investigate Gtk+ on Mac OS X (seems to only work with dependencies that require Leopard or Snow Leopard), or other ways to have the UI version also work.
 
 Man page:
 Write something useful in the man page, and then modify the install script to copy it to the appropriate location.
+
+
+Future Ideas:
+Generate compound events that are defined by TWO tags, such as "Andrew's tag" AND "e-mail tag", to be an event to read andrew's e-mail.
+
+Think about if it's useful to define "states" as well as events, so that something is done or maintained WHILE a certain tag or tags are
+detected.

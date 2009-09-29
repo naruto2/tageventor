@@ -326,29 +326,25 @@ gchar*              g_filename_to_utf8                  (const gchar *opsysstrin
     g_signal_connect (G_OBJECT (matchMenuItem), "toggled", G_CALLBACK (matchChosen), (gpointer)TAG_ID_MATCH );
     gtk_widget_show( matchMenuItem );
 
-    matchMenuItem = gtk_menu_item_new_with_label( "'generic'" );
+    matchMenuItem = gtk_radio_menu_item_new_with_label( NULL, "'generic'" );
     gtk_menu_shell_append( GTK_MENU_SHELL( matchMenu ), matchMenuItem );
-    g_signal_connect (G_OBJECT (matchMenuItem), "activate", G_CALLBACK (matchChosen), (gpointer)GENERIC_MATCH );
+    g_signal_connect (G_OBJECT (matchMenuItem), "toggled", G_CALLBACK (matchChosen), (gpointer)GENERIC_MATCH );
     gtk_widget_show( matchMenuItem );
 
-    matchMenuItem = gtk_menu_item_new_with_label( "SAM ID" );
+    matchMenuItem = gtk_radio_menu_item_new_with_label( NULL, "SAM ID" );
     gtk_menu_shell_append( GTK_MENU_SHELL( matchMenu ), matchMenuItem );
-    g_signal_connect (G_OBJECT (matchMenuItem), "activate", G_CALLBACK (matchChosen), (gpointer)SAM_ID_MATCH );
+    g_signal_connect (G_OBJECT (matchMenuItem), "toggled", G_CALLBACK (matchChosen), (gpointer)SAM_ID_MATCH );
     gtk_widget_show( matchMenuItem );
 
-    matchMenuItem = gtk_menu_item_new_with_label( "SAM Serial Number" );
+    matchMenuItem = gtk_radio_menu_item_new_with_label( NULL, "SAM Serial Number" );
     gtk_menu_shell_append( GTK_MENU_SHELL( matchMenu ), matchMenuItem );
-    g_signal_connect (G_OBJECT (matchMenuItem), "activate", G_CALLBACK (matchChosen), (gpointer)SAM_SERIAL_MATCH );
+    g_signal_connect (G_OBJECT (matchMenuItem), "toggled", G_CALLBACK (matchChosen), (gpointer)SAM_SERIAL_MATCH );
     gtk_widget_show( matchMenuItem );
 
-    matchMenuItem = gtk_menu_item_new_with_label( "Reader Number" );
+    matchMenuItem = gtk_radio_menu_item_new_with_label( NULL, "Reader Number" );
     gtk_menu_shell_append( GTK_MENU_SHELL( matchMenu ), matchMenuItem );
-    g_signal_connect (G_OBJECT (matchMenuItem), "activate", G_CALLBACK (matchChosen), (gpointer)READER_NUM_MATCH );
+    g_signal_connect (G_OBJECT (matchMenuItem), "toggled", G_CALLBACK (matchChosen), (gpointer)READER_NUM_MATCH );
     gtk_widget_show( matchMenuItem );
-
-    /* connect menu to the event that will be used  */
-/* TODO what is the right signal ??? */
-    g_signal_connect (G_OBJECT (matchMenu), "activate", G_CALLBACK (matchMenuPopup), matchMenu );
 
     gtk_widget_show( matchMenu );
 
@@ -472,16 +468,6 @@ buildCPanel ( void  )
      * titlebar) */
     g_signal_connect (G_OBJECT (mainWindow), "delete_event",
 		      G_CALLBACK (deleteSignalHandler), NULL);
-
-/* TODO this event no longer seems to be sent ! */
-/* something to do with signalhandlers in tagEventor.c ? */
-    g_signal_connect (G_OBJECT (mainWindow), "delete",
-                    G_CALLBACK (deleteSignalHandler), NULL);
-
-/* TODO see if we can get this signal to work, never sent either ¿¿ */
-/* should be sent when the Escape key is pressed to close the dialog */
-    g_signal_connect (G_OBJECT (mainWindow), "close",
-                    G_CALLBACK (closeSignalHandler), NULL);
 
     /* Here we connect the "destroy" event to a signal handler.
      * This event occurs when we call gtk_widget_destroy() on the window,
