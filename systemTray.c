@@ -33,6 +33,25 @@
 #define TOOL_TIP_TEXT               "Tageventor: \nLeft-click for control panel.\nRight-click for menu."
 
 static GtkStatusIcon    *systemTrayIcon = NULL;
+static int    (*readerPollFunction)( void *data );
+static guint    timeoutID = 0;
+
+
+void systemTraySetPollDelay(
+                            int     validPollDelay  /* already been validated as within range */
+                            )
+{
+
+    /* delete the old timeout */
+    if ( timeoutID )
+        g_source_remove( timeoutID );
+
+    /* add a new timeout to check for tags, TRUE to ask it to update system tray */
+    if ( readerPollFunction )
+        timeoutID = g_timeout_add( validPollDelay, readerPollFunction, (gpointer)TRUE );
+
+}
+
 
 void
 systemTraySetStatus(
@@ -104,7 +123,8 @@ void
 startSystemTray(
                 int     *argc,
                 char    ***argv,
-                int    (*pollFunction)( void *data )
+                int    (*pollFunction)( void *data ),
+                int     pollDelay
                 )
 {
     GtkWidget       *popupMenu, *quitMenuItem;
@@ -190,8 +210,12 @@ startSystemTray(
     /* make sure the icon is shown */
     gtk_status_icon_set_visible( systemTrayIcon, TRUE );
 
+    /* set the global variable for the polling function as we'll need it later */
+    readerPollFunction = pollFunction;
+
     /* add a timeout to check for tags, TRUE to ask it to update system tray */
-    g_timeout_add( 1000, pollFunction, (gpointer)TRUE );
+    /* pass in the value for the delay in milliseconds */
+    timeoutID = g_timeout_add( pollDelay, readerPollFunction, (gpointer)TRUE );
 
     /* Start main loop processing UI events */
     gtk_main();

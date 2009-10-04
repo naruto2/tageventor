@@ -25,8 +25,8 @@
 #define ICON_NAME_NOT_CONNECTED     "tageventorNoReader"
 
 /* define the function we must implement for tagEventor.c to start system tray icon */
-extern void startSystemTray( int     *argc, char    ***argv, int (*pollFunction)( void  *data ) );
-
+extern void startSystemTray( int     *argc, char    ***argv, int (*pollFunction)( void  *data ), int pollDelay );
 extern void systemTraySetStatus( char connected, const char *message );
+extern void systemTraySetPollDelay( int validPollDelay );
 
 #endif
