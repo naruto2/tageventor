@@ -25,7 +25,7 @@
 #define DAEMON_NAME "tagEventord"
 
 
-#define POLL_DELAY_MILLI_SECONDS_MIN        (1000)
+#define POLL_DELAY_MILLI_SECONDS_MIN        (500)
 #define POLL_DELAY_MILLI_SECONDS_DEFAULT    (1000)
 #define POLL_DELAY_MILLI_SECONDS_MAX        (5000)
 

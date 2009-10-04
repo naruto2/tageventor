@@ -124,7 +124,12 @@ int pollDelaySet(
     if ( newPollDelay < POLL_DELAY_MILLI_SECONDS_MIN )
         newPollDelay = POLL_DELAY_MILLI_SECONDS_MIN;
 
+    /* set the new delay to the capped value */
     pollDelayms = newPollDelay;
+
+#ifdef BUILD_SYSTEM_TRAY
+    systemTraySetPollDelay( pollDelayms );
+#endif
 
     /* return the value that was actually set */
     return ( pollDelayms );
@@ -875,11 +880,8 @@ int main(
          break;
       case SYSTEM_TRAY:
 #ifdef BUILD_SYSTEM_TRAY
-/* TODO arguably, we could/should move into background when run like this */
-/* it's not a problem for GNOME as it starts other process, but when executing this */
-/* option from the command line it stays in the foreground */
          /* build the status icon in the system tray area */
-         startSystemTray( &argc, &argv, &tagListCheck );
+         startSystemTray( &argc, &argv, &tagListCheck, pollDelayms );
 #endif
          break;
       default:
