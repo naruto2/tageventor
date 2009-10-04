@@ -4,7 +4,17 @@ Improve the install script, and have it check and use options. Install things op
 
 Get Icon theme and search path stuff to work...
 
-Wwhen we start up as system tray, try and ensure we are the only instance running.
+Make the default setting for reader number to be AUTO, not fixed at zero, and then to search for a valid reader.
+
+Extend the code to search for, connect to, and then use upto five simultaneously connected readers.
+Shouldn't be too difficult. Use the bitmap set from the Settings UI. Change command line to enable AUTO.
+
+Rename the ControlPanel to be the rules editor. Clean up the concepts of tags, tag events, and actions in all of program.
+Change About text to match.
+
+Wwhen we start up as system tray or foreground (i.e. ALWAYS), try and ensure we are the only instance running
+either for a given reader number (as at the moment), or if reader number = AUTO that we are the only instance
+globally on this machine.
 Maybe pop-up an error when another is detected, with it's PID
 
 Build:

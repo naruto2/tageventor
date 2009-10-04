@@ -33,9 +33,6 @@
 #include "systemTray.h"
 
 /************************* CONSTANTS ************************/
-#define RETRY_DELAY_SECONDS (10)
-#define POLL_DELAY_MILLI_SECONDS (1000)
-#define POLL_DELAY_MILLI_SECONDS_MAX (5000)
 
 #define SCRIPT_DOES_NOT_EXIST (127)
 
@@ -54,9 +51,9 @@
    }
 
 #ifdef BUILD_SYSTEM_TRAY
-#define USAGE_STRING "Usage: %s <options>\n\t-n <reader number>   : default = 0\n\t-v <verbosity level> : default = 0 (silent), max = 3 \n\t-d start | stop | tray (daemon options: default = foreground)\n\t-p <msecs> : tag polling delay, default = %d, max = %d\n\t-h : print this message\n"
+#define USAGE_STRING "Usage: %s <options>\n\t-n <reader number>   : default = 0\n\t-v <verbosity level> : default = 0 (silent), max = 3 \n\t-d start | stop | tray (daemon options: default = foreground)\n\t-p <msecs> : tag polling delay, min = %d, default = %d, max = %d\n\t-h : print this message\n"
 #else
-#define USAGE_STRING "Usage: %s <options>\n\t-n <reader number>   : default = 0\n\t-v <verbosity level> : default = 0 (silent), max = 3 \n\t-d start | stop (daemon options: default = foreground)\n\t-p <msecs> : tag polling delay, default = %d, max = %d\n\t-h : print this message\n"
+#define USAGE_STRING "Usage: %s <options>\n\t-n <reader number>   : default = 0\n\t-v <verbosity level> : default = 0 (silent), max = 3 \n\t-d start | stop (daemon options: default = foreground)\n\t-p <msecs> : tag polling delay, min = %d, default = %d, max = %d\n\t-h : print this message\n"
 #endif
 /*************    TYPEDEFS TO THIS FILE     **********************/
 typedef enum { FOREGROUND, START_DAEMON, STOP_DAEMON, SYSTEM_TRAY } tRunOptions;
@@ -73,6 +70,7 @@ static    tPanelEntry defaultCommands[NUM_DEFAULT_COMMANDS] = {
 
 /* This is needed by handleSignal to clean-up, so can't be local :-( */
 static  tReader     reader;
+static  int         readerSetting; /* not used just yet */
 static  int		    lockFile = -1;
 static  char		lockFilename[PATH_MAX];
 static  BOOL		runningAsDaemon = FALSE;
@@ -83,6 +81,7 @@ static  tPanelEntry *tagEntryArray;
 /* strings used for tag events, for text output and name of scipts */
 static const char * const tagString[]  = { "IN", "OUT" };
 static int		    pollDelayms;
+static int			verbosityLevel;
 
 static tTagList		tagList1, tagList2;
 
@@ -91,26 +90,96 @@ static tTagList		*pnewTagList = &tagList1, *ppreviousTagList = &tagList2;
 static BOOL         connected = FALSE; /* at the start, we are not connected */
 static BOOL         tagListChanged = FALSE;
 
+
+/* utility function for other modules that returns the current setting for the reader number bitmap */
+int
+readerSettingGet(
+                void
+                )
+{
+    return ( readerSetting );
+}
+
+/* utility function for settings modules that sets the state of current setting for the reader number */
+int
+readerSettingSet(
+                int             readerSettingBitmap
+                )
+{
+
+    readerSetting = readerSettingBitmap;
+
+    return ( readerSetting );
+
+}
+
+int pollDelaySet(
+                int     newPollDelay
+                )
+{
+    /* make sure not exceed limit */
+    if ( newPollDelay > POLL_DELAY_MILLI_SECONDS_MAX )
+        newPollDelay = POLL_DELAY_MILLI_SECONDS_MAX;
+
+    if ( newPollDelay < POLL_DELAY_MILLI_SECONDS_MIN )
+        newPollDelay = POLL_DELAY_MILLI_SECONDS_MIN;
+
+    pollDelayms = newPollDelay;
+
+    /* return the value that was actually set */
+    return ( pollDelayms );
+
+}
+
+int
+pollDelayGet( void )
+{
+    return( pollDelayms );
+}
+
+int verbosityLevelSet(
+                    int     newLevel
+                    )
+{
+
+    /* make sure not exceed limit */
+    if ( newLevel > VERBOSITY_MAX )
+        newLevel = VERBOSITY_MAX;
+
+    if ( newLevel < VERBOSITY_MIN )
+        newLevel = VERBOSITY_MIN;
+
+    verbosityLevel = newLevel;
+
+    /* return the value that was actually set */
+    return ( verbosityLevel );
+
+}
+
+int
+verbosityLevelGet( void )
+{
+    return( verbosityLevel );
+}
+
 /************************ PARSE COMMAND LINE OPTIONS ********/
 static void
 parseCommandLine(
                 int 		    argc,
                 char 		    *argv[],
                 int		        *pnumber,
-                int		        *pverbosityLevel,
-                tRunOptions     *pRunOptions,
-                int             *ppollDelay
+                tRunOptions     *pRunOptions
                 )
 {
 
    BOOL		parseError = FALSE;
-   int		option;
+   int		option, newDelay, newVerbosity;
 
    /* Set default values */
    *pnumber = 0;
-   *pverbosityLevel = 0;
+   verbosityLevel = VERBOSITY_DEFAULT;
    *pRunOptions = FOREGROUND;
-   *ppollDelay = POLL_DELAY_MILLI_SECONDS;
+   pollDelayms = POLL_DELAY_MILLI_SECONDS_DEFAULT;
 
    while ( ((option = getopt(argc, argv, "n:v:d:p:h")) != EOF) && (!parseError) )
       switch (option)
@@ -128,12 +197,12 @@ parseCommandLine(
 
          /* 'v' option is for verbosity level */
          case 'v':
-            *pverbosityLevel = atoi(optarg);
-            if (*pverbosityLevel  < 0)
+            newVerbosity = atoi(optarg);
+            /* check if the new verbosity was within range when set */
+            if ( verbosityLevelSet( newVerbosity ) != newVerbosity )
             {
-               *pverbosityLevel = 0;
                fprintf(stderr, "Verbosity level must be greater or equal to 0\n");
-               fprintf(stderr, "Verbosity level has been forced to %d\n", *pverbosityLevel);
+               fprintf(stderr, "Verbosity level has been forced to %d\n", verbosityLevelGet() );
             }
             break;
 
@@ -155,26 +224,18 @@ parseCommandLine(
 
          /* 'p' option is for the delay in polling in useconds */
          case 'p':
-            *ppollDelay = atoi(optarg);
-            /* make sure not exceed limit of usleep */
-            if (*ppollDelay > POLL_DELAY_MILLI_SECONDS_MAX)
+            newDelay = atoi(optarg);
+            /* check if the new delay was within range when set */
+            if ( pollDelaySet ( newDelay ) != newDelay )
             {
-               *ppollDelay = POLL_DELAY_MILLI_SECONDS_MAX;
                fprintf(stderr, "Poll delay must be greater or equal to 0\n");
-               fprintf(stderr, "Poll delay has been forced to %d\n", *ppollDelay);
-            }
-
-            if (*ppollDelay < 0)
-            {
-               *ppollDelay = POLL_DELAY_MILLI_SECONDS;
-               fprintf(stderr, "Poll delay must be greater or equal to 0\n");
-               fprintf(stderr, "Poll delay has been forced to %d\n", *ppollDelay);
+               fprintf(stderr, "Poll delay has been forced to %d\n", pollDelayGet() );
             }
             break;
 
          /* 'h' option is to request print out help */
          case 'h':
-                fprintf(stderr, USAGE_STRING, argv[0], POLL_DELAY_MILLI_SECONDS, POLL_DELAY_MILLI_SECONDS_MAX);
+                fprintf(stderr, USAGE_STRING, argv[0], POLL_DELAY_MILLI_SECONDS_MIN, POLL_DELAY_MILLI_SECONDS_DEFAULT, POLL_DELAY_MILLI_SECONDS_MAX);
             exit ( 0 );
             break;
 
@@ -185,7 +246,7 @@ parseCommandLine(
 
    if (parseError)
    {
-      fprintf(stderr, USAGE_STRING, argv[0], POLL_DELAY_MILLI_SECONDS, POLL_DELAY_MILLI_SECONDS_MAX);
+      fprintf(stderr, USAGE_STRING, argv[0], POLL_DELAY_MILLI_SECONDS_MIN, POLL_DELAY_MILLI_SECONDS_DEFAULT, POLL_DELAY_MILLI_SECONDS_MAX);
       exit( EXIT_FAILURE );
    }
 
@@ -623,7 +684,8 @@ tagEventDispatch(
     {
         if ( tagEntryArray[ruleIndex].enabled )
         {
-#if 0  /* TODO need to figure out how to do the regular expression matching */
+#if 0
+/* TODO need to figure out how to do the regular expression matching */
             tagEntryArray[ruleIndex].IDRegex
 #endif
 
@@ -772,15 +834,13 @@ int main(
         )
 {
    tRunOptions	runOptions;
-   int			    verbosityLevel;
 
    /* some help to make sure we close whatś needed, not more */
    reader.hContext = ((SCARDCONTEXT)NULL);
    reader.hCard = ((SCARDHANDLE)NULL);
    reader.number = 0;
 
-   parseCommandLine(argc, argv,
-                    &(reader.number), &verbosityLevel, &runOptions, &pollDelayms);
+   parseCommandLine(argc, argv, &(reader.number), &runOptions );
 
    /* set-up signal handlers */
    signal(SIGTERM,  handleSignal); /* software termination signal from kill */
