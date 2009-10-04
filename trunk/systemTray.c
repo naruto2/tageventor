@@ -28,6 +28,8 @@
 
 #include "systemTray.h"
 
+#include "settingsDialog.h"
+
 #define TOOL_TIP_TEXT               "Tageventor: \nLeft-click for control panel.\nRight-click for menu."
 
 static GtkStatusIcon    *systemTrayIcon = NULL;
@@ -66,9 +68,22 @@ iconQuit( void )
     /* pass the request onto the control panel, and only exit if it says so */
     /* as it may want to pop-up a dialog to save etc */
     if (controlPanelQuit())
+    {
+#ifdef BUILD_SETTINGS_DIALOG
+        if ( settingsDialogQuit() )
+            exit( 0 );
+#else
         exit( 0 );
+#endif
+    }
+#else
+#ifdef BUILD_SETTINGS_DIALOG
+        if ( settingsDialogQuit() )
+            exit( 0 );
 #else
     exit( 0 );
+#endif
+
 #endif
 
 }
@@ -103,6 +118,10 @@ startSystemTray(
 
 #ifdef BUILD_CONTROL_PANEL
     GtkWidget       *controlPanelMenuItem;
+#endif
+
+#ifdef BUILD_SETTINGS_DIALOG
+    GtkWidget       *settingsDialogMenuItem;
 #endif
 
     /* Init GTK+ it might modify significantly the command line options */
@@ -144,6 +163,13 @@ startSystemTray(
     gtk_menu_shell_append( GTK_MENU_SHELL( popupMenu ), controlPanelMenuItem );
     g_signal_connect (G_OBJECT (controlPanelMenuItem), "activate", G_CALLBACK (controlPanelActivate), NULL );
     gtk_widget_show( controlPanelMenuItem );
+#endif
+
+#ifdef BUILD_SETTINGS_DIALOG
+    settingsDialogMenuItem = gtk_menu_item_new_with_label( "Settings" );
+    gtk_menu_shell_append( GTK_MENU_SHELL( popupMenu ), settingsDialogMenuItem );
+    g_signal_connect (G_OBJECT (settingsDialogMenuItem), "activate", G_CALLBACK (settingsDialogActivate), NULL );
+    gtk_widget_show( settingsDialogMenuItem );
 #endif
 
 #ifdef BUILD_ABOUT_DIALOG

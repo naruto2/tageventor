@@ -49,6 +49,7 @@
 			<Add option="-DBUILD_CONTROL_PANEL" />
 			<Add option="-DBUILD_ABOUT_DIALOG" />
 			<Add option="-DBUILD_CONTROL_PANEL_HELP" />
+			<Add option="-DBUILD_SETTINGS_DIALOG" />
 			<Add directory="/home/andrew/tageventor/trunk" />
 			<Add directory="/usr/include/PCSC" />
 		</Compiler>
@@ -81,6 +82,15 @@
 			<Option target="Release" />
 		</Unit>
 		<Unit filename="controlPanelHelp.h">
+			<Option target="Debug" />
+			<Option target="Release" />
+		</Unit>
+		<Unit filename="settingsDialog.c">
+			<Option compilerVar="CC" />
+			<Option target="Debug" />
+			<Option target="Release" />
+		</Unit>
+		<Unit filename="settingsDialog.h">
 			<Option target="Debug" />
 			<Option target="Release" />
 		</Unit>

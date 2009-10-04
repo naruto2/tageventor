@@ -25,6 +25,24 @@
 #define DAEMON_NAME "tagEventord"
 
 
+#define POLL_DELAY_MILLI_SECONDS_MIN        (1000)
+#define POLL_DELAY_MILLI_SECONDS_DEFAULT    (1000)
+#define POLL_DELAY_MILLI_SECONDS_MAX        (5000)
+
+#define VERBOSITY_MIN       (0)
+#define VERBOSITY_DEFAULT   (0)
+#define VERBOSITY_MAX       (3)
+
+#define MAX_NUM_READERS     (6)
+/* reader setting is a bitmap so that multiple can be set and remember at same time */
+#define READER_NUM_AUTO     (1<<0)
+#define READER_NUM_0        (1<<1)
+#define READER_NUM_1        (1<<2)
+#define READER_NUM_2        (1<<3)
+#define READER_NUM_3        (1<<4)
+#define READER_NUM_4        (1<<5)
+
+
 /* where to save this type of config stuff???? via GConf or something */
 typedef struct {
    	char		*IDRegex;         /* specific ID or a regular expression - Max size = sizeof(uid) */
@@ -46,3 +64,12 @@ extern void tagTableSave( void );
 extern int  tagTableNumber( void );
 extern void tagTableEntryEnable( int index, char enable );
 extern const tPanelEntry *tagEntryGet( int index );
+
+extern int  readerSettingGet( void );
+extern int  readerSettingSet( int bitmap );
+
+extern int  pollDelaySet( int     newPollDelay );
+extern int  pollDelayGet( void );
+
+extern int  verbosityLevelSet( int     newLevel );
+extern int  verbosityLevelGet( void );
