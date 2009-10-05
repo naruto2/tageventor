@@ -49,6 +49,10 @@ rm -rf /usr/share/tagEventor/icons/hicolor/*
 
 echo "Installing icons"
 # NOTE: This path is also in the code, so if you change one, change both
+# This one is a temporary fix
+mkdir -p /usr/share/tagEventor/icons/
+cp -R ./icons/*.png /usr/share/tagEventor/icons/
+
 mkdir -p /usr/share/tagEventor/icons/hicolor/16x16
 cp -R ./icons/hicolor/16x16/*.png /usr/share/tagEventor/icons/hicolor/16x16/
 
