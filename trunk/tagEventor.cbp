@@ -46,9 +46,9 @@
 			<Add option="-Wall" />
 			<Add option="`pkg-config gtk+-2.0 --cflags`" />
 			<Add option="-DBUILD_SYSTEM_TRAY" />
-			<Add option="-DBUILD_CONTROL_PANEL" />
+			<Add option="-DBUILD_RULES_EDITOR" />
 			<Add option="-DBUILD_ABOUT_DIALOG" />
-			<Add option="-DBUILD_CONTROL_PANEL_HELP" />
+			<Add option="-DBUILD_RULES_EDITOR_HELP" />
 			<Add option="-DBUILD_SETTINGS_DIALOG" />
 			<Add directory="/home/andrew/tageventor/trunk" />
 			<Add directory="/usr/include/PCSC" />
@@ -67,21 +67,21 @@
 			<Option target="Debug" />
 			<Option target="Release" />
 		</Unit>
-		<Unit filename="controlPanel.c">
+		<Unit filename="rulesEditor.c">
 			<Option compilerVar="CC" />
 			<Option target="Debug" />
 			<Option target="Release" />
 		</Unit>
-		<Unit filename="controlPanel.h">
+		<Unit filename="rulesEditor.h">
 			<Option target="Debug" />
 			<Option target="Release" />
 		</Unit>
-		<Unit filename="controlPanelHelp.c">
+		<Unit filename="rulesEditorHelp.c">
 			<Option compilerVar="CC" />
 			<Option target="Debug" />
 			<Option target="Release" />
 		</Unit>
-		<Unit filename="controlPanelHelp.h">
+		<Unit filename="rulesEditorHelp.h">
 			<Option target="Debug" />
 			<Option target="Release" />
 		</Unit>
