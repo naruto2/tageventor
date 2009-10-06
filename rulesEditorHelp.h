@@ -1,5 +1,6 @@
 /*
-  controlPanelHelp.h - C header for tagEventor Gtk/GNOME control panel
+  rulesEditorHelp.h - C header for tagEventor Gtk/GNOME rules editor
+                    help dialog
 
   Copyright 2009 Autelic Association (http://www.autelic.org)
 
@@ -17,8 +18,8 @@
 */
 
 
-#ifdef BUILD_CONTROL_PANEL_HELP
+#ifdef BUILD_RULES_EDITOR_HELP
 
-extern void controlPanelHelpShow( void );
+extern void rulesEditorHelpShow( void );
 
 #endif

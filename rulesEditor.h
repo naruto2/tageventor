@@ -1,5 +1,5 @@
 /*
-  systemTray.h - headerfile that defines the entry point for code
+  rulesEditor.h - headerfile that defines the entry point for code
                  that will create and start and run a system tray icon
 
   Copyright 2009 Autelic Association (http://www.autelic.org)
@@ -17,14 +17,14 @@
   limitations under the License.
 */
 
-#ifdef BUILD_CONTROL_PANEL
+#ifdef BUILD_RULES_EDITOR
 
-/* this is a function that systemTray.c expects to exist to pop-up the control */
-/* panel dialog                                                                */
-extern void controlPanelActivate( void );
+/* this is a function that systemTray.c expects to exist to pop-up the */
+/* rules editor */
+extern void rulesEditorActivate( void );
 
-extern void controlPanelSetStatus( char connected, const char *message );
+extern void rulesEditorSetStatus( char connected, const char *message );
 
-extern char controlPanelQuit( void );
+extern char rulesEditorQuit( void );
 
 #endif

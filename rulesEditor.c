@@ -1,5 +1,5 @@
 /*
-  controlPanel.c - C source code for tagEventor Gtk/GNOME control panel
+  rulesEditor.c - C source code for tagEventor Gtk/GNOME rules editor
 
   Copyright 2009 Autelic Association (http://www.autelic.org)
 
@@ -16,7 +16,7 @@
   limitations under the License.
 */
 
-#ifdef BUILD_CONTROL_PANEL
+#ifdef BUILD_RULES_EDITOR
 #include <stdlib.h>
 #include <unistd.h>
 #include <gtk/gtk.h>
@@ -24,8 +24,8 @@
 
 #include "systemTray.h"
 
-#include "controlPanel.h"
-#include "controlPanelHelp.h"
+#include "rulesEditor.h"
+#include "rulesEditorHelp.h"
 #include "tagEventor.h"
 
 #include "aboutDialog.h"
@@ -37,7 +37,7 @@
 #define NUM_COLUMNS             (5)
 static const gchar      *columnHeader[NUM_COLUMNS] = { "Rule Description", "Tag ID Match", "Folder", "Match", "Enabled" };
 static char             savePending = FALSE;
-static GtkWidget        *cpanelWindow = NULL, *statusBar = NULL, *applyButton = NULL, *closeButton = NULL;
+static GtkWidget        *rulesEditorWindow = NULL, *statusBar = NULL, *applyButton = NULL, *closeButton = NULL;
 static GtkWidget        *instructionLabel;
 
 
@@ -45,7 +45,7 @@ static GtkWidget        *instructionLabel;
 /* to quite too. before doing so we check our status. If we have something to do then  */
 /* we pop-up the dialogs to do it, and we tell the systemTray to not quit just yet     */
 char
-controlPanelQuit( void )
+rulesEditorQuit( void )
 {
     /* request from the systemtrayIcon to exit */
     /* if we can, then close our own stuff and tell the systemtrayIcon it can also exit */
@@ -59,26 +59,26 @@ controlPanelQuit( void )
 }
 
 void
-controlPanelSetStatus(
+rulesEditorSetStatus(
                         char        connected,
                         const char  *message
                         )
 {
 
     /* put the result onto the status bar */
-    if ( cpanelWindow )
+    if ( rulesEditorWindow )
         gtk_statusbar_push((GtkStatusbar *)statusBar, 0, (gchar *)message);
 
 }
 
 static void
-hideCPanelWindow( void )
+hiderulesEditorWindow( void )
 {
 
     /* hide the main window if it exists ADN is visible */
-    if ( cpanelWindow )
+    if ( rulesEditorWindow )
     {
-        gtk_widget_hide(cpanelWindow);
+        gtk_widget_hide( rulesEditorWindow );
     }
 
 }
@@ -92,7 +92,7 @@ closeSignalHandler(
                    )
 {
     /* if the button was sensitive and could be pressed then it's OK to close window ASAP */
-    hideCPanelWindow();
+    hiderulesEditorWindow();
 }
 
 /* Call back for the cancel button */
@@ -102,11 +102,12 @@ cancelSignalHandler(
                    gpointer     user_data
                    )
 {
-/* TODO we should (arguable, reset the tag array back to the way it was when the Control Panel was opened,
+/* TODO we should (arguable, reset the tag array back to the way it was when the rules editor was opened,
    or when the last save was made..... so that the changes aren't kept around in memory forever
 */
     /* OK to close window ASAP */
-    hideCPanelWindow();
+    hiderulesEditorWindow();
+
 }
 
 /* This get's called when the user closes the window using the Window Manager 'X' box */
@@ -139,11 +140,11 @@ destroy(
 {
 
     /* hide the main cpanel window */
-    hideCPanelWindow();
+    hiderulesEditorWindow();
 
     /* it seems that when this get's called the widget actually get's destroyed */
     /* so, show it's not existant and on next activate it will get re-built */
-    cpanelWindow = NULL;
+    rulesEditorWindow = NULL;
 
 }
 
@@ -433,7 +434,7 @@ fillTable(
 
 
 static GtkWidget *
-buildCPanel ( void  )
+buildrulesEditor ( void  )
 {
     GtkWidget   *mainWindow;
     GtkWidget   *vbox, *scroll, *buttonBox, *table;
@@ -442,7 +443,7 @@ buildCPanel ( void  )
 
     /******************************* Main Application Window ************************/
     mainWindow = gtk_window_new( GTK_WINDOW_TOPLEVEL );
-    gtk_window_set_title( (GtkWindow *)mainWindow, PROGRAM_NAME );
+    gtk_window_set_title( (GtkWindow *)mainWindow, "tagEventor - Rules Editor" );
     /* Smallest height possible then should expand to hold what's needed */
     gtk_window_set_default_size( (GtkWindow *)mainWindow, DEFAULT_WIDTH_PIX, DEFAULT_HEIGHT_PIX );
 
@@ -481,7 +482,7 @@ buildCPanel ( void  )
     /* create the table for tag IDs */
     table = gtk_table_new( 1, 1, FALSE);
 
-    /* fill the table with rows and columns of controls for scripts */
+    /* fill the table with rows and columns of widgets for scripts */
     fillTable( (GtkTable *)table, numEntries );
 
     /* add the non-scrollable Table to the scrolled window via a viewport */
@@ -502,7 +503,7 @@ buildCPanel ( void  )
     /* create the box for the buttons */
     buttonBox = gtk_hbox_new( FALSE, 0);
 
-#ifdef BUILD_CONTROL_PANEL_HELP
+#ifdef BUILD_RULES_EDITOR_HELP
     /********************************************* Help Button ***********************/
     helpButton = gtk_button_new_from_stock( "gtk-help" );
 
@@ -511,7 +512,7 @@ buildCPanel ( void  )
 
     /* When the button receives the "clicked" signal, it will call the
      * function applyChanges() passing it NULL as its argument. */
-    g_signal_connect (G_OBJECT (helpButton), "released", G_CALLBACK (controlPanelHelpShow), NULL);
+    g_signal_connect (G_OBJECT (helpButton), "released", G_CALLBACK (rulesEditorHelpShow), NULL);
 #endif
 
 #ifdef BUILD_ABOUT_DIALOG
@@ -579,32 +580,32 @@ buildCPanel ( void  )
 }
 
 void
-controlPanelActivate( void )
+rulesEditorActivate( void )
 {
 
     /* if it exists i.e. has been built */
-    if ( cpanelWindow )
+    if ( rulesEditorWindow )
     {
         /* check to see if it's on top level for user, if so, then hide it */
         /* thus clicking on the status icon toggles it, like skype */
-        if (gtk_window_is_active( (GtkWindow *)cpanelWindow ) )
+        if (gtk_window_is_active( (GtkWindow *)rulesEditorWindow ) )
             closeSignalHandler( NULL, NULL );
         else
         /* it's built, but not visible, so pop it up to the top! */
         {
             /* make sure it always become visible for the user as could be hidden
                on another workspace, iconized etc */
-            gtk_window_present( (GtkWindow *)cpanelWindow );
+            gtk_window_present( (GtkWindow *)rulesEditorWindow );
         }
     }
     else
     /* build it from scratch the first time, so we're not using that memory etc if not needed */
     {
         /* build the widget tree for the entire UI */
-        cpanelWindow = buildCPanel();
+        rulesEditorWindow = buildrulesEditor();
 
         /* Show window, and recursively all contained widgets */
-        gtk_widget_show_all( cpanelWindow );
+        gtk_widget_show_all( rulesEditorWindow );
     }
 
 }
