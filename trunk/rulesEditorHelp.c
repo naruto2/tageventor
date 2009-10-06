@@ -1,5 +1,6 @@
 /*
-  controlPanelHelp.c - C source code for tagEventor Gtk/GNOME control panel
+  rulesEditorHelp.c - C source code for tagEventor Gtk/GNOME help
+                    dialog for rules editor
 
   Copyright 2009 Autelic Association (http://www.autelic.org)
 
@@ -16,14 +17,14 @@
   limitations under the License.
 */
 
-#ifdef BUILD_CONTROL_PANEL_HELP
+#ifdef BUILD_RULES_EDITOR_HELP
 
-#include "controlPanelHelp.h"
+#include "rulesEditorHelp.h"
 #include "systemTray.h"
 #include <gtk/gtk.h>
 
 static void
-controlPanelHelpClose(
+rulesEditorHelpClose(
                     GtkDialog   *dialog,
                     gpointer   user_data
                     )
@@ -35,7 +36,7 @@ controlPanelHelpClose(
 
 
 static void
-controlPanelHelpResponse(
+rulesEditorHelpResponse(
                         GtkDialog *dialog,
                         gint       response_id,
                         gpointer   user_data
@@ -47,26 +48,26 @@ controlPanelHelpResponse(
 }
 
 void
-controlPanelHelpShow( void )
+rulesEditorHelpShow( void )
 {
 
-    GtkWidget   *controlPanelHelpDialog;
+    GtkWidget   *rulesEditorHelpDialog;
 
-    controlPanelHelpDialog = gtk_dialog_new();
+    rulesEditorHelpDialog = gtk_dialog_new();
 
     /* set the icon for the window */
-    gtk_window_set_icon_name( (GtkWindow *)controlPanelHelpDialog, ICON_NAME_CONNECTED );
+    gtk_window_set_icon_name( (GtkWindow *)rulesEditorHelpDialog, ICON_NAME_CONNECTED );
 
     /* add a close button Response ID for it is 0, although we won't use it */
-    gtk_dialog_add_button( (GtkDialog *)controlPanelHelpDialog, "Close", 0 );
+    gtk_dialog_add_button( (GtkDialog *)rulesEditorHelpDialog, "Close", 0 );
 
     /* this will be triggered when escape key is used */
-    g_signal_connect ( G_OBJECT (controlPanelHelpDialog), "close", G_CALLBACK (controlPanelHelpClose), NULL );
+    g_signal_connect ( G_OBJECT (rulesEditorHelpDialog), "close", G_CALLBACK (rulesEditorHelpClose), NULL );
 /* TODO set the default button that is pressed with Enter */
 
-    g_signal_connect ( G_OBJECT (controlPanelHelpDialog), "response", G_CALLBACK (controlPanelHelpResponse), NULL );
+    g_signal_connect ( G_OBJECT (rulesEditorHelpDialog), "response", G_CALLBACK (rulesEditorHelpResponse), NULL );
 
-    gtk_widget_show( controlPanelHelpDialog );
+    gtk_widget_show( rulesEditorHelpDialog );
 
 }
 

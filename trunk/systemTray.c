@@ -22,7 +22,7 @@
 #include <gtk/gtk.h>
 #include <string.h>
 #include <unistd.h>
-#include "controlPanel.h"
+#include "rulesEditor.h"
 
 #include "aboutDialog.h"
 
@@ -30,7 +30,7 @@
 
 #include "settingsDialog.h"
 
-#define TOOL_TIP_TEXT               "Tageventor: \nLeft-click for control panel.\nRight-click for menu."
+#define TOOL_TIP_TEXT               "Tageventor: \nLeft-click for Rules Editor.\nRight-click for menu."
 
 static GtkStatusIcon    *systemTrayIcon = NULL;
 static int    (*readerPollFunction)( void *data );
@@ -70,9 +70,9 @@ systemTraySetStatus(
     sprintf( toolTipText, "%s\n%s", TOOL_TIP_TEXT, message );
     gtk_status_icon_set_tooltip_text( systemTrayIcon, toolTipText );
 
-#ifdef BUILD_CONTROL_PANEL
-    /* let the control panel know of status updates too */
-    controlPanelSetStatus( connected, message );
+#ifdef BUILD_RULES_EDITOR
+    /* let the ruls editor know of status updates too */
+    rulesEditorSetStatus( connected, message );
 #endif
 
 }
@@ -83,10 +83,10 @@ iconQuit( void )
 {
     /* this is a request to exit tageventor altogether */
 
-#ifdef BUILD_CONTROL_PANEL
-    /* pass the request onto the control panel, and only exit if it says so */
+#ifdef BUILD_RULES_EDITOR
+    /* pass the request onto the rulse editor, and only exit if it says so */
     /* as it may want to pop-up a dialog to save etc */
-    if (controlPanelQuit())
+    if ( rulesEditorQuit())
     {
 #ifdef BUILD_SETTINGS_DIALOG
         if ( settingsDialogQuit() )
@@ -136,8 +136,8 @@ startSystemTray(
     GtkWidget       *aboutMenuItem;
 #endif
 
-#ifdef BUILD_CONTROL_PANEL
-    GtkWidget       *controlPanelMenuItem;
+#ifdef BUILD_RULES_EDITOR
+    GtkWidget       *rulesEditorMenuItem;
 #endif
 
 #ifdef BUILD_SETTINGS_DIALOG
@@ -168,9 +168,9 @@ startSystemTray(
     /* Set the basic tooltip info. Tag polling routine may update it with more info */
     gtk_status_icon_set_tooltip_text( systemTrayIcon, TOOL_TIP_TEXT );
 
-#ifdef BUILD_CONTROL_PANEL
-    /* if we have built the control panel then connect up the handler for the left mouse-click */
-    g_signal_connect (G_OBJECT (systemTrayIcon), "activate", G_CALLBACK (controlPanelActivate), NULL);
+#ifdef BUILD_RULES_EDITOR
+    /* if we have built the rules editor then connect up the handler for the left mouse-click */
+    g_signal_connect (G_OBJECT (systemTrayIcon), "activate", G_CALLBACK (rulesEditorActivate), NULL);
 #endif
 
     /* now create the pop-up menu that is shown by right-clicking the systemTray icon */
@@ -178,11 +178,11 @@ startSystemTray(
     popupMenu = gtk_menu_new();
 
     /* Now add entries to the menu */
-#ifdef BUILD_CONTROL_PANEL
-    controlPanelMenuItem = gtk_menu_item_new_with_label( "Control Panel" );
-    gtk_menu_shell_append( GTK_MENU_SHELL( popupMenu ), controlPanelMenuItem );
-    g_signal_connect (G_OBJECT (controlPanelMenuItem), "activate", G_CALLBACK (controlPanelActivate), NULL );
-    gtk_widget_show( controlPanelMenuItem );
+#ifdef BUILD_RULES_EDITOR
+    rulesEditorMenuItem = gtk_menu_item_new_with_label( "Rules Editor" );
+    gtk_menu_shell_append( GTK_MENU_SHELL( popupMenu ), rulesEditorMenuItem );
+    g_signal_connect (G_OBJECT (rulesEditorMenuItem), "activate", G_CALLBACK (rulesEditorActivate), NULL );
+    gtk_widget_show( rulesEditorMenuItem );
 #endif
 
 #ifdef BUILD_SETTINGS_DIALOG
