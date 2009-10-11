@@ -21,7 +21,7 @@ bin/Debug/tagEventor: lib/Debug/libtagReader.a obj/Debug/tagEventor.o obj/Debug/
 
 # The way I have defined the headers and code, tagEventor should never need any Gtk+ stuff
 obj/Debug/tagEventor.o: tagEventor.c tagReader.h
-	gcc -c tagEventor.c -DDEBUG -Wall -I . -o $@
+	gcc -c tagEventor.c -DDEBUG -Wall -I . -I /usr/include/PCSC -o $@
 
 obj/Debug/aboutDialog.o: aboutDialog.c aboutDialog.h
 	gcc -c aboutDialog.c -DDEBUG `pkg-config --cflags --libs gtk+-2.0 gmodule-2.0` -DICON_DIR="/usr/share/app-install/" -Wall -I . -o $@
@@ -41,7 +41,7 @@ lib/Debug/libtagReader.a: obj/Debug/tagReader.o
 	@echo libtagReader BUILT \(.lib/Debug/libtagReader\)
 
 obj/Debug/tagReader.o: tagReader.c  tagReader.h
-	gcc -c tagReader.c -Wall -I . -o $@
+	gcc -c tagReader.c -Wall -I . -I /usr/include/PCSC -o $@
 
 ########## Release version
 bin/Release/tagEventor: lib/Release/libtagReader.a obj/Release/tagEventor.o obj/Release/aboutDialog.o obj/Release/rulesEditor.o obj/Release/systemTray.o
@@ -50,7 +50,7 @@ bin/Release/tagEventor: lib/Release/libtagReader.a obj/Release/tagEventor.o obj/
 
 # The way I have defined the headers and code, tagEventor should never need any Gtk+ stuff
 obj/Release/tagEventor.o: tagEventor.c tagReader.h
-	gcc -c tagEventor.c -Wall -I . -o $@
+	gcc -c tagEventor.c -Wall -I . -I /usr/include/PCSC -o $@
 
 obj/Release/aboutDialog.o: aboutDialog.c aboutDialog.h
 	gcc -c aboutDialog.c `pkg-config --cflags --libs gtk+-2.0 gmodule-2.0` -DICON_DIR="/usr/share/app-install/" -Wall -I . -o $@
@@ -70,7 +70,7 @@ lib/Release/libtagReader.a: obj/Release/tagReader.o
 	@echo libtagReader BUILT \(.lib/Release/libtagReader\)
 
 obj/Release/tagReader.o: tagReader.c  tagReader.h
-	gcc -c tagReader.c -Wall -I . -o $@
+	gcc -c tagReader.c -Wall -I . -I /usr/include/PCSC -o $@
 
 # Clean up all stray editor back-up files, any .o or .a left around in this directory
 # Remove all built object files (.o and .a) and compiled and linked binaries
