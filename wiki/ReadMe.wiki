@@ -1,38 +1,44 @@
+=== Build Pre-requisites ===
+You'll need the "pcsc-lite" package on your machine which runes the "pcscd" daemon, if not already there. It maybe called "pcscd".
+
+To develop against PCSCD, including building tagEventor you will need the packages:
+  * libpcsclite1 - the library
+  * libpcsclite-dev - the header files
+
 == How to make ==
 Type "make" at the command prompt in the source directory.
 You can use "make clean" then "make" to ensure you have a clean build.
 
 You should get appropriate output from the make file and be left with a tagEventor executable object in the ./bin/Debug and ./bin/Release subdirectories.
 
-=== Getting Pre-requisites ===
-You'll need the "pcsc-lite" package on your machine which runes the "pcscd" daemon, if not already there.
-You'll need the "pcsc-lite-dev" package for the header files and library of PCSC-LITE to build tagEventor.
-Explain the build-prerequisites here.....
+How to run
+----------
+Replace "Release" for "Debug" for the release version.
 
-=== Linux Gtk+ / GNOME GUI version ===
-Currently this is build using the Code::Blocks IDE. Open the project in the trunk directory and "build" your selected target. Later this maybe added as an option to the makefile for command line building
+Type "./bin/Debug/tagEventor -h" to see the usage string.
 
-=== Mac OS X command-line version ===
-Open the tagEventor.xcode project in XCode and build it.
+"./bin/Debug/tagEventor" will start it in foreground mode with all the default options, with verbosity level = 0, or zero informational output (errors WILL BE output on STDERR).
 
-== How to run ==
-Type "./bin/Debug/tagEventor -h" at the command prompt in the source directory, this will print the usage string to STDOUT.
-
-"./debug/tagEventor" will start it in foreground mode with all the default options, with verbosity level = 0, or zero informational output (errors WILL BE output on STDERR).
-
-== How to Install ==
-You must have root permissions to install tagEventor on the local machine.
-If you can do this, then type "sudo sh ./install-sh".
+How to Install as a daemon
+--------------------------
+You must be able to run as root to install tagEventor on the local machine.
+If you can do this, then use "sudo ./install-sh".
 
 This will do a number of things:
 
-  # Copy the "tagEventor" binary you build above into /usr/sbin/. Check this has worked and that you can execute it from there with "/usr/sbin/tagEventor"
-  # Create (if needed) the /etc/tagEventor directory, and copy the "generic" script into it.
-  # Copy a GNOME desktop autostartup file into the diretcory required to start tagEventor with each GNOME GUI session. 
-  # Copy the icon files into the system directories.
-  # Copies the "tagEventord" init shell script into /etc/init.d for use in starting as a system daemon. This script can be run manually from here also to start and stop the daemon as init would do. e.g. Use "sudo /etc/init.d/tagEventord start|stop|reload|restart" (one of those four options)
-  # It then creates appropriate links in the different runlevel directories (/etc/rc?.d). Each link points to the same tagEventord script in /etc/init.d. FYI it uses the command "update-rc.d -f tagEventord start 80 2 3 4 5 ." to do this
+1) Copy the "tagEventor" binary you build above into /usr/sbin/
+   -> check this works and you can execute it from there with "/usr/sbin/tagEventor"ç
 
-Now when you restart your system tagEventor should be started as a daemon with verbosity level = 2. 
+2) Create (if needed) the /etc/tagEventor directory, and copy the "generic" script into it.
+
+3) Copies the "tagEventord" init shell script into /etc/init.d for use in starting as a system daemon
+   -> This script can be run manually from here also to start and stop the daemon as init would do
+   -> Use "sudo /etc/init.d/tagEventord start|stop|reload|restart" (one of those four options)
+
+4) It then creates appropriate links in the different runlevel directories (/etc/rc?.d) that each
+   point to the script in /etc/init.d
+   -> FYI it uses the command "update-rc.d -f tagEventord start 80 2 3 4 5 ." to do this
+
+Now when you restart your system tagEventor should be started as a daemon with verbosity level = 2.
 You can check things work by looking in /var/log/syslog for lines with "tagEventor" in them.
 You will also notice a regular (1 second) slight blink of the LED on the reader as it is polled one per second by the daemon.
