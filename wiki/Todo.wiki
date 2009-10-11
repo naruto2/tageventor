@@ -42,7 +42,6 @@ Work is progressing on a GNOME/Gtk+ system tray resident application and "contro
 == Tag read / write ==
   * I *think* that in the Mi-Fare tags used a few bytes can be reprogrammed. So, write a script or program to:-
     * Read the entire contents of the Mi-fare tag memory (see spec document in download section)
-<<<<<<< .mine
     * Write the bytes that can be written, and read them back to verify
 
 See the file TODO.TXT in the /trunk/ source directory for a more up-to-date list of things to do, and ideas for the future.
