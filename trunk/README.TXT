@@ -7,7 +7,13 @@ The wiki documentation list is at http://code.google.com/p/tageventor/wiki/
 
 However, we document a few other things here as this might be the first place you look after downloading the source, and trying to make and run it, if you come across problems.
 
-NOTE that the latest version will probably also be the wiki though!
+NOTE that the latest version will probably be the wiki though!
+
+Getting Pre-requisites
+----------------------
+You'll need the "pcsc-lite" package on your machine which runes the "pcscd" daemon, if not already there.
+You'll need the "pcsc-lite-dev" package for the header files and library of PCSC-LITE to build tagEventor.
+Explain the build-prerequisites here.....
 
 How to make
 -----------
@@ -42,6 +48,6 @@ This will do a number of things:
    point to the script in /etc/init.d
    -> FYI it uses the command "update-rc.d -f tagEventord start 80 2 3 4 5 ." to do this
 
-Now when you restart your system tagEventor should be started as a daemon with verbosity level = 2. 
+Now when you restart your system tagEventor should be started as a daemon with verbosity level = 2.
 You can check things work by looking in /var/log/syslog for lines with "tagEventor" in them.
 You will also notice a regular (1 second) slight blink of the LED on the reader as it is polled one per second by the daemon.

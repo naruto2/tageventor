@@ -191,6 +191,11 @@ parseCommandLine(
       {
          /* 'n' option is for reader number to connect to */
          case 'n':
+/* TODO
+check for the AUTO term before converting to a number!
+this switch could be supplied repeatedly, once for each reader.
+For each case add that reader to the list enabled, even if AUTO is also specified
+the program logic will take notice of Auto, but GUI will also reflect the others */
             *pnumber = atoi(optarg);
             if (*pnumber  < 0)
             {
