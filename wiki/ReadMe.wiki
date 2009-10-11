@@ -1,8 +1,13 @@
 == How to make ==
-=== Linux command line version ===
-Type "make" at the command prompt in the source directory :-)
+Type "make" at the command prompt in the source directory.
+You can use "make clean" then "make" to ensure you have a clean build.
 
-You should get appropriate output from the make file and be left with tagEventor executables in ./bin/Debug/ and ./bin/Release
+You should get appropriate output from the make file and be left with a tagEventor executable object in the ./bin/Debug and ./bin/Release subdirectories.
+
+=== Getting Pre-requisites ===
+You'll need the "pcsc-lite" package on your machine which runes the "pcscd" daemon, if not already there.
+You'll need the "pcsc-lite-dev" package for the header files and library of PCSC-LITE to build tagEventor.
+Explain the build-prerequisites here.....
 
 === Linux Gtk+ / GNOME GUI version ===
 Currently this is build using the Code::Blocks IDE. Open the project in the trunk directory and "build" your selected target. Later this maybe added as an option to the makefile for command line building
@@ -10,15 +15,10 @@ Currently this is build using the Code::Blocks IDE. Open the project in the trun
 === Mac OS X command-line version ===
 Open the tagEventor.xcode project in XCode and build it.
 
-=== Known Build Issues ===
-I continue to have issues with the way the PCSCLite header files include their other internal library header files. They use #include <> for example for wintypes.h, and I think it should be #include "". I modified them to do that and then everything builds no problem. I also think that´s the recommended way to include files inside a library known to be in the same directory. The <> construct is used to tell the compiler to seach in standard system include directories....I´ve mentioned to the developers and will be double checking....
-
-This is reported in the projects issue tracking system as issue id=2
-
 == How to run ==
-Type "./tagEventor -h" at the command prompt in the source directory, this will print the usage string to STDOUT.
+Type "./bin/Debug/tagEventor -h" at the command prompt in the source directory, this will print the usage string to STDOUT.
 
-"./tagEventor" will start it in foreground mode with all the default options, with verbosity level = 0, or zero informational output (errors WILL BE output on STDERR).
+"./debug/tagEventor" will start it in foreground mode with all the default options, with verbosity level = 0, or zero informational output (errors WILL BE output on STDERR).
 
 == How to Install ==
 You must have root permissions to install tagEventor on the local machine.
