@@ -16,9 +16,6 @@
   limitations under the License.
 */
 
-#include <PCSC/wintypes.h>
-#include <PCSC/winscard.h>
-
 /**************************** CONSTANTS ******************************/
 #ifndef TRUE
 #define TRUE 1
@@ -40,10 +37,14 @@
 #define MAX_SAM_ID_SIZE     (30)    /* TODO what is max size? */
 
 /**************************    TYPEDEFS    **************************/
+typedef void    *tReaderManager;
+
+typedef void    *tCardHandle;
+
 typedef struct {
-   SCARDCONTEXT 	hContext;
+   tReaderManager 	hContext;
    int      		number;
-   SCARDHANDLE		hCard;
+   tCardHandle		hCard;
    char     		SAM;
    char     		SAM_serial[MAX_SAM_SERIAL_SIZE];
    char     		SAM_id[MAX_SAM_ID_SIZE];
@@ -52,19 +53,20 @@ typedef struct {
 typedef char	uid[MAX_TAG_UID_SIZE];
 
 typedef struct {
-	uid	            tagUID[MAX_NUM_TAGS];
-    DWORD	        numTags;
+	uid	        tagUID[MAX_NUM_TAGS];
+    int	        numTags;
 } tTagList;
 
 
 /************************ EXTERNAL FUNCTIONS **********************/
-extern LONG readerSetOptions ( int	verbosity,
-                               BOOL	background );
-extern LONG readerConnect( tReader	*pReader );
-extern void readerDisconnect( tReader	*pReader );
-extern LONG getTagList( const tReader	*preader,
-                        tTagList	    *ptagList);
-extern LONG getContactlessStatus( const tReader	*preader );
-extern void logMessage( int		    type,
-                        int		    messageLevel,
-                        const char 	*message);
+extern int              readerSetOptions (  int	            verbosity,
+                                            unsigned char	background );
+extern int              readerManagerConnect( tReaderManager *pManager );
+extern int              readerConnect( tReader	*pReader );
+extern void             readerDisconnect( tReader	*pReader );
+extern int              getTagList( const tReader	*preader,
+                                    tTagList	    *ptagList);
+extern int              getContactlessStatus( const tReader	*preader );
+extern void             logMessage( int		    type,
+                                    int		    messageLevel,
+                                    const char 	*message);
