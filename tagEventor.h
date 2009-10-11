@@ -41,6 +41,7 @@
 #define READER_NUM_2        (1<<3)
 #define READER_NUM_3        (1<<4)
 #define READER_NUM_4        (1<<5)
+#define READER_NUM_DEFAULT  READER_NUM_AUTO
 
 
 /* where to save this type of config stuff???? via GConf or something */

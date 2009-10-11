@@ -23,8 +23,10 @@
 #include <stdarg.h>
 #include <syslog.h>
 
-#include "tagReader.h"
+#include <PCSC/wintypes.h>
+#include <PCSC/winscard.h>
 
+#include "tagReader.h"
 
 /* COMMAND : [Class, Ins, P1, P2, DATA, LEN] */
 /* Direct to card commands start with 'd4', must prepend direct transmit to them*/
@@ -188,9 +190,9 @@ void logMessage( int		type,
 
 
 /**************************** READER SET OPTIONS *********/
-LONG readerSetOptions (
-		int		verbosity,
-		BOOL		background
+int readerSetOptions (
+		int		        verbosity,
+		unsigned char   background
 		 )
 
 {
@@ -210,7 +212,7 @@ LONG readerSetOptions (
 
 /**************************** APDU SEND ************************/
 static LONG apduSend (
-                SCARDHANDLE   		hCard,
+                    tCardHandle hCard,
 		const BYTE    	        *apdu,
 		DWORD			apduLength,
 		BYTE			*pbRecvBuffer,
@@ -249,7 +251,7 @@ static LONG apduSend (
         /* remember the size of the input buffer passed to us, so we don't exceed */
 	rBufferMax = *dwRecvLength;
 
-	rv = SCardTransmit(hCard,
+	rv = SCardTransmit((SCARDHANDLE) hCard,
                            pioSendPci, pbSendBuffer, dwSendLength,
                            &pioRecvPci, pbRecvBuffer, dwRecvLength);
         PCSC_ERROR(rv, "SCardTransmit");
@@ -286,7 +288,7 @@ static LONG apduSend (
               /* specify the maximum size of the buffer */
 	      *dwRecvLength = rBufferMax;
 
-              rv = SCardTransmit(hCard, pioSendPci, pbSendBuffer,
+              rv = SCardTransmit((SCARDCONTEXT)hCard, pioSendPci, pbSendBuffer,
 	                      dwSendLength, &pioRecvPci, pbRecvBuffer, &rBufferMax);
               PCSC_ERROR(rv, "SCardTransmit");
               sprintf(messageString, "Received: ");
@@ -305,8 +307,34 @@ static LONG apduSend (
 /**************************** APDU SEND ************************/
 
 
+/************************* READER MANAGER CONNECT **************/
+/* This is added to make things a bit more efficient when you  */
+/* are using multiple readers connected to one reader manager  */
+/* I have left the readerConnect() function as is for back-    */
+/* -wards compatibility. If you use this function then set the */
+/* hCOntext element of each tReader structure to this value and*/
+/* then they will all use the same context and avoid overhead  */
+int
+readerManagerConnect( tReaderManager *pManager )
+{
+    LONG 		    rv;
+
+    rv = SCardEstablishContext(SCARD_SCOPE_SYSTEM, NULL, NULL, (LPSCARDCONTEXT) pManager );
+    if (rv != SCARD_S_SUCCESS)
+    {
+        logMessage(LOG_ERR, 1, "Failed to connect to pcscd server");
+        *pManager = NULL;
+    }
+    else
+        logMessage(LOG_INFO, 2, "Successfully connected to pcscd server");
+
+    return (rv);
+
+}
+/************************* READER MANAGER CONNECT **************/
+
 /************************* READER CONNECT **********************/
-LONG readerConnect (
+int readerConnect (
                   tReader	*pReader
                  )
 {
@@ -325,35 +353,31 @@ LONG readerConnect (
    BOOL			readerSupported = FALSE;
    int			i;
 
+   /* if not already connected to daemon that manager readers */
+   if ( pReader->hContext == NULL )
+   { /* then try and connect to the pcscd server */
+       rv = readerManagerConnect( &(pReader->hContext) );
+
+       if ( rv != SCARD_S_SUCCESS )
+        return ( rv );
+   }
+
    /* set strings to empty until we find out otherwise */
    strcpy(pReader->SAM_serial, "NoSAM");
    strcpy(pReader->SAM_id, "NoSAM");
 
-   /* try and connect to the pcscd server if not already connected */
-   if (!pReader->hContext)
-   {
-      rv = SCardEstablishContext(SCARD_SCOPE_SYSTEM, NULL, NULL,
-                                 &(pReader->hContext));
-      PCSC_ERROR(rv, "SCardEstablishContext");
-      if (rv != SCARD_S_SUCCESS)
-         return (rv);
-      logMessage(LOG_INFO, 2, "Successfully connected to pcscd server");
-   }
-
    /* Retrieve the available readers list.
     * 1. Call with a null buffer to get the number of bytes to allocate
     * 2. malloc the necessary storage */
-   rv = SCardListReaders(pReader->hContext, NULL, NULL, &dwReaders);
-   PCSC_ERROR(rv, "SCardListReaders");
+   rv = SCardListReaders( (SCARDCONTEXT) (pReader->hContext), NULL, NULL, &dwReaders);
    if (rv != SCARD_S_SUCCESS)
-      return (rv);
+      return ( rv );
 
    /* malloc enough memory for dwReader string */
    mszReaders = malloc(sizeof(char)*dwReaders);
 
    /* now get the list into the mszReaders array */
-   rv = SCardListReaders(pReader->hContext, NULL, mszReaders, &dwReaders);
-   PCSC_ERROR(rv, "SCardListReaders");
+   rv = SCardListReaders( (SCARDCONTEXT) (pReader->hContext), NULL, mszReaders, &dwReaders);
    if (rv != SCARD_S_SUCCESS)
       return (rv);
 
@@ -402,10 +426,9 @@ LONG readerConnect (
    }
 
    dwActiveProtocol = -1;
-   rv = SCardConnect(pReader->hContext, readers[pReader->number],
+   rv = SCardConnect( (SCARDCONTEXT) (pReader->hContext), readers[pReader->number],
                      SCARD_SHARE_SHARED, SCARD_PROTOCOL_T0 ,
-                     &(pReader->hCard), &dwActiveProtocol);
-   PCSC_ERROR(rv, "SCardConnect");
+                     (LPSCARDHANDLE) &(pReader->hCard), &dwActiveProtocol);
    if (rv != SCARD_S_SUCCESS)
       return (rv);
    sprintf(messageString, "Connected to reader: %d", pReader->number);
@@ -444,9 +467,8 @@ LONG readerConnect (
    /* Get ATR so we can tell if there is a SAM in the reader */
    dwAtrLen = sizeof(pbAtr);
    dwReaderLen = sizeof(pbReader);
-   rv = SCardStatus(pReader->hCard, pbReader, &dwReaderLen, &dwState, &dwProt,
+   rv = SCardStatus( (SCARDHANDLE) (pReader->hCard), pbReader, &dwReaderLen, &dwState, &dwProt,
                     pbAtr, &dwAtrLen);
-   PCSC_ERROR(rv, "SCardStatus");
    sprintf(messageString, "ATR: ");
    sPrintBufferHex( (messageString + strlen("ATR: ")), dwAtrLen, pbAtr);
    logMessage(LOG_INFO, 3, messageString);
@@ -503,8 +525,8 @@ void readerDisconnect(
 
    if (pReader->hCard)
    {
-      SCardDisconnect(pReader->hCard, SCARD_UNPOWER_CARD);
-      pReader->hCard = ((SCARDHANDLE)NULL);
+      SCardDisconnect( (SCARDHANDLE) (pReader->hCard), SCARD_UNPOWER_CARD);
+      pReader->hCard = NULL;
       PCSC_ERROR(rv, "SCardDisconnect");
    }
 
@@ -512,8 +534,8 @@ void readerDisconnect(
 
    if (pReader->hContext);
    {
-      SCardReleaseContext(pReader->hContext);
-      pReader->hContext = ((SCARDCONTEXT)NULL);
+      SCardReleaseContext( (SCARDCONTEXT) (pReader->hContext));
+      pReader->hContext = NULL;
       PCSC_ERROR(rv, "SCardReleaseContext");
    }
 
@@ -535,7 +557,7 @@ void readerDisconnect(
 
 /************************ GET CONTACTLESS STATUS *****************/
 /* TODO : this function hasn't really been tested                */
-LONG getContactlessStatus(
+int getContactlessStatus(
                           const tReader	*preader
                          )
 {
@@ -569,7 +591,7 @@ LONG getContactlessStatus(
 
 
 /************************ GET TAG LIST ***************************/
-LONG getTagList(
+int getTagList(
 		const tReader	*preader,
 		tTagList	*ptagList
                )

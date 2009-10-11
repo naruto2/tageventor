@@ -28,6 +28,7 @@
 #include <sys/stat.h>  /* for umask() */
 #include <limits.h>
 
+#include <PCSC/winscard.h>
 #include "tagReader.h"
 #include "tagEventor.h"
 #include "systemTray.h"
@@ -51,9 +52,9 @@
    }
 
 #ifdef BUILD_SYSTEM_TRAY
-#define USAGE_STRING "Usage: %s <options>\n\t-n <reader number>   : default = 0\n\t-v <verbosity level> : default = 0 (silent), max = 3 \n\t-d start | stop | tray (daemon options: default = foreground)\n\t-p <msecs> : tag polling delay, min = %d, default = %d, max = %d\n\t-h : print this message\n"
+#define USAGE_STRING "Usage: %s <options>\n\t-n <reader number>   : default = AUTO\n\t-v <verbosity level> : default = 0 (silent), max = 3 \n\t-d start | stop | tray (daemon options: default = foreground)\n\t-p <msecs> : tag polling delay, min = %d, default = %d, max = %d\n\t-h : print this message\n"
 #else
-#define USAGE_STRING "Usage: %s <options>\n\t-n <reader number>   : default = 0\n\t-v <verbosity level> : default = 0 (silent), max = 3 \n\t-d start | stop (daemon options: default = foreground)\n\t-p <msecs> : tag polling delay, min = %d, default = %d, max = %d\n\t-h : print this message\n"
+#define USAGE_STRING "Usage: %s <options>\n\t-n <reader number>   : default = AUTO\n\t-v <verbosity level> : default = 0 (silent), max = 3 \n\t-d start | stop (daemon options: default = foreground)\n\t-p <msecs> : tag polling delay, min = %d, default = %d, max = %d\n\t-h : print this message\n"
 #endif
 /*************    TYPEDEFS TO THIS FILE     **********************/
 typedef enum { FOREGROUND, START_DAEMON, STOP_DAEMON, SYSTEM_TRAY } tRunOptions;
@@ -69,13 +70,13 @@ static    tPanelEntry defaultCommands[NUM_DEFAULT_COMMANDS] = {
         };
 
 /* This is needed by handleSignal to clean-up, so can't be local :-( */
-static  tReader     reader;
-static  int         readerSetting; /* not used just yet */
-static  int		    lockFile = -1;
-static  char		lockFilename[PATH_MAX];
-static  BOOL		runningAsDaemon = FALSE;
-static  int         numTagEntries = 0;
-static  tPanelEntry *tagEntryArray;
+static  tReader         readers[MAX_NUM_READERS];
+static  int             readerSetting = 0; /* no readers, not even AUTO to start with */
+static  int		        lockFile = -1;
+static  char		    lockFilename[PATH_MAX];
+static  unsigned char	runningAsDaemon = FALSE;
+static  int             numTagEntries = 0;
+static  tPanelEntry     *tagEntryArray;
 
 
 /* strings used for tag events, for text output and name of scipts */
@@ -87,8 +88,7 @@ static tTagList		tagList1, tagList2;
 
 /* make each pointer point to an allocated tag list that can be filled */
 static tTagList		*pnewTagList = &tagList1, *ppreviousTagList = &tagList2;
-static BOOL         connected = FALSE; /* at the start, we are not connected */
-static BOOL         tagListChanged = FALSE;
+static unsigned char tagListChanged = FALSE;
 
 
 /* utility function for other modules that returns the current setting for the reader number bitmap */
@@ -100,7 +100,7 @@ readerSettingGet(
     return ( readerSetting );
 }
 
-/* utility function for settings modules that sets the state of current setting for the reader number */
+/* utility function for settings modules that sets the state of current setting for the reader number bitmap */
 int
 readerSettingSet(
                 int             readerSettingBitmap
@@ -112,6 +112,17 @@ readerSettingSet(
     return ( readerSetting );
 
 }
+
+/* Utility function to add one specific reader number to the bitmap */
+static void
+readerNumberAdd( int number )
+{
+    /* bit 0 of the bitmap is reserved for AUTO */
+    /* so OR in the bit shifted an extra 1   number 0 = bit 1 etc */
+    readerSetting |= ( 1 << (number +1) );
+
+}
+
 
 int pollDelaySet(
                 int     newPollDelay
@@ -172,16 +183,15 @@ static void
 parseCommandLine(
                 int 		    argc,
                 char 		    *argv[],
-                int		        *pnumber,
                 tRunOptions     *pRunOptions
                 )
 {
 
-   BOOL		parseError = FALSE;
+   unsigned char parseError = FALSE;
    int		option, newDelay, newVerbosity;
+   int      number;
 
    /* Set default values */
-   *pnumber = 0;
    verbosityLevel = VERBOSITY_DEFAULT;
    *pRunOptions = FOREGROUND;
    pollDelayms = POLL_DELAY_MILLI_SECONDS_DEFAULT;
@@ -189,19 +199,26 @@ parseCommandLine(
    while ( ((option = getopt(argc, argv, "n:v:d:p:h")) != EOF) && (!parseError) )
       switch (option)
       {
-         /* 'n' option is for reader number to connect to */
+         /* 'n' option is for reader number(s) to connect to */
+         /* this switch could be supplied repeatedly, once for each reader. */
+         /* check for the AUTO term before converting to a number! */
+        /* For each case add that reader to the list enabled, even if AUTO is also specified */
+        /* the program logic will take notice of Auto, but GUI will also reflect the others */
          case 'n':
-/* TODO
-check for the AUTO term before converting to a number!
-this switch could be supplied repeatedly, once for each reader.
-For each case add that reader to the list enabled, even if AUTO is also specified
-the program logic will take notice of Auto, but GUI will also reflect the others */
-            *pnumber = atoi(optarg);
-            if (*pnumber  < 0)
+            if ( strcmp( optarg, "AUTO" ) == strlen( "AUTO" ) )
             {
-               *pnumber = 0;
-               fprintf(stderr, "Reader number must be greater or equal to 0\n");
-               fprintf(stderr, "Reader number has been forced to %d\n", *pnumber);
+                readerSetting |= READER_NUM_DEFAULT;
+            }
+            else
+            {
+                number = atoi(optarg);
+                if ( number  < 0)
+                {
+                    fprintf(stderr, "Reader number must be AUTO or a valid number between 0 and %d\n", MAX_NUM_READERS );
+                    fprintf(stderr, "Reader number argument '%s' ignored", optarg);
+                }
+                else
+                    readerNumberAdd( number );
             }
             break;
 
@@ -260,6 +277,10 @@ the program logic will take notice of Auto, but GUI will also reflect the others
       exit( EXIT_FAILURE );
    }
 
+    /* if no reader numbers were specified and AUTO neither, then set default */
+    if ( readerSetting == 0 )
+        readerSetting = READER_NUM_DEFAULT;
+
 }
 /************************ PARSE COMMAND LINE OPTIONS ********/
 
@@ -278,14 +299,14 @@ handleSignal(
       break;
 
       case SIGHUP: /* restart the server using  "kill -1" at the command shell */
-         readerDisconnect(&reader);
-         readerConnect(&reader);
+         readerDisconnect( &(readers[0]) );
+         readerConnect( &(readers[0]) );
          logMessage(LOG_INFO, 1, "Hangup signal received - disconnected and reconnected");
       break;
 
       case SIGINT: /* kill -2 or Control-C */
       case SIGTERM:/* "kill -15" or "kill" */
-         readerDisconnect(&reader);
+         readerDisconnect(&(readers[0]) );
          logMessage( LOG_INFO, 1, "SIGTERM or SIGINT received, exiting gracefully");
          if ( runningAsDaemon )
          {
@@ -737,46 +758,42 @@ static int
 tagListCheck( void *updateSystemTray )
 {
     tTagList        *temp;
-    LONG 		    rv;
-    BOOL			found;
+    int  		    rv;
+    unsigned char	found;
     uid             ID;
     int			    i, j;
     char			messageString[MAX_LOG_MESSAGE];
 
-    if ( connected == FALSE )
+    /* If not connected to PCSCD, then try and connect */
+    if ( readers[0].hContext == NULL )
     {
-        if ( readerConnect(&reader) == SCARD_S_SUCCESS )
-        {
-            connected = TRUE;
+        if ( readerManagerConnect( &(readers[0].hContext) ) != SCARD_S_SUCCESS )
+            sprintf( messageString, "Problems connecting to pcscd daemon, check it is running using 'ps -ef' command");
+    }
 
-            /* get initial state to prime the pump for the later comparison */
-            getTagList(&reader, ppreviousTagList);
+    /* if we are now connected to the pcscd manager, but not reader, then try and connect to the reader */
+    if  ( ( readers[0].hContext != NULL ) & ( readers[0].hCard == NULL ) )
+    {
+        if ( readerConnect( &(readers[0]) ) == SCARD_S_SUCCESS )
+        {
+            /* get initial list of tags on first connect to prime the pump for the later comparisons */
+            rv = getTagList( &(readers[0]), ppreviousTagList);
         }
         else
-        {
-            sprintf( messageString, "Could not connect to tag reader." );
-        }
-    } /* if ( connected == FALSE ) */
+            sprintf( messageString, "Connected to pcscd, problems connecting to reader %d", readers[0].number);
+    }
 
-    /* we may have just connected, or been connected from a previous call */
-    if ( connected == TRUE )
+    /* if we are connected to the pcscd manager, AND the reader */
+    if ( ( readers[0].hContext != NULL ) && ( readers[0].hCard != NULL ) )
     {
         /* get the list of tags on reader */
-        rv = getTagList(&reader, pnewTagList);
+        rv = getTagList( &(readers[0]), pnewTagList);
 
         if (rv != SCARD_S_SUCCESS)
-        {
-            /* reading tags is not working */
-            connected = FALSE;
-
-            sprintf( messageString, "Connected to reader, problems reading.");
-
-            /* disconnect and let it re-connect next time around */
-            readerDisconnect( &reader );
-        }
+            sprintf( messageString, "Connected to pcscd, problems reading from reader number %d.", readers[0].number );
         else
         {
-            sprintf( messageString, "Connected to reader %d, %d tags:", reader.number, (int)(pnewTagList->numTags) );
+            sprintf( messageString, "Connected to pcsc, reader %d, %d tags:", readers[0].number, (int)(pnewTagList->numTags) );
             for (i=0; i < pnewTagList->numTags; i++)
             {
                 sprintf( ID, " %s", pnewTagList->tagUID[i]);
@@ -796,7 +813,7 @@ tagListCheck( void *updateSystemTray )
                 if (!found)
                 {
                     tagListChanged = TRUE;
-                    tagEventDispatch(TAG_OUT, ppreviousTagList->tagUID[i], &reader);
+                    tagEventDispatch(TAG_OUT, ppreviousTagList->tagUID[i], &(readers[0]) );
                 }
             }
 
@@ -812,7 +829,7 @@ tagListCheck( void *updateSystemTray )
                 if (!found)
                 {
                     tagListChanged = TRUE;
-                    tagEventDispatch(TAG_IN, pnewTagList->tagUID[i], &reader);
+                    tagEventDispatch(TAG_IN, pnewTagList->tagUID[i], &(readers[0]) );
                 }
             }
 
@@ -821,17 +838,14 @@ tagListCheck( void *updateSystemTray )
             SWAP(pnewTagList, ppreviousTagList);
             tagListChanged = FALSE;
         } /* if getTagList() was successful */
-    } /* if ( connected == TRUE ) */
+    }
 
 #ifdef BUILD_SYSTEM_TRAY
     if ( updateSystemTray )
-        systemTraySetStatus( connected, messageString );
+        systemTraySetStatus( ( (readers[0].hContext != NULL) & (readers[0].hCard != NULL) ), messageString );
 #endif
 
-    if ( connected )
-        logMessage(LOG_INFO, 2, messageString);
-    else
-        logMessage(LOG_WARNING, 0, messageString);
+    logMessage(LOG_WARNING, 0, messageString);
 
     /* keep calling me */
     return( TRUE );
@@ -844,13 +858,17 @@ int main(
         )
 {
    tRunOptions	runOptions;
+   int          i;
 
    /* some help to make sure we close whatś needed, not more */
-   reader.hContext = ((SCARDCONTEXT)NULL);
-   reader.hCard = ((SCARDHANDLE)NULL);
-   reader.number = 0;
+   for ( i = 0; i < MAX_NUM_READERS; i++ )
+   {
+        readers[i].hContext = NULL;
+        readers[i].hCard = NULL;
+        readers[i].number = i;
+   }
 
-   parseCommandLine(argc, argv, &(reader.number), &runOptions );
+   parseCommandLine(argc, argv, &runOptions );
 
    /* set-up signal handlers */
    signal(SIGTERM,  handleSignal); /* software termination signal from kill */
@@ -870,11 +888,11 @@ int main(
    {
       case START_DAEMON:
          /* will fork a daemon and return if successful */
-         daemonize(reader.number);
+         daemonize( readers[0].number );
          break;
       case STOP_DAEMON:
          /* find the running daemon, kill it and exit */
-         stopDaemon(reader.number);
+         stopDaemon( readers[0].number);
          exit( 0 );
          break;
       case FOREGROUND:
@@ -895,7 +913,8 @@ int main(
 
    /* be a good citizen and clean-up on our way out System Tray version might get this far */
    /* the other versions will all exit via a signal handler elsewhere */
-   readerDisconnect(&reader);
+   for ( i = 0; i < MAX_NUM_READERS; i++ )
+    readerDisconnect( &(readers[i]) );
 
    return ( 0 );
 
