@@ -67,6 +67,11 @@
 			<Option target="Debug" />
 			<Option target="Release" />
 		</Unit>
+		<Unit filename="rules.c">
+			<Option compilerVar="CC" />
+			<Option target="Debug" />
+			<Option target="Release" />
+		</Unit>
 		<Unit filename="rulesEditor.c">
 			<Option compilerVar="CC" />
 			<Option target="Debug" />
@@ -85,6 +90,11 @@
 			<Option target="Debug" />
 			<Option target="Release" />
 		</Unit>
+		<Unit filename="rulesTable.c">
+			<Option compilerVar="CC" />
+			<Option target="Debug" />
+			<Option target="Release" />
+		</Unit>
 		<Unit filename="settingsDialog.c">
 			<Option compilerVar="CC" />
 			<Option target="Debug" />
@@ -94,6 +104,7 @@
 			<Option target="Debug" />
 			<Option target="Release" />
 		</Unit>
+		<Unit filename="stringConstants.h" />
 		<Unit filename="systemTray.c">
 			<Option compilerVar="CC" />
 			<Option target="Debug" />
