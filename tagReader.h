@@ -62,6 +62,8 @@ typedef struct {
 extern int              readerSetOptions (  int	            verbosity,
                                             unsigned char	background );
 extern int              readerManagerConnect( tReaderManager *pManager );
+extern int              readerManagerDisconnect( tReaderManager *pManager );
+
 extern int              readerConnect( tReader	*pReader );
 extern void             readerDisconnect( tReader	*pReader );
 extern int              getTagList( const tReader	*preader,
