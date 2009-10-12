@@ -223,7 +223,7 @@ enableChange(
 
     /* get the button state and put into tagEntryArray */
 /* TODO check that casting this is correct, and it's not the destination of the pointer */
-    tagTableEntryEnable( (int)entryIndex, gtk_toggle_button_get_active( (GtkToggleButton *)widget) );
+    rulesTableEntryEnable( (int)entryIndex, gtk_toggle_button_get_active( (GtkToggleButton *)widget) );
 
     /* change means a save is now needed */
     setSavePending( TRUE );
@@ -236,7 +236,7 @@ applyChanges( void )
 
     /* if all is OK, then modify the table we use to process events */
     /* save the changes */
-    tagTableSave();
+    rulesTableSave();
 
     /* now the table used to process events matches what's in the UI so we are in sync */
     /* change means a save is now needed */
@@ -254,7 +254,7 @@ tableAddRow( GtkTable *pTable, int i )
     const tPanelEntry   *pTagEntry;
 
     /* get a pointer to this entry in the table */
-    pTagEntry = tagEntryGet( i );
+    pTagEntry = rulesTableEntryGet( i );
 
     /* description entry of upto 80 characters which can benefit from expanding horizontally*/
     description = gtk_entry_new();
@@ -383,7 +383,7 @@ addTagEntry(
 {
     int i, numEntries;
 
-    numEntries = tagTableAddEntry();
+    numEntries = rulesTableAddEntry();
 
     /* resize the table widget - with an extra row for the header */
     gtk_table_resize( (GtkTable *)pTable, (numEntries + 1), NUM_COLUMNS );
@@ -470,7 +470,7 @@ buildrulesEditor ( void  )
     /* This packs the vbox into the window (a gtk container). */
     gtk_container_add (GTK_CONTAINER (mainWindow), vbox);
 
-    numEntries = tagTableNumber( );
+    numEntries = rulesTableNumber( );
 
     /******************************* Table ******************************************/
     /* create the scolled window that will hold the viewport and table */

@@ -16,6 +16,9 @@
   limitations under the License.
 */
 
+#ifndef TAG_READER_INCLUDED
+#define TAG_READER_INCLUDED
+
 /**************************** CONSTANTS ******************************/
 #ifndef TRUE
 #define TRUE 1
@@ -72,3 +75,5 @@ extern int              getContactlessStatus( const tReader	*preader );
 extern void             logMessage( int		    type,
                                     int		    messageLevel,
                                     const char 	*message);
+
+#endif

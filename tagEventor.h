@@ -16,6 +16,13 @@
   limitations under the License.
 */
 
+#include "tagReader.h"
+
+#ifndef TRUE
+#define TRUE 1
+#define FALSE 0
+#endif
+
 #define MAX_DESCRIPTION_LENGTH  (80)
 
 #define PROGRAM_NAME    "tagEventor"
@@ -43,6 +50,12 @@
 #define READER_NUM_5        (1<<6)
 #define READER_NUM_DEFAULT  READER_NUM_AUTO
 
+/* different options for matching script names */
+#define TAG_ID_MATCH		(1)
+#define GENERIC_MATCH		(2)
+#define SAM_ID_MATCH	    (3)
+#define SAM_SERIAL_MATCH    (4)
+#define READER_NUM_MATCH	(5)
 
 /* where to save this type of config stuff???? via GConf or something */
 typedef struct {
@@ -53,19 +66,6 @@ typedef struct {
 	char		enabled;
 } tPanelEntry;
 
-/* different options for matching script names */
-#define TAG_ID_MATCH		(1)
-#define GENERIC_MATCH		(2)
-#define SAM_ID_MATCH	    (3)
-#define SAM_SERIAL_MATCH    (4)
-#define READER_NUM_MATCH	(5)
-
-extern int  tagTableAddEntry( void );
-extern void tagTableSave( void );
-extern int  tagTableNumber( void );
-extern void tagTableEntryEnable( int index, char enable );
-extern const tPanelEntry *tagEntryGet( int index );
-
 extern int  readerSettingGet( void );
 extern int  readerSettingSet( int bitmap );
 
@@ -74,3 +74,18 @@ extern int  pollDelayGet( void );
 
 extern int  verbosityLevelSet( int     newLevel );
 extern int  verbosityLevelGet( void );
+
+
+/*************** RULES TABLE *************/
+extern int  rulesTableAddEntry( void );
+extern void rulesTableSave( void );
+extern int  rulesTableNumber( void );
+extern int  rulesTableRead( void );
+extern void rulesTableEntryEnable( int index, char enable );
+extern const tPanelEntry *rulesTableEntryGet( int index );
+extern void  rulesTableEventDispatch(
+                int	  	        eventType,
+                uid       	    tagUID,
+                const tReader	*preader
+                );
+
