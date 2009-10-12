@@ -10,8 +10,6 @@ Maybe pop-up an error when another is detected, with it's PID
 
   * Make the Icon AMBER if it can connect to PCSCD but no readers found, red if cannot connect to PCSCD, and green if connected and a reader found.
 
-  * Make the default setting for reader number to be AUTO, not fixed at zero, and then to search for a valid reader. Extend the code to search for, connect to, and then use upto five simultaneously connected readers. Use the bitmap set from the Settings UI. Change command line to enable AUTO.
-
   * Add the regexp matching of the tagID inside tagEventDispatch()
 
   * Write some text for the rules Editor help dialog and have it display it neatly, maybe with links to the wiki help pages or other sources.
