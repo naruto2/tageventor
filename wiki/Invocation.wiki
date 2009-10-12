@@ -1,5 +1,5 @@
 Usage: tagEventor *options*
-  * -n *reader number*   : default = 0
+  * -n *reader number*   : default = AUTO, min = 0, max = 4.
   * -v *verbosity level* : default = 0 (silent), max = 3 
   * -d start | stop : start or stop daemon, default = foreground
   * -d start | stop | tray: start or stop daemon, start system tray icon, default = foreground - This is only available if the Gtk+ GUI version was built 
@@ -10,7 +10,7 @@ When building the GUI version (for Gtk) an additional option is added to the -d 
 
 *NOTE: To start the daemon you will need permission for /etc/tagEventor and hence you will probably need to start it as root, or with the "sudo" command!*
 
-  * -n reader number: this is the number of the reader connected to the pcscd that manages the smart card resources. Default of 0 is chosen.
+  * -n reader number: this is the number of the reader connected to the pcscd that manages the smart card resources. Default of AUTO is chosen. Note that this switch can be used many times to specify a number of readers, as well as AUTO. If AUTO is specified it will take priority over the other readers enabled. But the readers specified are remembered and the Settings GUI (Gtk/GNOME version) can be used to toggle them, and untoggle AUTO.
 
   * -v verbosity level: sets the verbosity of output. Messages are output if the verbosity level meets or exceed the level of the message. i.e. 0 is no output, 3 is the maximum.
 
