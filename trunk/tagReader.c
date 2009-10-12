@@ -83,6 +83,11 @@
 /* Error codes from Get Status APDU */
 #define GET_STATUS_NO_ERROR 0x00
 
+/**********************    STRINGS ****************************/
+#define TAGREADER_STRING_PCSCD_OK              "Successfully connected to pcscd server"
+#define TAGREADER_STRING_PCSCD_NO              "Failed to connect to pcscd server"
+
+
 /**********************    CONSTANT ****************************/
 /* See API_ACR122.pdf from ACS */
 /*                  CLS  INS  P1   P2   Lc             Data In */
@@ -318,8 +323,8 @@ static LONG apduSend (
 /*************************** READERS ENUMERATE *****************/
 static int
 readersEnumerate(
-                tReaderManager pManager,
-                int             *pNumberFound
+                const tReaderManager    manager,
+                int                     *pNumberFound
                 )
 {
 
@@ -328,7 +333,7 @@ readersEnumerate(
     char 		    *ptr;
 
     /* Call with a null buffer to get the number of bytes to allocate */
-    rv = SCardListReaders( (SCARDCONTEXT)pManager, NULL, NULL, &dwReaders);
+    rv = SCardListReaders( (SCARDCONTEXT)manager, NULL, NULL, &dwReaders);
     if (rv != SCARD_S_SUCCESS)
     {
         PCSC_ERROR(rv, "SCardListReaders");
@@ -343,7 +348,7 @@ readersEnumerate(
     mszReaders = malloc(sizeof(char)*dwReaders);
 
     /* now get the list into the mszReaders array */
-    rv = SCardListReaders( (SCARDCONTEXT)pManager, NULL, mszReaders, &dwReaders);
+    rv = SCardListReaders( (SCARDCONTEXT)manager, NULL, mszReaders, &dwReaders);
     if (rv != SCARD_S_SUCCESS)
     {
         PCSC_ERROR(rv, "SCardListReaders");
@@ -409,14 +414,14 @@ readerManagerConnect( tReaderManager *pManager )
     if (rv != SCARD_S_SUCCESS)
     {
         PCSC_ERROR(rv, "SCardEstablishContext");
-        logMessage(LOG_ERR, 1, "Failed to connect to pcscd server");
+        logMessage( LOG_ERR, 1, TAGREADER_STRING_PCSCD_NO );
         *pManager = NULL;
         return( rv );
     }
 
-    logMessage(LOG_INFO, 2, "Successfully connected to pcscd server");
+    logMessage( LOG_INFO, 2, TAGREADER_STRING_PCSCD_OK );
 
-    rv = readersEnumerate( pManager, &nbReaders );
+    rv = readersEnumerate( *pManager, &nbReaders );
 
     return (rv);
 
@@ -429,11 +434,11 @@ readerManagerDisconnect( tReaderManager *pManager )
 {
     LONG 		    rv;
 
-    if ( pManager );
+    if ( *pManager );
     {
         logMessage(LOG_INFO, 2, "Disconnecting from pcscd server");
 
-        rv = SCardReleaseContext( (SCARDCONTEXT) (pManager));
+        rv = SCardReleaseContext( (SCARDCONTEXT) *pManager);
         if ( rv != SCARD_S_SUCCESS )
             PCSC_ERROR(rv, "SCardReleaseContext");
 
@@ -454,6 +459,9 @@ readerManagerDisconnect( tReaderManager *pManager )
         }
     }
 
+    /* now it should be NULL either way */
+    *pManager = NULL;
+
     return( rv );
 }
 /************************* READER MANAGER DISCONNECT ***********/
@@ -461,7 +469,8 @@ readerManagerDisconnect( tReaderManager *pManager )
 
 /************************* READER CONNECT **********************/
 int readerConnect (
-                  tReader	*pReader
+                    tReaderManager  *pManager,
+                    tReader	        *pReader
                  )
 {
    LONG 		rv;
@@ -477,9 +486,9 @@ int readerConnect (
    int			i;
 
    /* if not already connected to daemon that manager readers */
-   if ( pReader->hContext == NULL )
+   if ( *pManager == NULL )
    { /* then try and connect to the pcscd server */
-       rv = readerManagerConnect( &(pReader->hContext) );
+       rv = readerManagerConnect( pManager );
 
        if ( rv != SCARD_S_SUCCESS )
         return ( rv );
@@ -487,7 +496,7 @@ int readerConnect (
    else
    {
        /* re-enumerate the readers in the system as it may have changed */
-       rv = readersEnumerate( pReader->hContext, &nbReaders );
+       rv = readersEnumerate( *pManager, &nbReaders );
        if ( rv != SCARD_S_SUCCESS )
           return( rv );
    }
@@ -511,7 +520,7 @@ int readerConnect (
    strcpy(pReader->SAM_id, "NoSAM");
 
    dwActiveProtocol = -1;
-   rv = SCardConnect( (SCARDCONTEXT) (pReader->hContext), readers[pReader->number],
+   rv = SCardConnect( (SCARDCONTEXT)*pManager, readers[pReader->number],
                      SCARD_SHARE_SHARED, SCARD_PROTOCOL_T0 ,
                      (LPSCARDHANDLE) &(pReader->hCard), &dwActiveProtocol);
    if (rv != SCARD_S_SUCCESS)

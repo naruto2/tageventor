@@ -16,9 +16,9 @@
   limitations under the License.
 */
 
-#define TAGEVENTOR_STRING_PCSCD_OK_READER_NOT    "Connected to pcscd.|Problems connecting to reader %d"
-#define TAGEVENTOR_STRING_PCSCD_PROBLEM          "Problems connecting to pcscd daemon, check it is running using 'ps -ef' command"
-#define TAGEVENTOR_STRING_CONNECTED_READER_TAGS  "Connected to pcscd.\nReader %d, %d tags:"
+#define TAGEVENTOR_STRING_PCSCD_OK_READER_NOT   "Connected to pcscd.\nProblems connecting to reader %d"
+#define TAGEVENTOR_STRING_PCSCD_PROBLEM         "Problems connecting to pcscd daemon, check it is running using 'ps -ef' command"
+#define TAGEVENTOR_STRING_CONNECTED_READER_TAGS "Connected to pcscd.\nReader %d, %d tags:"
 
 #ifdef BUILD_SYSTEM_TRAY
 #define TAGEVENTOR_STRING_USAGE "Usage: %s <options>\n\t-n <reader number>   : default = AUTO\n\t-v <verbosity level> : default = 0 (silent), max = 3 \n\t-d start | stop | tray (daemon options: default = foreground)\n\t-p <msecs> : tag polling delay, min = %d, default = %d, max = %d\n\t-h : print this message\n"
