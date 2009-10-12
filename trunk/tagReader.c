@@ -124,6 +124,10 @@ static const SCARD_IO_REQUEST 	*pioSendPci = SCARD_PCI_T0;
 
 static         char		messageString[MAX_LOG_MESSAGE];
 
+/* TODO move this into the hContext for the manager... */
+static int              nbReaders;
+
+
 /*******************   MACROS ************************************/
 #define sPrintBufferHex(string, num, array)\
         {\
@@ -133,20 +137,24 @@ static         char		messageString[MAX_LOG_MESSAGE];
         string[num*2] = '\0';\
         }
 
+#ifdef DEBUG
 #define PCSC_ERROR(rv, text) \
 if (rv != SCARD_S_SUCCESS) \
 { \
    sprintf(messageString, "%s: %s (0x%lX)", text, pcsc_stringify_error(rv), rv); \
    logMessage( LOG_ERR, 0, messageString);\
-}\
+}
+#else
+#define PCSC_ERROR(rv, text)
+#endif
 
 
 /**********    STATIC VARIABLES TO THIS FILE     ***************/
 static  char 		pbReader[MAX_READERNAME] = "";
 static  LPSTR 		mszReaders = NULL;
 static  char 		**readers = NULL;
-static  int		verbosityLevel = 0;
-static  BOOL            runningInBackground = FALSE;
+static  int		    verbosityLevel = 0;
+static  BOOL        runningInBackground = FALSE;
 
 /**************************** LOG MESSAGE************************/
 /* type = LOG_WARNING (something unexpected, not a big problem) */
@@ -307,6 +315,84 @@ static LONG apduSend (
 /**************************** APDU SEND ************************/
 
 
+/*************************** READERS ENUMERATE *****************/
+static int
+readersEnumerate(
+                tReaderManager pManager,
+                int             *pNumberFound
+                )
+{
+
+    int             rv;
+    DWORD 		    dwReaders;
+    char 		    *ptr;
+
+    /* Call with a null buffer to get the number of bytes to allocate */
+    rv = SCardListReaders( (SCARDCONTEXT)pManager, NULL, NULL, &dwReaders);
+    if (rv != SCARD_S_SUCCESS)
+    {
+        PCSC_ERROR(rv, "SCardListReaders");
+        return ( rv );
+    }
+
+    /* if array already exists, then free it and alloc a new one for the */
+    /* number of readers reported from SCardListReader */
+    if (mszReaders)
+        free( mszReaders );
+    /* malloc enough memory for dwReader string */
+    mszReaders = malloc(sizeof(char)*dwReaders);
+
+    /* now get the list into the mszReaders array */
+    rv = SCardListReaders( (SCARDCONTEXT)pManager, NULL, mszReaders, &dwReaders);
+    if (rv != SCARD_S_SUCCESS)
+    {
+        PCSC_ERROR(rv, "SCardListReaders");
+        return (rv);
+    }
+
+    /* Extract readers from the null separated string and get the total
+        * number of readers */
+    *pNumberFound = 0;
+    ptr = mszReaders;
+    while (*ptr != '\0')
+    {
+        ptr += strlen(ptr)+1;
+        (*pNumberFound)++;
+    }
+
+    sprintf(messageString, "Found %d Readers, ", nbReaders);
+    logMessage(LOG_INFO, 2, messageString);
+
+    /* if there was already a readers table, free it */
+    if (readers)
+        free(readers);
+
+    /* allocate the readers table, a set of pointers to the name of each */
+    readers = calloc(nbReaders, sizeof(char *));
+    if ( readers == NULL )
+    {
+        logMessage(LOG_ERR, 0, "Not enough memory for readers[]");
+        return(SCARD_F_INTERNAL_ERROR);
+    }
+
+    /* fill the readers table */
+    *pNumberFound = 0;
+    ptr = mszReaders;
+    while (*ptr != '\0')
+    {
+        sprintf(messageString, "Reader [%d]: %s", nbReaders, ptr);
+        logMessage(LOG_INFO, 3, messageString);
+        readers[nbReaders] = ptr;
+        ptr += strlen(ptr)+1;
+        (*pNumberFound)++;
+    }
+
+    return( SCARD_S_SUCCESS );
+
+}
+/*************************** READERS ENUMERATE *****************/
+
+
 /************************* READER MANAGER CONNECT **************/
 /* This is added to make things a bit more efficient when you  */
 /* are using multiple readers connected to one reader manager  */
@@ -322,16 +408,56 @@ readerManagerConnect( tReaderManager *pManager )
     rv = SCardEstablishContext(SCARD_SCOPE_SYSTEM, NULL, NULL, (LPSCARDCONTEXT) pManager );
     if (rv != SCARD_S_SUCCESS)
     {
+        PCSC_ERROR(rv, "SCardEstablishContext");
         logMessage(LOG_ERR, 1, "Failed to connect to pcscd server");
         *pManager = NULL;
+        return( rv );
     }
-    else
-        logMessage(LOG_INFO, 2, "Successfully connected to pcscd server");
+
+    logMessage(LOG_INFO, 2, "Successfully connected to pcscd server");
+
+    rv = readersEnumerate( pManager, &nbReaders );
 
     return (rv);
 
 }
 /************************* READER MANAGER CONNECT **************/
+
+/************************* READER MANAGER DISCONNECT ***********/
+int
+readerManagerDisconnect( tReaderManager *pManager )
+{
+    LONG 		    rv;
+
+    if ( pManager );
+    {
+        logMessage(LOG_INFO, 2, "Disconnecting from pcscd server");
+
+        rv = SCardReleaseContext( (SCARDCONTEXT) (pManager));
+        if ( rv != SCARD_S_SUCCESS )
+            PCSC_ERROR(rv, "SCardReleaseContext");
+
+/* TODO, make these memory pointers part of the hCOntext structure associated with manager */
+
+        /* Free up memory that was allocated when we connected to manager */
+        if (mszReaders)
+        {
+            free(mszReaders);
+            mszReaders = NULL;
+        }
+
+        /* free allocated memory */
+        if (readers)
+        {
+            free(readers);
+            readers = NULL;
+        }
+    }
+
+    return( rv );
+}
+/************************* READER MANAGER DISCONNECT ***********/
+
 
 /************************* READER CONNECT **********************/
 int readerConnect (
@@ -339,13 +465,10 @@ int readerConnect (
                  )
 {
    LONG 		rv;
-   DWORD 		dwReaders,
-			dwAtrLen,
+   DWORD 		dwAtrLen,
 			dwReaderLen,
 			dwState,
 			dwProt;
-   int                  nbReaders;
-   char 		*ptr;
    DWORD 		dwActiveProtocol;
    BYTE 		pbAtr[MAX_ATR_SIZE] = "";
    DWORD		dwRecvLength;
@@ -361,69 +484,31 @@ int readerConnect (
        if ( rv != SCARD_S_SUCCESS )
         return ( rv );
    }
-
-   /* set strings to empty until we find out otherwise */
-   strcpy(pReader->SAM_serial, "NoSAM");
-   strcpy(pReader->SAM_id, "NoSAM");
-
-   /* Retrieve the available readers list.
-    * 1. Call with a null buffer to get the number of bytes to allocate
-    * 2. malloc the necessary storage */
-   rv = SCardListReaders( (SCARDCONTEXT) (pReader->hContext), NULL, NULL, &dwReaders);
-   if (rv != SCARD_S_SUCCESS)
-      return ( rv );
-
-   /* malloc enough memory for dwReader string */
-   mszReaders = malloc(sizeof(char)*dwReaders);
-
-   /* now get the list into the mszReaders array */
-   rv = SCardListReaders( (SCARDCONTEXT) (pReader->hContext), NULL, mszReaders, &dwReaders);
-   if (rv != SCARD_S_SUCCESS)
-      return (rv);
-
-   /* Extract readers from the null separated string and get the total
-    * number of readers */
-   nbReaders = 0;
-   ptr = mszReaders;
-   while (*ptr != '\0')
+   else
    {
-      ptr += strlen(ptr)+1;
-      nbReaders++;
+       /* re-enumerate the readers in the system as it may have changed */
+       rv = readersEnumerate( pReader->hContext, &nbReaders );
+       if ( rv != SCARD_S_SUCCESS )
+          return( rv );
    }
 
-   sprintf(messageString, "Found %d Readers, ", nbReaders);
-   logMessage(LOG_INFO, 2, messageString);
-
-   if (nbReaders == 0)
-      return(SCARD_E_UNKNOWN_READER);
+   if ( nbReaders == 0 )
+   {
+        logMessage(LOG_ERR, 0, "No readers were found" );
+        return( SCARD_E_UNKNOWN_READER );
+   }
 
    /* connect to the specified card reader */
    if (pReader->number < 0 || pReader->number >= nbReaders)
    {
-     sprintf(messageString, "Wrong reader index: %d", pReader->number);
+     sprintf(messageString, "Reader number '%d' out of range", pReader->number);
      logMessage(LOG_ERR, 0, messageString);
      return(SCARD_E_READER_UNAVAILABLE);
    }
 
-   /* allocate the readers table, a set of pointers to the name of each */
-   readers = calloc(nbReaders, sizeof(char *));
-   if (NULL == readers)
-   {
-      logMessage(LOG_ERR, 0, "Not enough memory for readers[]");
-      return(SCARD_F_INTERNAL_ERROR);
-   }
-
-   /* fill the readers table */
-   nbReaders = 0;
-   ptr = mszReaders;
-   while (*ptr != '\0')
-   {
-      sprintf(messageString, "Reader [%d]: %s", nbReaders, ptr);
-      logMessage(LOG_INFO, 3, messageString);
-      readers[nbReaders] = ptr;
-      ptr += strlen(ptr)+1;
-      nbReaders++;
-   }
+   /* set strings to empty until we find out otherwise */
+   strcpy(pReader->SAM_serial, "NoSAM");
+   strcpy(pReader->SAM_id, "NoSAM");
 
    dwActiveProtocol = -1;
    rv = SCardConnect( (SCARDCONTEXT) (pReader->hContext), readers[pReader->number],
@@ -457,6 +542,7 @@ int readerConnect (
           sizeof(SUPPORTED_READER_ARRAY[i])-1) == 0)
          readerSupported = TRUE;
    }
+
    if (!readerSupported)
    {
       sprintf(messageString, "Reader (%s) not supported", pbRecvBuffer);
@@ -517,38 +603,20 @@ void readerDisconnect(
                    tReader	*pReader
                    )
 {
-   LONG		rv;
-
-   /* We try to leave things as clean as possible */
-   sprintf(messageString, "Disconnecting from reader %d", pReader->number);
-   logMessage(LOG_INFO, 2, messageString);
 
    if (pReader->hCard)
    {
+      sprintf(messageString, "Disconnecting from reader %d", pReader->number);
+      logMessage(LOG_INFO, 2, messageString);
+
       SCardDisconnect( (SCARDHANDLE) (pReader->hCard), SCARD_UNPOWER_CARD);
       pReader->hCard = NULL;
       PCSC_ERROR(rv, "SCardDisconnect");
    }
-
-   logMessage(LOG_INFO, 2, "Disconnecting from pcscd server");
-
-   if (pReader->hContext);
+   else
    {
-      SCardReleaseContext( (SCARDCONTEXT) (pReader->hContext));
-      pReader->hContext = NULL;
-      PCSC_ERROR(rv, "SCardReleaseContext");
-   }
-
-   /* free allocated memory */
-   if (mszReaders)
-   {
-      free(mszReaders);
-      mszReaders = NULL;
-   }
-   if (readers)
-   {
-      free(readers);
-      readers = NULL;
+      sprintf(messageString, "Not currently connected to reader %d, cannot disconnect", pReader->number);
+      logMessage(LOG_INFO, 2, messageString);
    }
 
 }

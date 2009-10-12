@@ -32,6 +32,7 @@
 #include "tagReader.h"
 #include "tagEventor.h"
 #include "systemTray.h"
+#include "stringConstants.h"
 
 /************************* CONSTANTS ************************/
 
@@ -51,11 +52,6 @@
    second = temp;\
    }
 
-#ifdef BUILD_SYSTEM_TRAY
-#define USAGE_STRING "Usage: %s <options>\n\t-n <reader number>   : default = AUTO\n\t-v <verbosity level> : default = 0 (silent), max = 3 \n\t-d start | stop | tray (daemon options: default = foreground)\n\t-p <msecs> : tag polling delay, min = %d, default = %d, max = %d\n\t-h : print this message\n"
-#else
-#define USAGE_STRING "Usage: %s <options>\n\t-n <reader number>   : default = AUTO\n\t-v <verbosity level> : default = 0 (silent), max = 3 \n\t-d start | stop (daemon options: default = foreground)\n\t-p <msecs> : tag polling delay, min = %d, default = %d, max = %d\n\t-h : print this message\n"
-#endif
 /*************    TYPEDEFS TO THIS FILE     **********************/
 typedef enum { FOREGROUND, START_DAEMON, STOP_DAEMON, SYSTEM_TRAY } tRunOptions;
 
@@ -262,7 +258,8 @@ parseCommandLine(
 
          /* 'h' option is to request print out help */
          case 'h':
-                fprintf(stderr, USAGE_STRING, argv[0], POLL_DELAY_MILLI_SECONDS_MIN, POLL_DELAY_MILLI_SECONDS_DEFAULT, POLL_DELAY_MILLI_SECONDS_MAX);
+                fprintf(stderr, TAGEVENTOR_STRING_USAGE, argv[0], POLL_DELAY_MILLI_SECONDS_MIN, POLL_DELAY_MILLI_SECONDS_DEFAULT,
+                        POLL_DELAY_MILLI_SECONDS_MAX);
             exit ( 0 );
             break;
 
@@ -273,7 +270,8 @@ parseCommandLine(
 
    if (parseError)
    {
-      fprintf(stderr, USAGE_STRING, argv[0], POLL_DELAY_MILLI_SECONDS_MIN, POLL_DELAY_MILLI_SECONDS_DEFAULT, POLL_DELAY_MILLI_SECONDS_MAX);
+      fprintf(stderr, TAGEVENTOR_STRING_USAGE, argv[0], POLL_DELAY_MILLI_SECONDS_MIN, POLL_DELAY_MILLI_SECONDS_DEFAULT,
+              POLL_DELAY_MILLI_SECONDS_MAX);
       exit( EXIT_FAILURE );
    }
 
@@ -768,11 +766,11 @@ tagListCheck( void *updateSystemTray )
     if ( readers[0].hContext == NULL )
     {
         if ( readerManagerConnect( &(readers[0].hContext) ) != SCARD_S_SUCCESS )
-            sprintf( messageString, "Problems connecting to pcscd daemon, check it is running using 'ps -ef' command");
+            sprintf( messageString, TAGEVENTOR_STRING_PCSCD_PROBLEM );
     }
 
     /* if we are now connected to the pcscd manager, but not reader, then try and connect to the reader */
-    if  ( ( readers[0].hContext != NULL ) & ( readers[0].hCard == NULL ) )
+    if  ( ( readers[0].hContext != NULL ) && ( readers[0].hCard == NULL ) )
     {
         if ( readerConnect( &(readers[0]) ) == SCARD_S_SUCCESS )
         {
@@ -780,7 +778,7 @@ tagListCheck( void *updateSystemTray )
             rv = getTagList( &(readers[0]), ppreviousTagList);
         }
         else
-            sprintf( messageString, "Connected to pcscd, problems connecting to reader %d", readers[0].number);
+            sprintf( messageString, TAGEVENTOR_STRING_PCSCD_OK_READER_NOT , readers[0].number);
     }
 
     /* if we are connected to the pcscd manager, AND the reader */
@@ -790,10 +788,17 @@ tagListCheck( void *updateSystemTray )
         rv = getTagList( &(readers[0]), pnewTagList);
 
         if (rv != SCARD_S_SUCCESS)
-            sprintf( messageString, "Connected to pcscd, problems reading from reader number %d.", readers[0].number );
+        {
+            /* looks like we lost the connection to this reader! */
+            /* reset the reader connection to NULL so that we will */
+            /* attempt to reconnect to it on each call until we succeed */
+            readers[0].hCard = NULL;
+
+            sprintf( messageString, TAGEVENTOR_STRING_PCSCD_OK_READER_NOT, readers[0].number );
+        }
         else
         {
-            sprintf( messageString, "Connected to pcsc, reader %d, %d tags:", readers[0].number, (int)(pnewTagList->numTags) );
+            sprintf( messageString, TAGEVENTOR_STRING_CONNECTED_READER_TAGS, readers[0].number, (int)(pnewTagList->numTags) );
             for (i=0; i < pnewTagList->numTags; i++)
             {
                 sprintf( ID, " %s", pnewTagList->tagUID[i]);
@@ -845,10 +850,13 @@ tagListCheck( void *updateSystemTray )
         systemTraySetStatus( ( (readers[0].hContext != NULL) & (readers[0].hCard != NULL) ), messageString );
 #endif
 
-    logMessage(LOG_WARNING, 0, messageString);
+    /* if any problems with PCSCD or with the reader, then report it */
+    if  ( ( readers[0].hContext == NULL ) || ( readers[0].hCard == NULL ) )
+        logMessage(LOG_WARNING, 0, messageString);
 
     /* keep calling me */
     return( TRUE );
+
 }
 
 /************************ MAIN ******************************/
@@ -915,6 +923,9 @@ int main(
    /* the other versions will all exit via a signal handler elsewhere */
    for ( i = 0; i < MAX_NUM_READERS; i++ )
     readerDisconnect( &(readers[i]) );
+
+    /* clean up the connection to PCSCD */
+    readerManagerDisconnect( readers[0].hContext );
 
    return ( 0 );
 
