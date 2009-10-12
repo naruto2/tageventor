@@ -209,10 +209,10 @@ parseCommandLine(
             else
             {
                 number = atoi(optarg);
-                if ( number  < 0)
+                if ( ( number  < 0) || ( number >= MAX_NUM_READERS ) )
                 {
-                    fprintf(stderr, "Reader number must be AUTO or a valid number between 0 and %d\n", MAX_NUM_READERS );
-                    fprintf(stderr, "Reader number argument '%s' ignored", optarg);
+                    fprintf(stderr, TAGEVENTOR_STRING_COMMAND_LINE_READER_NUM_ERROR_1, MAX_NUM_READERS );
+                    fprintf(stderr, TAGEVENTOR_STRING_COMMAND_LINE_READER_NUM_ERROR_2, optarg);
                 }
                 else
                     readerNumberAdd( number );

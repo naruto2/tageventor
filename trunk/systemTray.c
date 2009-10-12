@@ -190,6 +190,11 @@ startSystemTray(
     gtk_menu_shell_append( GTK_MENU_SHELL( popupMenu ), settingsDialogMenuItem );
     g_signal_connect (G_OBJECT (settingsDialogMenuItem), "activate", G_CALLBACK (settingsDialogActivate), NULL );
     gtk_widget_show( settingsDialogMenuItem );
+
+    /* put in a separator after the settings menu item */
+    separator = gtk_separator_menu_item_new();
+    gtk_menu_shell_append( GTK_MENU_SHELL( popupMenu ), separator );
+    gtk_widget_show( separator );
 #endif
 
     quitMenuItem = gtk_image_menu_item_new_from_stock( GTK_STOCK_QUIT, NULL );

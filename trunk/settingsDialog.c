@@ -37,13 +37,14 @@ typedef struct {
                 GtkWidget   *toggle;
 } tReaderNumToggle;
 
-static tReaderNumToggle readerNumToggle[MAX_NUM_READERS] = {
+static tReaderNumToggle readerNumToggle[MAX_NUM_READERS+1] = {
                 {"AUTO",    READER_NUM_AUTO,    NULL},
                 {"0",       READER_NUM_0,       NULL},
                 {"1",       READER_NUM_1,       NULL},
                 {"2",       READER_NUM_2,       NULL},
                 {"3",       READER_NUM_3,       NULL},
-                {"4",       READER_NUM_4,       NULL}
+                {"4",       READER_NUM_4,       NULL},
+                {"5",       READER_NUM_5,       NULL}
                 };
 
 static void
@@ -155,7 +156,7 @@ applyChanges( void )
     int     readerBitmap = 0;
 
     /* get the reader settings, form a bitmap and set it */
-    for ( i = 0; i <  MAX_NUM_READERS; i++ )
+    for ( i = 0; i <  (MAX_NUM_READERS +1); i++ )
     {
         /* if the GUI toggle is set */
         if ( gtk_toggle_button_get_active( (GtkToggleButton *)readerNumToggle[i].toggle ) )
@@ -185,15 +186,13 @@ toggleChange(
 
     unsigned char autoSet;
 
-/* TODO get the button state and change settings correspondingly*/
-
     if ( (int)readerNumSetting == READER_NUM_AUTO )
     {
         /* see if AUTO has been set or unset */
         autoSet = gtk_toggle_button_get_active( (GtkToggleButton *)widget );
 
-        /* then make the other toggles insensitive */
-        for ( i = 1; i <  MAX_NUM_READERS; i++ )
+        /* then , starting at the second widget, make the other toggles insensitive */
+        for ( i = 1; i <  (MAX_NUM_READERS +1); i++ )
             gtk_widget_set_sensitive( readerNumToggle[i].toggle, !autoSet );
     }
 
@@ -220,7 +219,7 @@ buildSettingsDialog ( void  )
     GtkWidget   *dialog;
     GtkWidget   *vbox, *buttonBox, *table, *label;
     GtkWidget   *cancelButton;
-    int         i;
+    int         i, readerSettingBitmap;
 
     dialog = gtk_window_new( GTK_WINDOW_TOPLEVEL );
 
@@ -263,13 +262,16 @@ buildSettingsDialog ( void  )
     gtk_table_attach( (GtkTable *)table, label, 0, 1, 0, 1, GTK_FILL, GTK_FILL, 0, 10 );
     gtk_widget_show( label );
 
-    /* the 6 possible options are  AUTO(-1), 0, 1, 2, 3, 4, */
-    for ( i = 0; i < MAX_NUM_READERS; i++ )
+    /* Get the current setting for the readers enabled, which is a bitmap */
+    readerSettingBitmap = readerSettingGet();
+
+    /* the 6 possible options are  AUTO plus the readers 0, 1, 2, 3, 4, 5, */
+    for ( i = 0; i < (MAX_NUM_READERS +1); i++ )
     {
         readerNumToggle[i].toggle = gtk_check_button_new_with_label( readerNumToggle[i].label);
-#if 0 /* TODO: need to wait until we change rest of code to use array of readers before we can do this */
-        gtk_toggle_button_set_active( (GtkToggleButton *)readerNumToggle[i].toggle, pTagEntry->enabled);
-#endif
+        gtk_toggle_button_set_active( (GtkToggleButton *)readerNumToggle[i].toggle,
+                                      (readerSettingBitmap & (1 << i) ) );
+
         /* attach a new widget into the table, row 0, for the 6 columns */
         gtk_table_attach( (GtkTable *)table, readerNumToggle[i].toggle, i+1, i+2, 0, 1, GTK_FILL, GTK_FILL, 5, 0 );
         /* add a callback to the button which will be passed the setting value */
