@@ -133,7 +133,7 @@ startSystemTray(
 #endif
 
 #ifdef BUILD_ABOUT_DIALOG
-    GtkWidget       *aboutMenuItem;
+    GtkWidget       *aboutMenuItem, *separator;
 #endif
 
 #ifdef BUILD_RULES_EDITOR
@@ -192,17 +192,22 @@ startSystemTray(
     gtk_widget_show( settingsDialogMenuItem );
 #endif
 
+    quitMenuItem = gtk_image_menu_item_new_from_stock( GTK_STOCK_QUIT, NULL );
+    gtk_menu_shell_append( GTK_MENU_SHELL( popupMenu ), quitMenuItem );
+    g_signal_connect (G_OBJECT (quitMenuItem), "activate", G_CALLBACK (iconQuit), NULL );
+    gtk_widget_show( quitMenuItem );
+
 #ifdef BUILD_ABOUT_DIALOG
-    aboutMenuItem = gtk_menu_item_new_with_label( "About" );
+    /* put in a separator before the about menu item */
+    separator = gtk_separator_menu_item_new();
+    gtk_menu_shell_append( GTK_MENU_SHELL( popupMenu ), separator );
+    gtk_widget_show( separator );
+
+    aboutMenuItem = gtk_image_menu_item_new_from_stock( GTK_STOCK_ABOUT, NULL );
     gtk_menu_shell_append( GTK_MENU_SHELL( popupMenu ), aboutMenuItem );
     g_signal_connect (G_OBJECT (aboutMenuItem), "activate", G_CALLBACK (aboutDialogShow), NULL );
     gtk_widget_show( aboutMenuItem );
 #endif
-
-    quitMenuItem = gtk_menu_item_new_with_label( "Quit" );
-    gtk_menu_shell_append( GTK_MENU_SHELL( popupMenu ), quitMenuItem );
-    g_signal_connect (G_OBJECT (quitMenuItem), "activate", G_CALLBACK (iconQuit), NULL );
-    gtk_widget_show( quitMenuItem );
 
     /* connect menu to the event that will be used (right click on status icon) and pass in pointer to menu */
     g_signal_connect (G_OBJECT (systemTrayIcon), "popup-menu", G_CALLBACK (iconPopupMenu), popupMenu );
