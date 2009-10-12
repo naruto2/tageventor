@@ -14,6 +14,8 @@ Maybe pop-up an error when another is detected, with it's PID
 
   * Write some text for the rules Editor help dialog and have it display it neatly, maybe with links to the wiki help pages or other sources.
 
+  * From the list of readers built on connecting to PCSCD or connecting to a particular reader, construct a table of descriptions of the detected readers. Make this visible in the Settings dialog as a list of description texts, with the toggle button beside each to enable or disable it.
+
 == Build ==
 Avoid use of pkg-config (use correct flags directly) and fix problem with -lpcsclite so that the Mac version can also be built from the command line with "make".
 
