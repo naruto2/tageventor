@@ -67,6 +67,7 @@ static    tPanelEntry defaultCommands[NUM_DEFAULT_COMMANDS] = {
 
 /* This is needed by handleSignal to clean-up, so can't be local :-( */
 static  tReader         readers[MAX_NUM_READERS];
+static  tReaderManager  readerManager = NULL;
 static  int             readerSetting = 0; /* no readers, not even AUTO to start with */
 static  int		        lockFile = -1;
 static  char		    lockFilename[PATH_MAX];
@@ -298,7 +299,7 @@ handleSignal(
 
       case SIGHUP: /* restart the server using  "kill -1" at the command shell */
          readerDisconnect( &(readers[0]) );
-         readerConnect( &(readers[0]) );
+         readerConnect( &readerManager, &(readers[0]) );
          logMessage(LOG_INFO, 1, "Hangup signal received - disconnected and reconnected");
       break;
 
@@ -763,16 +764,16 @@ tagListCheck( void *updateSystemTray )
     char			messageString[MAX_LOG_MESSAGE];
 
     /* If not connected to PCSCD, then try and connect */
-    if ( readers[0].hContext == NULL )
+    if ( readerManager == NULL )
     {
-        if ( readerManagerConnect( &(readers[0].hContext) ) != SCARD_S_SUCCESS )
+        if ( readerManagerConnect( &readerManager ) != SCARD_S_SUCCESS )
             sprintf( messageString, TAGEVENTOR_STRING_PCSCD_PROBLEM );
     }
 
     /* if we are now connected to the pcscd manager, but not reader, then try and connect to the reader */
-    if  ( ( readers[0].hContext != NULL ) && ( readers[0].hCard == NULL ) )
+    if  ( ( readerManager != NULL ) && ( readers[0].hCard == NULL ) )
     {
-        if ( readerConnect( &(readers[0]) ) == SCARD_S_SUCCESS )
+        if ( readerConnect( &readerManager, &(readers[0]) ) == SCARD_S_SUCCESS )
         {
             /* get initial list of tags on first connect to prime the pump for the later comparisons */
             rv = getTagList( &(readers[0]), ppreviousTagList);
@@ -782,7 +783,7 @@ tagListCheck( void *updateSystemTray )
     }
 
     /* if we are connected to the pcscd manager, AND the reader */
-    if ( ( readers[0].hContext != NULL ) && ( readers[0].hCard != NULL ) )
+    if ( ( readerManager != NULL ) && ( readers[0].hCard != NULL ) )
     {
         /* get the list of tags on reader */
         rv = getTagList( &(readers[0]), pnewTagList);
@@ -847,11 +848,11 @@ tagListCheck( void *updateSystemTray )
 
 #ifdef BUILD_SYSTEM_TRAY
     if ( updateSystemTray )
-        systemTraySetStatus( ( (readers[0].hContext != NULL) & (readers[0].hCard != NULL) ), messageString );
+        systemTraySetStatus( ( (readerManager != NULL) && (readers[0].hCard != NULL) ), messageString );
 #endif
 
     /* if any problems with PCSCD or with the reader, then report it */
-    if  ( ( readers[0].hContext == NULL ) || ( readers[0].hCard == NULL ) )
+    if  ( ( readerManager == NULL ) || ( readers[0].hCard == NULL ) )
         logMessage(LOG_WARNING, 0, messageString);
 
     /* keep calling me */
@@ -871,7 +872,6 @@ int main(
    /* some help to make sure we close whatś needed, not more */
    for ( i = 0; i < MAX_NUM_READERS; i++ )
    {
-        readers[i].hContext = NULL;
         readers[i].hCard = NULL;
         readers[i].number = i;
    }
@@ -925,7 +925,7 @@ int main(
     readerDisconnect( &(readers[i]) );
 
     /* clean up the connection to PCSCD */
-    readerManagerDisconnect( readers[0].hContext );
+    readerManagerDisconnect( &readerManager );
 
    return ( 0 );
 

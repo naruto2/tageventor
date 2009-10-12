@@ -42,7 +42,6 @@ typedef void    *tReaderManager;
 typedef void    *tCardHandle;
 
 typedef struct {
-   tReaderManager 	hContext;
    int      		number;
    tCardHandle		hCard;
    char     		SAM;
@@ -64,7 +63,8 @@ extern int              readerSetOptions (  int	            verbosity,
 extern int              readerManagerConnect( tReaderManager *pManager );
 extern int              readerManagerDisconnect( tReaderManager *pManager );
 
-extern int              readerConnect( tReader	*pReader );
+extern int              readerConnect(  tReaderManager   *pmanager,
+                                        tReader	*pReader );
 extern void             readerDisconnect( tReader	*pReader );
 extern int              getTagList( const tReader	*preader,
                                     tTagList	    *ptagList);
