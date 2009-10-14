@@ -16,9 +16,9 @@
   limitations under the License.
 */
 
-#define TAGEVENTOR_STRING_PCSCD_OK_READER_NOT   "Connected to pcscd.\nProblems connecting to reader %d"
+#define TAGEVENTOR_STRING_PCSCD_OK_READER_NOT   "Connected to pcscd, %d readers found.\nProblems connecting to reader %d"
 #define TAGEVENTOR_STRING_PCSCD_PROBLEM         "Problems connecting to pcscd daemon, check it is running using 'ps -ef' command"
-#define TAGEVENTOR_STRING_CONNECTED_READER_TAGS "Connected to pcscd.\nReader %d, %d tags:"
+#define TAGEVENTOR_STRING_CONNECTED_READER_TAGS "Connected to pcscd, %d readers found.\nReader %d, %d tags:"
 
 #define TAGEVENTOR_STRING_COMMAND_LINE_READER_NUM_ERROR_1 "Reader number must be AUTO or a valid number between 0 and %d\n"
 #define TAGEVENTOR_STRING_COMMAND_LINE_READER_NUM_ERROR_2 "Reader number argument '%s' ignored\n"

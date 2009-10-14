@@ -69,8 +69,7 @@
 		</Unit>
 		<Unit filename="rules.c">
 			<Option compilerVar="CC" />
-			<Option target="Debug" />
-			<Option target="Release" />
+			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Unit filename="rulesEditor.c">
 			<Option compilerVar="CC" />

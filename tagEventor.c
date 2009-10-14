@@ -34,13 +34,11 @@
 #include "systemTray.h"
 #include "stringConstants.h"
 
-/************************* CONSTANTS ************************/
-
+/*************************** MACROS ************************/
 /* Tag event types */
 #define TAG_IN  (0)
 #define TAG_OUT (1)
 
-/*************************** MACROS ************************/
 #define SWAP(first, second)\
    {\
    temp = first;\
@@ -56,7 +54,7 @@ typedef enum { FOREGROUND, START_DAEMON, STOP_DAEMON, SYSTEM_TRAY } tRunOptions;
 
 /* This is needed by handleSignal to clean-up, so can't be local :-( */
 static  tReader         readers[MAX_NUM_READERS];
-static  tReaderManager  readerManager = NULL;
+static  tReaderManager  readerManager = { 0, NULL, NULL, NULL };
 static  int             readerSetting = 0; /* no readers, not even AUTO to start with */
 static  int		        lockFile = -1;
 static  char		    lockFilename[PATH_MAX];
@@ -502,14 +500,14 @@ tagListCheck( void *updateSystemTray )
     char			messageString[MAX_LOG_MESSAGE];
 
     /* If not connected to PCSCD, then try and connect */
-    if ( readerManager == NULL )
+    if ( readerManager.hContext == NULL )
     {
         if ( readerManagerConnect( &readerManager ) != SCARD_S_SUCCESS )
             sprintf( messageString, TAGEVENTOR_STRING_PCSCD_PROBLEM );
     }
 
     /* if we are now connected to the pcscd manager, but not reader, then try and connect to the reader */
-    if  ( ( readerManager != NULL ) && ( readers[0].hCard == NULL ) )
+    if  ( ( readerManager.hContext != NULL ) && ( readers[0].hCard == NULL ) )
     {
         if ( readerConnect( &readerManager, &(readers[0]) ) == SCARD_S_SUCCESS )
         {
@@ -517,11 +515,12 @@ tagListCheck( void *updateSystemTray )
             rv = getTagList( &(readers[0]), ppreviousTagList);
         }
         else
-            sprintf( messageString, TAGEVENTOR_STRING_PCSCD_OK_READER_NOT , readers[0].number);
+            sprintf( messageString, TAGEVENTOR_STRING_PCSCD_OK_READER_NOT ,
+                     readerManager.nbReaders, readers[0].number);
     }
 
     /* if we are connected to the pcscd manager, AND the reader */
-    if ( ( readerManager != NULL ) && ( readers[0].hCard != NULL ) )
+    if ( ( readerManager.hContext != NULL ) && ( readers[0].hCard != NULL ) )
     {
         /* get the list of tags on reader */
         rv = getTagList( &(readers[0]), pnewTagList);
@@ -533,11 +532,13 @@ tagListCheck( void *updateSystemTray )
             /* attempt to reconnect to it on each call until we succeed */
             readers[0].hCard = NULL;
 
-            sprintf( messageString, TAGEVENTOR_STRING_PCSCD_OK_READER_NOT, readers[0].number );
+            sprintf( messageString, TAGEVENTOR_STRING_PCSCD_OK_READER_NOT,
+                    readerManager.nbReaders, readers[0].number );
         }
         else
         {
-            sprintf( messageString, TAGEVENTOR_STRING_CONNECTED_READER_TAGS, readers[0].number, (int)(pnewTagList->numTags) );
+            sprintf( messageString, TAGEVENTOR_STRING_CONNECTED_READER_TAGS,
+                    readerManager.nbReaders, readers[0].number, (int)(pnewTagList->numTags) );
             for (i=0; i < pnewTagList->numTags; i++)
             {
                 sprintf( ID, " %s", pnewTagList->tagUID[i]);
@@ -586,11 +587,11 @@ tagListCheck( void *updateSystemTray )
 
 #ifdef BUILD_SYSTEM_TRAY
     if ( updateSystemTray )
-        systemTraySetStatus( ( (readerManager != NULL) && (readers[0].hCard != NULL) ), messageString );
+        systemTraySetStatus( ( (readerManager.hContext != NULL) && (readers[0].hCard != NULL) ), messageString );
 #endif
 
     /* if any problems with PCSCD or with the reader, then report it */
-    if  ( ( readerManager == NULL ) || ( readers[0].hCard == NULL ) )
+    if  ( ( readerManager.hContext == NULL ) || ( readers[0].hCard == NULL ) )
         logMessage(LOG_WARNING, 0, messageString);
 
     /* keep calling me */

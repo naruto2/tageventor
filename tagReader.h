@@ -39,8 +39,18 @@
 #define MAX_SAM_SERIAL_SIZE (30)    /* TODO what is max size? */
 #define MAX_SAM_ID_SIZE     (30)    /* TODO what is max size? */
 
+/**********************    STRINGS ****************************/
+#define TAGREADER_STRING_PCSCD_OK              "Successfully connected to pcscd server"
+#define TAGREADER_STRING_PCSCD_NO              "Failed to connect to pcscd server"
+
+
 /**************************    TYPEDEFS    **************************/
-typedef void    *tReaderManager;
+typedef struct {
+    int         nbReaders;
+    char 		*mszReaders;
+    char 		**readers;
+    void        *hContext;
+} tReaderManager;
 
 typedef void    *tCardHandle;
 
