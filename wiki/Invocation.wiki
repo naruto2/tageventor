@@ -1,12 +1,12 @@
 Usage: tagEventor *options*
   * -n *reader number*   : default = AUTO, min = 0, max = 4.
   * -v *verbosity level* : default = 0 (silent), max = 3 
-  * -d start | stop : start or stop daemon, default = foreground
-  * -d start | stop | tray: start or stop daemon, start system tray icon, default = foreground - This is only available if the Gtk+ GUI version was built 
+  * -d start | stop : start or stop daemon
   * -p *msecs* : tag polling delay (milli seconds), default = 1,000
   * -h : print this message
 
-When building the GUI version (for Gtk) an additional option is added to the -d switch, it is "-d tray" which starts tagEventor GUI version in the GNOME system tray.
+The *tagEventor* command line binary will start up in the foreground at the terminal and any output (depending on verbosity level set) will goto STDERR.
+The *gtagEventor* binary (for Gtk2.0/Gnome) will start as an icon in the system tray. If started from the command line it won't disconnect from the terminal. You should use "gtagEventor&" for that.
 
 *NOTE: To start the daemon you will need permission for /etc/tagEventor and hence you will probably need to start it as root, or with the "sudo" command!*
 
@@ -14,7 +14,7 @@ When building the GUI version (for Gtk) an additional option is added to the -d 
 
   * -v verbosity level: sets the verbosity of output. Messages are output if the verbosity level meets or exceed the level of the message. i.e. 0 is no output, 3 is the maximum.
 
-  * -d start|stop|tray: start or stop the daemon process for the given reader (default = 0) and remove the lock-file. Or start the program as an iconized program in the GNOME system tray
+  * -d start|stop: start or stop the daemon process for the given reader (default = 0) and remove the lock-file.
 
   * - p poll_time: this is the time in milliseconds between each poll of the card reader. Default is 1,000, or 1 second.
 
