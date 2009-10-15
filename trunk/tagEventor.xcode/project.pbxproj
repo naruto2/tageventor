@@ -74,14 +74,7 @@
 		};
 		08FB7795FE84155DC02AAC07 = {
 			children = (
-				49B7DC44106FF8940055D634,
-				49B7DC45106FF8940055D634,
-				49B7DC46106FF8940055D634,
-				49B7DC47106FF8940055D634,
-				49B7DC48106FF8940055D634,
-				49B7DC49106FF8940055D634,
-				49B7DC4A106FF8940055D634,
-				49B7DC4B106FF8940055D634,
+				49BDB8D51087DAEA0030C65C,
 				49B7DC4C106FF8940055D634,
 				49B7DC4D106FF8940055D634,
 				49B7DC4E106FF8940055D634,
@@ -135,70 +128,6 @@
 			settings = {
 			};
 		};
-		49B7DC44106FF8940055D634 = {
-			fileEncoding = 30;
-			isa = PBXFileReference;
-			lastKnownFileType = sourcecode.c.c;
-			path = aboutDialog.c;
-			refType = 4;
-			sourceTree = "<group>";
-		};
-		49B7DC45106FF8940055D634 = {
-			fileEncoding = 30;
-			isa = PBXFileReference;
-			lastKnownFileType = sourcecode.c.h;
-			path = aboutDialog.h;
-			refType = 4;
-			sourceTree = "<group>";
-		};
-		49B7DC46106FF8940055D634 = {
-			fileEncoding = 30;
-			isa = PBXFileReference;
-			lastKnownFileType = sourcecode.c.c;
-			path = controlPanel.c;
-			refType = 4;
-			sourceTree = "<group>";
-		};
-		49B7DC47106FF8940055D634 = {
-			fileEncoding = 30;
-			isa = PBXFileReference;
-			lastKnownFileType = sourcecode.c.h;
-			path = controlPanel.h;
-			refType = 4;
-			sourceTree = "<group>";
-		};
-		49B7DC48106FF8940055D634 = {
-			fileEncoding = 30;
-			isa = PBXFileReference;
-			lastKnownFileType = sourcecode.c.c;
-			path = controlPanelHelp.c;
-			refType = 4;
-			sourceTree = "<group>";
-		};
-		49B7DC49106FF8940055D634 = {
-			fileEncoding = 30;
-			isa = PBXFileReference;
-			lastKnownFileType = sourcecode.c.h;
-			path = controlPanelHelp.h;
-			refType = 4;
-			sourceTree = "<group>";
-		};
-		49B7DC4A106FF8940055D634 = {
-			fileEncoding = 30;
-			isa = PBXFileReference;
-			lastKnownFileType = sourcecode.c.c;
-			path = systemTray.c;
-			refType = 4;
-			sourceTree = "<group>";
-		};
-		49B7DC4B106FF8940055D634 = {
-			fileEncoding = 30;
-			isa = PBXFileReference;
-			lastKnownFileType = sourcecode.c.h;
-			path = systemTray.h;
-			refType = 4;
-			sourceTree = "<group>";
-		};
 		49B7DC4C106FF8940055D634 = {
 			fileEncoding = 30;
 			isa = PBXFileReference;
@@ -231,54 +160,6 @@
 			refType = 4;
 			sourceTree = "<group>";
 		};
-		49B7DC50106FF8940055D634 = {
-			fileRef = 49B7DC44106FF8940055D634;
-			isa = PBXBuildFile;
-			settings = {
-			};
-		};
-		49B7DC51106FF8940055D634 = {
-			fileRef = 49B7DC45106FF8940055D634;
-			isa = PBXBuildFile;
-			settings = {
-			};
-		};
-		49B7DC52106FF8940055D634 = {
-			fileRef = 49B7DC46106FF8940055D634;
-			isa = PBXBuildFile;
-			settings = {
-			};
-		};
-		49B7DC53106FF8940055D634 = {
-			fileRef = 49B7DC47106FF8940055D634;
-			isa = PBXBuildFile;
-			settings = {
-			};
-		};
-		49B7DC54106FF8940055D634 = {
-			fileRef = 49B7DC48106FF8940055D634;
-			isa = PBXBuildFile;
-			settings = {
-			};
-		};
-		49B7DC55106FF8940055D634 = {
-			fileRef = 49B7DC49106FF8940055D634;
-			isa = PBXBuildFile;
-			settings = {
-			};
-		};
-		49B7DC56106FF8940055D634 = {
-			fileRef = 49B7DC4A106FF8940055D634;
-			isa = PBXBuildFile;
-			settings = {
-			};
-		};
-		49B7DC57106FF8940055D634 = {
-			fileRef = 49B7DC4B106FF8940055D634;
-			isa = PBXBuildFile;
-			settings = {
-			};
-		};
 		49B7DC58106FF8940055D634 = {
 			fileRef = 49B7DC4C106FF8940055D634;
 			isa = PBXBuildFile;
@@ -299,6 +180,20 @@
 		};
 		49B7DC5B106FF8940055D634 = {
 			fileRef = 49B7DC4F106FF8940055D634;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		49BDB8D51087DAEA0030C65C = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.c;
+			path = rulesTable.c;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		49BDB8D61087DAEA0030C65C = {
+			fileRef = 49BDB8D51087DAEA0030C65C;
 			isa = PBXBuildFile;
 			settings = {
 			};
@@ -342,12 +237,9 @@
 		8DD76FAB0486AB0100D96B5E = {
 			buildActionMask = 2147483647;
 			files = (
-				49B7DC50106FF8940055D634,
-				49B7DC52106FF8940055D634,
-				49B7DC54106FF8940055D634,
-				49B7DC56106FF8940055D634,
 				49B7DC58106FF8940055D634,
 				49B7DC5A106FF8940055D634,
+				49BDB8D61087DAEA0030C65C,
 			);
 			isa = PBXSourcesBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;
@@ -366,10 +258,6 @@
 			dstSubfolderSpec = 0;
 			files = (
 				8DD76FB00486AB0100D96B5E,
-				49B7DC51106FF8940055D634,
-				49B7DC53106FF8940055D634,
-				49B7DC55106FF8940055D634,
-				49B7DC57106FF8940055D634,
 				49B7DC59106FF8940055D634,
 				49B7DC5B106FF8940055D634,
 			);
