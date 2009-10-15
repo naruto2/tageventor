@@ -20,11 +20,24 @@ all:Debug Release
 build_flags = -DBUILD_SYSTEM_TRAY -DBUILD_CONTROL_PANEL -DBUILD_ABOUT_DIALOG -DBUILD_CONTROL_PANEL_HELP -DBUILD_SETTINGS_DIALOG -DBUILD_RULES_EDITOR -DBUILD_RULES_EDITOR_HELP
 
 icon_flags = -DICON_INSTALL_DIR='"/usr/share/gtagEventor/icons/"' -DICON_NAME_CONNECTED='"gtagEventor"' -DICON_NAME_NOT_CONNECTED='"gtagEventorNoReader"'
-flags = $(build_flags) $(icon_flags) -I . -Wall -DPROGRAM_NAME='"gtagEventor"' -I /usr/include/PCSC `pkg-config --cflags --libs gtk+-2.0 gmodule-2.0`
+
+os = $(shell uname)
+ifeq ($(os),Darwin)
+	os_link_flags = -framework PCSC
+	os_cc_flags = 
+else
+	os_link_flags = `pkg-config --cflags --libs gtk+-2.0 gmodule-2.0` -l pcsclite
+	os_cc_flags = `pkg-config --cflags --libs gtk+-2.0 gmodule-2.0`
+endif
+
+flags = $(build_flags) $(icon_flags) -I . -Wall -DPROGRAM_NAME='"gtagEventor"' -I /usr/include/PCSC $(os_cc_flags)
 
 debug_flags = $(flags) -DDEBUG -g -DVERSION_STRING='"0.0.0.0 Debug"'
 
 release_flags = $(flags) -DVERSION_STRING='"0.0.0.0 Release"'
+
+link_flags = $(os_link_flags) -Llib/Debug -l tagReader
+
 
 cleanDebug:
 	@rm -f $(debug_binaries) $(debug_objects)
@@ -34,7 +47,7 @@ Debug: bin/Debug/gtagEventor
 
 ###### Debug version LINK
 bin/Debug/gtagEventor: lib/Debug/libtagReader.a $(debug_objects)
-	@gcc $(debug_objects) `pkg-config --cflags --libs gtk+-2.0 gmodule-2.0` -l pcsclite  -Llib/Debug -l tagReader -o $@
+	@gcc $(debug_objects) $(link_flags) -o $@
 	@echo gtagEventor Debug version BUILT \(./bin/Debug/gtagEventor\)
 	@echo ""
 
@@ -57,7 +70,7 @@ Release: bin/Release/gtagEventor
 
 ########## Release version LINK
 bin/Release/gtagEventor: lib/Release/libtagReader.a $(release_objects)
-	@gcc $(release_objects) `pkg-config --cflags --libs gtk+-2.0 gmodule-2.0` -l pcsclite  -Llib/Release -l tagReader -o $@
+	@gcc $(release_objects) $(link_flags) tagReader -o $@
 	@echo gtagEventor Release version BUILT \(./bin/Release/gtagEventor\)
 	@echo ""
 

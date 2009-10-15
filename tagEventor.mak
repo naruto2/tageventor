@@ -13,7 +13,13 @@ debug_flags = $(flags) -DDEBUG -g
 
 release_flags = $(flags)
 
-link_flags = -l pcsclite  -Llib/Debug -l tagReader
+common_link_flags = -Llib/Debug -l tagReader
+os = $(shell uname)
+ifeq ($(os),Darwin)
+	link_flags = -framework PCSC $(common_link_flags)
+else
+	link_flags = -l pcsclite  $(common_link_flags)
+endif
 
 cleanDebug:
 	@rm -f $(debug_objects) $(debug_binaries)
