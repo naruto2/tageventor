@@ -1,23 +1,17 @@
 === Build Pre-requisites ===
-You'll need the "pcsc-lite" package on your machine which runes the "pcscd" daemon, if not already there. It maybe called "pcscd".
+See the SoftwareDependencies page for details on what you need to build and run tagEventor/gtagEventor.
 
-To develop against PCSCD, including building tagEventor you will need the packages:
-  * libpcsclite1 - the library
-  * libpcsclite-dev - the header files
-
-== How to make ==
+=== How to 'make' - from the command line ===
 Type "make" at the command prompt in the source directory.
 You can use "make clean" then "make" to ensure you have a clean build.
 
-You should get appropriate output from the make file and be left with a tagEventor executable object in the ./bin/Debug and ./bin/Release subdirectories.
+You should get appropriate output from the make file and be left with tagEventor and gtagEventor (Gtk/GNOME GUI version) executables in the ./bin/Debug and ./bin/Release subdirectories.
 
-How to run
-----------
-Replace "Release" for "Debug" for the release version.
+== How to build - from an IDE ===
+There are projects included for the libReader library, tagEventor command-line program and gtagEventor Gtk/Gnome GUI version for the Code::Blocks Integrated Development Environment (IDE). Open them in Code::Blocks, select the target (Debug or Release) and hit "build" or "fresh build"...
 
-Type "./bin/Debug/tagEventor -h" to see the usage string.
-
-"./bin/Debug/tagEventor" will start it in foreground mode with all the default options, with verbosity level = 0, or zero informational output (errors WILL BE output on STDERR).
+=== How to run ===
+See the [Invocation Invocation page] for details on running tagEventor or gtagEventor.
 
 How to Install as a daemon
 --------------------------
