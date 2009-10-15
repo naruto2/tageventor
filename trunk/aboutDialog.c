@@ -78,7 +78,7 @@ or maybe reading from a file at run time */
     gtk_about_dialog_set_website( (GtkAboutDialog *)aboutDialog, "http://tageventor.googlecode.com" );
     gtk_about_dialog_set_website_label( (GtkAboutDialog *)aboutDialog, "Development Site (Google Code)" );
 
-    gtk_about_dialog_set_comments( (GtkAboutDialog *)aboutDialog, "Tageventor is a program that detects RFID/NFC tags, via an appropriate reader hardware connected to your computer, and performs actions when they are placed or removed from the reader. \nIt includes a Rules Editor to define Tag events and then what actions are to be performed for that event." );
+    gtk_about_dialog_set_comments( (GtkAboutDialog *)aboutDialog, "An application that detects RFID/NFC tags, via an appropriate reader hardware connected to your computer, and performs actions when they are placed or removed from the reader. \nIt includes a Rules Editor to define Tag events and then what actions are to be performed for that event." );
 
 /* find a way to read this at compile or run time from the COMMITTERS file */
     gtk_about_dialog_set_authors( (GtkAboutDialog *)aboutDialog, authors );

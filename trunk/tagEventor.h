@@ -25,7 +25,6 @@
 
 #define MAX_DESCRIPTION_LENGTH  (80)
 
-#define PROGRAM_NAME    "tagEventor"
 #define DEFAULT_LOCK_FILE_DIR "/var/run/tagEventor"
 #define DEFAULT_COMMAND_DIR "/etc/tagEventor"
 #define DAEMON_NAME "tagEventord"

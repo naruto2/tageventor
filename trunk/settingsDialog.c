@@ -276,6 +276,10 @@ buildSettingsDialog ( void  )
         gtk_table_attach( (GtkTable *)table, readerNumToggle[i].toggle, i+1, i+2, 0, 1, GTK_FILL, GTK_FILL, 5, 0 );
         /* add a callback to the button which will be passed the setting value */
         g_signal_connect (G_OBJECT (readerNumToggle[i].toggle), "toggled", G_CALLBACK (toggleChange), (gpointer)(readerNumToggle[i].setting) );
+
+        /* however, if AUTO is set, then set the other toggles to insensitive */
+        if ( ( i > 0) && ( readerNumToggle[0].setting & READER_NUM_AUTO ) )
+            gtk_widget_set_sensitive( readerNumToggle[i].toggle, FALSE );
     }
 
     /* polly delay setting */

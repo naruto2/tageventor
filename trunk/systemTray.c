@@ -22,15 +22,12 @@
 #include <gtk/gtk.h>
 #include <string.h>
 #include <unistd.h>
+
+#include "stringConstants.h"
 #include "rulesEditor.h"
-
 #include "aboutDialog.h"
-
 #include "systemTray.h"
-
 #include "settingsDialog.h"
-
-#define TOOL_TIP_TEXT               "Tageventor: \nLeft-click for Rules Editor.\nRight-click for menu."
 
 static GtkStatusIcon    *systemTrayIcon = NULL;
 static int    (*readerPollFunction)( void *data );
@@ -67,7 +64,7 @@ systemTraySetStatus(
         gtk_status_icon_set_from_icon_name( systemTrayIcon, ICON_NAME_NOT_CONNECTED );
 
     /* push the message into the tool tip for the status icon */
-    sprintf( toolTipText, "%s\n%s", TOOL_TIP_TEXT, message );
+    sprintf( toolTipText, "%s:\n%s\n%s", PROGRAM_NAME, TOOL_TIP_TEXT, message );
     gtk_status_icon_set_tooltip_text( systemTrayIcon, toolTipText );
 
 #ifdef BUILD_RULES_EDITOR
