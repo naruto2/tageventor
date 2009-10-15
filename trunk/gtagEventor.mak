@@ -17,13 +17,14 @@ all:Debug Release
 # BUILD_SETTINGS_DIALOG
 # BUILD_RULES_EDITOR
 # BUILD_RULES_EDITOR_HELP
-build_flags = -DBUILD_SYSTEM_TRAY -DBUILD_CONTROL_PANEL -DBUILD_ABOUT_DIALOG -DBUILD_CONTROL_PANEL_HELP -DBUILD_SETTINGS_DIALOG -DBUILD_RULES_EDITOR -DBUILD_RULES_EDITOR_HELP -DPROGRAM_NAME='"gtagEventor"'
+build_flags = -DBUILD_SYSTEM_TRAY -DBUILD_CONTROL_PANEL -DBUILD_ABOUT_DIALOG -DBUILD_CONTROL_PANEL_HELP -DBUILD_SETTINGS_DIALOG -DBUILD_RULES_EDITOR -DBUILD_RULES_EDITOR_HELP
 
-flags = $(build_flags) -I . -Wall -DICON_DIR="/usr/share/app-install/"  -I /usr/include/PCSC `pkg-config --cflags --libs gtk+-2.0 gmodule-2.0`
+icon_flags = -DICON_INSTALL_DIR='"/usr/share/gtagEventor/icons/"' -DICON_NAME_CONNECTED='"gtagEventor"' -DICON_NAME_NOT_CONNECTED='"gtagEventorNoReader"'
+flags = $(build_flags) $(icon_flags) -I . -Wall -DPROGRAM_NAME='"gtagEventor"' -I /usr/include/PCSC `pkg-config --cflags --libs gtk+-2.0 gmodule-2.0`
 
-debug_flags = $(flags) -DDEBUG
+debug_flags = $(flags) -DDEBUG -g -DVERSION_STRING='"0.0.0.0 Debug"'
 
-release_flags = $(flags)
+release_flags = $(flags) -DVERSION_STRING='"0.0.0.0 Release"'
 
 cleanDebug:
 	@rm -f $(debug_binaries) $(debug_objects)
@@ -65,7 +66,7 @@ lib/Release/libtagReader.a:
 ########## Release version COMPILE
 obj/Release/gtagEventor.o : tagEventor.c
 	@gcc -c $< $(release_flags) -o $@
-	@echo "Compiling " $<
+	@echo "Compiling " $< "---->" $@
 
 obj/Release/%.o : %.c
 	@gcc -c $< $(release_flags) -o $@

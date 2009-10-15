@@ -23,6 +23,7 @@
 #include <gtk/gtk.h>
 #include <string.h>
 
+#include "stringConstants.h"
 #include "tagEventor.h"
 #include "systemTray.h"
 #include "settingsDialog.h"
@@ -220,11 +221,11 @@ buildSettingsDialog ( void  )
     GtkWidget   *vbox, *buttonBox, *table, *label;
     GtkWidget   *cancelButton;
     int         i, readerSettingBitmap;
+    char        windowTitle[strlen(PROGRAM_NAME) + strlen(SETTINGS_DIALOG_WINDOW_TITLE) + 10];
 
     dialog = gtk_window_new( GTK_WINDOW_TOPLEVEL );
-
-/* TODO append "settings" to the window name */
-    gtk_window_set_title( (GtkWindow *)dialog, PROGRAM_NAME );
+    sprintf(windowTitle, "%s%s", PROGRAM_NAME, SETTINGS_DIALOG_WINDOW_TITLE);
+    gtk_window_set_title( (GtkWindow *)dialog, windowTitle );
 
     /* set the icon for the window */
     gtk_window_set_icon_name( (GtkWindow *)dialog, ICON_NAME_CONNECTED );

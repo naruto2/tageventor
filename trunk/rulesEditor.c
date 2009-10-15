@@ -22,17 +22,15 @@
 #include <gtk/gtk.h>
 #include <string.h>
 
+#include "stringConstants.h"
 #include "systemTray.h"
-
 #include "rulesEditor.h"
 #include "rulesEditorHelp.h"
 #include "tagEventor.h"
-
 #include "aboutDialog.h"
 
 #define DEFAULT_WIDTH_PIX       (620)
 #define DEFAULT_HEIGHT_PIX      (250)
-
 
 #define NUM_COLUMNS             (5)
 static const gchar      *columnHeader[NUM_COLUMNS] = { "Rule Description", "Tag ID Match", "Folder", "Match", "Enabled" };
@@ -440,10 +438,12 @@ buildrulesEditor ( void  )
     GtkWidget   *vbox, *scroll, *buttonBox, *table;
     GtkWidget   *helpButton, *aboutButton, *addButton, *cancelButton;
     int         numEntries;
+    char        windowTitle[strlen(PROGRAM_NAME) + strlen(RULES_EDITOR_WINDOW_TITLE) + 10];
 
     /******************************* Main Application Window ************************/
     mainWindow = gtk_window_new( GTK_WINDOW_TOPLEVEL );
-    gtk_window_set_title( (GtkWindow *)mainWindow, "tagEventor - Rules Editor" );
+    sprintf(windowTitle, "%s%s", PROGRAM_NAME, RULES_EDITOR_WINDOW_TITLE);
+    gtk_window_set_title( (GtkWindow *)mainWindow, windowTitle );
     /* Smallest height possible then should expand to hold what's needed */
     gtk_window_set_default_size( (GtkWindow *)mainWindow, DEFAULT_WIDTH_PIX, DEFAULT_HEIGHT_PIX );
 

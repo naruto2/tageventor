@@ -29,6 +29,8 @@
 #include "systemTray.h"
 #include "settingsDialog.h"
 
+#define SYSTEM_TRAY_TOOL_TIP_TEXT_MAX    (260)
+
 static GtkStatusIcon    *systemTrayIcon = NULL;
 static int    (*readerPollFunction)( void *data );
 static guint    timeoutID = 0;
@@ -56,7 +58,7 @@ systemTraySetStatus(
                     const char  *message
                     )
 {
-    gchar   toolTipText[strlen(TOOL_TIP_TEXT) + SYSTEM_TRAY_ICON_MESSAGE_MAX];
+    gchar   toolTipText[SYSTEM_TRAY_TOOL_TIP_TEXT_MAX];
 
     if ( connected )
         gtk_status_icon_set_from_icon_name( systemTrayIcon, ICON_NAME_CONNECTED );
@@ -145,7 +147,7 @@ startSystemTray(
     gtk_init( argc, argv );
 
 #ifdef DEBUG
-    /* this might be useful for use during development */
+    /* this might be useful for use during development of new icons */
     if ( ( getcwd( currentDir, PATH_MAX ) ) != NULL )
     {
         /* add 'icons' on the end of it */
