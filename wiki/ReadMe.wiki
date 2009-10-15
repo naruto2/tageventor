@@ -1,17 +1,13 @@
-=== Build Pre-requisites ===
+=== What you need first ===
 See the SoftwareDependencies page for details on what you need to build and run tagEventor/gtagEventor.
 
-=== How to 'make' - from the command line ===
-Type "make" at the command prompt in the source directory.
-You can use "make clean" then "make" to ensure you have a clean build.
-
-You should get appropriate output from the make file and be left with tagEventor and gtagEventor (Gtk/GNOME GUI version) executables in the ./bin/Debug and ./bin/Release subdirectories.
-
-== How to build - from an IDE ===
-There are projects included for the libReader library, tagEventor command-line program and gtagEventor Gtk/Gnome GUI version for the Code::Blocks Integrated Development Environment (IDE). Open them in Code::Blocks, select the target (Debug or Release) and hit "build" or "fresh build"...
+=== How to build the project ===
+See the HowToBuild page for details.
 
 === How to run ===
 See the [Invocation Invocation page] for details on running tagEventor or gtagEventor.
 
 === How to install ===
 See the HowToInstall page for different ways of installing and running automatically the different binaries built.
+
+We hope to be able to create .deb and other binary install packages sometime.....please volunteer!
