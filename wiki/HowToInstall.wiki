@@ -1,0 +1,31 @@
+You must be able to run as root to install tagEventor/gtagEventor on the local machine.
+
+If you can do this, then use 
+  * 'cd' to the directory where you downloaded the source
+  * type 'sudo sh install-sh'. This should do a clean Release build before installing.
+
+This will do a number of things:
+
+=== tagEventor ===
+  # Copy the "./bin/Release/tagEventor" binary into /usr/sbin/
+     * check this works and you can execute it from there with "/usr/sbin/tagEventor"
+     * if that works, in another terminal from your home directory see if you can execute it by typing just "tagEventor". "/usr/bin" should be in your $PATH and you shouldn't have problems.
+  # Creates (if needed) the /etc/tagEventor directory, and copies the "generic" action script into it.
+
+=== tagEventord ===
+  # Copies the "tagEventord" daemon init shell script into /etc/init.d for use in starting as a system daemon
+    * This script can be run manually from here also to start and stop the daemon as init would do
+    * Use "sudo /etc/init.d/tagEventord start|stop|reload|restart" (one of those four options)
+  # It then creates appropriate links in the different runlevel directories (/etc/rc?.d) that each point to the script in /etc/init.d
+    * FYI it uses the command "update-rc.d -f tagEventord start 80 2 3 4 5 ." to do this
+
+This script invokes the tagEventor binary with the appropriate options to start a daemon version of it.
+
+Now when you restart your system tagEventor should be started as a daemon with verbosity level = 2.
+You can check things work by looking in /var/log/syslog for lines with "tagEventor" in them.
+You will also notice a regular (1 second) slight blink of the LED on the reader as it is polled one per second by the daemon.
+
+=== gtagEventor ===
+  # Copy the gtagEventor binary into the same /usr/sbin directory.
+  # Copies a GNOME desktop short cut "gtagEventor.desktop" into the standard GNOME auto-start directory, which is /etc/xdg/autostart
+  # Copies the gtagEventor icons into /usr/share/gtagEventor/icons/hicolor (where "hicolor" is the name of the Gnome icon-theme) 
