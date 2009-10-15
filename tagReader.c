@@ -315,9 +315,9 @@ readersEnumerate(
                 )
 {
 
-    int             rv;
-    DWORD 		    dwReaders;
-    char 		    *ptr;
+    LONG    rv;
+    DWORD   dwReaders;
+    char 	*ptr;
 
     /* Call with a null buffer to get the number of bytes to allocate */
     rv = SCardListReaders( (SCARDCONTEXT)(pManager->hContext), NULL, NULL, &dwReaders);
@@ -601,22 +601,22 @@ void readerDisconnect(
                    tReader	*pReader
                    )
 {
+    long unsigned int rv;
 
-   if (pReader->hCard)
-   {
-      sprintf(messageString, "Disconnecting from reader %d", pReader->number);
-      logMessage(LOG_INFO, 2, messageString);
+    if (pReader->hCard)
+    {
+        sprintf(messageString, "Disconnecting from reader %d", pReader->number);
+        logMessage(LOG_INFO, 2, messageString);
 
-      SCardDisconnect( (SCARDHANDLE) (pReader->hCard), SCARD_UNPOWER_CARD);
-      pReader->hCard = NULL;
-      PCSC_ERROR(rv, "SCardDisconnect");
-   }
-   else
-   {
-      sprintf(messageString, "Not currently connected to reader %d, cannot disconnect", pReader->number);
-      logMessage(LOG_INFO, 2, messageString);
-   }
-
+        rv = SCardDisconnect( (SCARDHANDLE) (pReader->hCard), SCARD_UNPOWER_CARD);
+        pReader->hCard = NULL;
+        PCSC_ERROR(rv, "SCardDisconnect");
+    }
+    else
+    {
+        sprintf(messageString, "Not currently connected to reader %d, cannot disconnect", pReader->number);
+        logMessage(LOG_INFO, 2, messageString);
+    }
 }
 /************************** READER DISCONNECT ********************/
 

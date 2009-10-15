@@ -6,6 +6,11 @@
 echo You must be \"root\" for install to work correctly
 echo ""
 
+###################################################################################
+# make sure we have all the (correct) binaries built
+make cleanRelease Release
+
+############################################### tagEventor  #######################
 # Copy the generic script that is used when no specific script is found for the tag ID
 echo "Installing tag event scripts"
 mkdir -p /etc/tagEventor
@@ -13,8 +18,7 @@ cp -f scripts/generic /etc/tagEventor/
 echo Script \"./scripts/generic\" copied to /etc/tagEventor/
 echo ""
 
-# copy the tageventor binaries to the system directory
-# TODO change make to build a release binary and install it instead
+# copy the tageventor binary to the system directory
 echo "Installing the Program Binary"
 cp -f bin/Release/tagEventor /usr/sbin
 echo Executable \"./bin/Release/tagEventor\" copied to /usr/sbin/
@@ -35,41 +39,47 @@ update-rc.d -f tagEventord start 80 2 3 4 5 .
 cd -
 echo ""
 
-####### GNOME Specific install options
+############################################## gtagEventor  #######################
+# copy the gtagEventor binary to the system directory
+echo "Installing the Program Binary"
+cp -f bin/Release/gtagEventor /usr/sbin
+echo Executable \"./bin/Release/gtagEventor\" copied to /usr/sbin/
+echo ""
+
 # put a desktop link in the right place and it will start executable with each GNOME session
 # TODO when we merge binaries, this may need changing. At the moment it starts the cpanel binary.
 echo "Installing Gnome start-up entries"
-cp tagEventor.desktop /etc/xdg/autostart/
-echo ./tagEventor.desktop copied into "/etc/xdg/autostart/" so it is started with each GNOME session
+cp gtagEventor.desktop /etc/xdg/autostart/
+echo ./gtagEventor.desktop copied into "/etc/xdg/autostart/" so it is started with each GNOME session
 echo ""
 
 # copy the required icons to a place where GNOME can find them without .svn directories!
 # delete older icons first
-rm -rf /usr/share/tagEventor/icons/hicolor/*
+rm -rf /usr/share/gtagEventor/icons/hicolor/*
 
 echo "Installing icons"
 # NOTE: This path is also in the code, so if you change one, change both
 # This one is a temporary fix
-mkdir -p /usr/share/tagEventor/icons/
+mkdir -p /usr/share/gtagEventor/icons/
 cp -R ./icons/*.png /usr/share/tagEventor/icons/
 
-mkdir -p /usr/share/tagEventor/icons/hicolor/16x16
+mkdir -p /usr/share/gtagEventor/icons/hicolor/16x16
 cp -R ./icons/hicolor/16x16/*.png /usr/share/tagEventor/icons/hicolor/16x16/
 
-mkdir -p /usr/share/tagEventor/icons/hicolor/22x22
+mkdir -p /usr/share/gtagEventor/icons/hicolor/22x22
 cp -R ./icons/hicolor/22x22/*.png /usr/share/tagEventor/icons/hicolor/22x22/
 
-mkdir -p /usr/share/tagEventor/icons/hicolor/32x32
+mkdir -p /usr/share/gtagEventor/icons/hicolor/32x32
 cp -R ./icons/hicolor/32x32/*.png /usr/share/tagEventor/icons/hicolor/32x32/
 
-mkdir -p /usr/share/tagEventor/icons/hicolor/48x48
+mkdir -p /usr/share/gtagEventor/icons/hicolor/48x48
 cp -R ./icons/hicolor/48x48/*.png /usr/share/tagEventor/icons/hicolor/48x48/
 
-mkdir -p /usr/share/tagEventor/icons/hicolor/64x64
+mkdir -p /usr/share/gtagEventor/icons/hicolor/64x64
 cp -R ./icons/hicolor/64x64/*.png /usr/share/tagEventor/icons/hicolor/64x64/
 
-mkdir -p /usr/share/tagEventor/icons/hicolor/128x128
+mkdir -p /usr/share/gtagEventor/icons/hicolor/128x128
 cp -R ./icons/hicolor/128x128/*.png /usr/share/tagEventor/icons/hicolor/128x128/
 
-echo Copied ./icons/ into "/usr/share/tagEventor"
+echo Copied ./icons/ into "/usr/share/gtagEventor"
 echo ""

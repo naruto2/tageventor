@@ -174,7 +174,15 @@ parseCommandLine(
 
    /* Set default values */
    verbosityLevel = VERBOSITY_DEFAULT;
+
+#ifdef BUILD_SYSTEM_TRAY
+   /* this is the gtagEventor GUI version built to install in system tray */
+   *pRunOptions = SYSTEM_TRAY;
+#else
+   /* default mode is to run in foreground at the terminal */
    *pRunOptions = FOREGROUND;
+#endif
+
    pollDelayms = POLL_DELAY_MILLI_SECONDS_DEFAULT;
 
    while ( ((option = getopt(argc, argv, "n:v:d:p:h")) != EOF) && (!parseError) )
@@ -219,10 +227,6 @@ parseCommandLine(
                *pRunOptions = START_DAEMON;
             else if (strcmp(optarg, "stop") == 0)
                   *pRunOptions = STOP_DAEMON;
-#ifdef BUILD_SYSTEM_TRAY
-                 else if (strcmp(optarg, "tray") == 0)
-                  *pRunOptions = SYSTEM_TRAY;
-#endif
                       else
                       {
                           parseError = TRUE;
