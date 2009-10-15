@@ -1,7 +1,9 @@
-=== Compile Time ===
-   * *pcsclite* development package
+=== To Build tagEventor ===
+To develop against PCSCD, including building tagEventor you will need the packages:
+  * libpcsclite1 - the library
+  * libpcsclite-dev - the header files
 
-   * If you want to compile the evolving UI prototypes to see what they look like you will need *Glade* and it's development headers.
+   * If you want to compile the evolving UI prototypes to see what they look like you will need Gtk2-0. Projects are included for Code::Blocks IDE so you might want to get that.
 
 === Link Time ===
   * *libpcsclite* to link executable.
@@ -9,5 +11,7 @@
    * If you want to compile the evolving UI prototypes to see what they look like you will need *Glade* and it's libraries.
 
 === Run Time ===
-  * *pcscd* installed and daemon running on local machine.
-  * *libccid* driver installed, should be loaded by pcscd.
+You'll need the "pcsc-lite" package on your machine which runes the "pcscd" daemon, if not already there (it comes with most Linux disctributions and Mac OS X).
+It maybe called "pcscd". From the terminal type "ps -ef | grep pcsc" to see if it's there. Best to try that with a reader plugged-in.
+
+The ACS reader will need the *libccid* driver installed, should be loaded by pcscd.
