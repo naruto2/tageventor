@@ -13,26 +13,5 @@ There are projects included for the libReader library, tagEventor command-line p
 === How to run ===
 See the [Invocation Invocation page] for details on running tagEventor or gtagEventor.
 
-How to Install as a daemon
---------------------------
-You must be able to run as root to install tagEventor on the local machine.
-If you can do this, then use "sudo ./install-sh".
-
-This will do a number of things:
-
-1) Copy the "tagEventor" binary you build above into /usr/sbin/
-   -> check this works and you can execute it from there with "/usr/sbin/tagEventor"ç
-
-2) Create (if needed) the /etc/tagEventor directory, and copy the "generic" script into it.
-
-3) Copies the "tagEventord" init shell script into /etc/init.d for use in starting as a system daemon
-   -> This script can be run manually from here also to start and stop the daemon as init would do
-   -> Use "sudo /etc/init.d/tagEventord start|stop|reload|restart" (one of those four options)
-
-4) It then creates appropriate links in the different runlevel directories (/etc/rc?.d) that each
-   point to the script in /etc/init.d
-   -> FYI it uses the command "update-rc.d -f tagEventord start 80 2 3 4 5 ." to do this
-
-Now when you restart your system tagEventor should be started as a daemon with verbosity level = 2.
-You can check things work by looking in /var/log/syslog for lines with "tagEventor" in them.
-You will also notice a regular (1 second) slight blink of the LED on the reader as it is polled one per second by the daemon.
+=== How to install ===
+See the HowToInstall page for different ways of installing and running automatically the different binaries built.
