@@ -20,7 +20,7 @@ echo ""
 
 # copy the tageventor binary to the system directory
 echo "Installing the Program Binary"
-cp -f bin/Release/tagEventor /usr/sbin
+cp -f bin/Release/tagEventor /usr/sbin/
 echo Executable \"./bin/Release/tagEventor\" copied to /usr/sbin/
 echo ""
 
@@ -28,7 +28,7 @@ echo ""
 # copy the init script to the system directory so that tag eventor will be started as a daemon
 # TODO once we merge binaries and have a GNOME item running, this could be removed or disabled.
 echo "Installing daemon start-up script "
-cp -f tagEventord /etc/init.d
+cp -f tagEventord /etc/init.d/
 echo Init script \"./tagEventord\" copied to /etc/init.d/
 echo ""
 
@@ -61,25 +61,25 @@ echo "Installing icons"
 # NOTE: This path is also in the code, so if you change one, change both
 # This one is a temporary fix
 mkdir -p /usr/share/gtagEventor/icons/
-cp -R ./icons/*.png /usr/share/tagEventor/icons/
+cp -R ./icons/*.png /usr/share/gtagEventor/icons/
 
 mkdir -p /usr/share/gtagEventor/icons/hicolor/16x16
-cp -R ./icons/hicolor/16x16/*.png /usr/share/tagEventor/icons/hicolor/16x16/
+cp -R ./icons/hicolor/16x16/*.png /usr/share/gtagEventor/icons/hicolor/16x16/
 
 mkdir -p /usr/share/gtagEventor/icons/hicolor/22x22
-cp -R ./icons/hicolor/22x22/*.png /usr/share/tagEventor/icons/hicolor/22x22/
+cp -R ./icons/hicolor/22x22/*.png /usr/share/gtagEventor/icons/hicolor/22x22/
 
 mkdir -p /usr/share/gtagEventor/icons/hicolor/32x32
-cp -R ./icons/hicolor/32x32/*.png /usr/share/tagEventor/icons/hicolor/32x32/
+cp -R ./icons/hicolor/32x32/*.png /usr/share/gtagEventor/icons/hicolor/32x32/
 
 mkdir -p /usr/share/gtagEventor/icons/hicolor/48x48
-cp -R ./icons/hicolor/48x48/*.png /usr/share/tagEventor/icons/hicolor/48x48/
+cp -R ./icons/hicolor/48x48/*.png /usr/share/gtagEventor/icons/hicolor/48x48/
 
 mkdir -p /usr/share/gtagEventor/icons/hicolor/64x64
-cp -R ./icons/hicolor/64x64/*.png /usr/share/tagEventor/icons/hicolor/64x64/
+cp -R ./icons/hicolor/64x64/*.png /usr/share/gtagEventor/icons/hicolor/64x64/
 
 mkdir -p /usr/share/gtagEventor/icons/hicolor/128x128
-cp -R ./icons/hicolor/128x128/*.png /usr/share/tagEventor/icons/hicolor/128x128/
+cp -R ./icons/hicolor/128x128/*.png /usr/share/gtagEventor/icons/hicolor/128x128/
 
 echo Copied ./icons/ into "/usr/share/gtagEventor"
 echo ""

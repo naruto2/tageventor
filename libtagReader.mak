@@ -8,6 +8,12 @@ debug_objects = lib/Debug/tagReader.o
 
 release_objects = lib/Release/tagReader.o
 
+flags = -Wall -I . -I /usr/include/PCSC
+
+debug_flags = $(flags) -DDEBUG -g
+
+release_flags = $(flags)
+
 ###### Debug version of library
 cleanDebug:
 	@rm -f $(debug_objects) $(debug_archive)
@@ -21,7 +27,7 @@ lib/Debug/libtagReader.a: $(debug_objects)
 	@echo ""
 
 lib/Debug/tagReader.o: tagReader.c  tagReader.h
-	@gcc -c tagReader.c -DDEBUG -Wall -I . -I /usr/include/PCSC -o $@
+	@gcc -c tagReader.c $(debug_flags) -o $@
 	@echo "Compiling " $<
 
 ###### Release version of library
@@ -37,7 +43,7 @@ lib/Release/libtagReader.a: $(release_objects)
 	@echo ""
 
 lib/Release/tagReader.o: tagReader.c
-	@gcc -c tagReader.c -Wall -I . -I /usr/include/PCSC -o $@
+	@gcc -c tagReader.c $(release_flags) -o $@
 	@echo "Compiling " $<
 
 # Clean up all stray editor back-up files, any .o or .a left around in this directory

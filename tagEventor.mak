@@ -9,7 +9,7 @@ release_objects = obj/Release/tagEventor.o obj/Release/rulesTable.o
 
 flags = -Wall -I . -I /usr/include/PCSC -DPROGRAM_NAME="tagEventor"
 
-debug_flags = $(flags) -DDEBUG
+debug_flags = $(flags) -DDEBUG -g
 
 release_flags = $(flags)
 
