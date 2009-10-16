@@ -70,7 +70,7 @@ Release: bin/Release/gtagEventor
 
 ########## Release version LINK
 bin/Release/gtagEventor: lib/Release/libtagReader.a $(release_objects)
-	@gcc $(release_objects) $(link_flags) tagReader -o $@
+	@gcc $(release_objects) $(link_flags) -o $@
 	@echo gtagEventor Release version BUILT \(./bin/Release/gtagEventor\)
 	@echo ""
 
