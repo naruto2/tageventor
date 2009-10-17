@@ -1,5 +1,5 @@
 /*
-  aboutDialog.h - C source code for tagEventor Gtk/GNOME about dialog
+  aboutDialog.h - C source code for gtagEventor Gtk/GNOME about dialog
 
   Copyright 2009 Autelic Association (http://www.autelic.org)
 

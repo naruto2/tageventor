@@ -1,7 +1,6 @@
 /*
-  rulesEditor.h - headerfile that defines the entry point for code
-                 that will create and start and run a system tray icon
-
+  rulesEditor.h - C header for gtagEventor Gtk/GNOME rules editor
+       
   Copyright 2009 Autelic Association (http://www.autelic.org)
 
   Licensed under the Apache License, Version 2.0 (the "License");

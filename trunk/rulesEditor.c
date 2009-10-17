@@ -1,5 +1,5 @@
 /*
-  rulesEditor.c - C source code for tagEventor Gtk/GNOME rules editor
+  rulesEditor.c - C source code for gtagEventor Gtk/GNOME rules editor
 
   Copyright 2009 Autelic Association (http://www.autelic.org)
 
@@ -299,8 +299,9 @@ gchar*              g_filename_to_utf8                  (const gchar *opsysstrin
     gtk_file_chooser_set_local_only( GTK_FILE_CHOOSER (chooser), TRUE );
     /* otherwise it's a new blank name, so default to width of 10 characters */
     gtk_file_chooser_button_set_width_chars((GtkFileChooserButton *)chooser, 10 );
-    /* add a short-cut to the dialog to help the user find folders related to tagEventor */
-    gtk_file_chooser_add_shortcut_folder( GTK_FILE_CHOOSER (chooser), DEFAULT_COMMAND_DIR, &pError );
+    /* add short-cut to the dialog to help the user find folders related to gtagEventor */
+    gtk_file_chooser_add_shortcut_folder( GTK_FILE_CHOOSER (chooser), 
+                                          DEFAULT_COMMAND_DIR, &pError );
 
 
     /*  add the match option menu */

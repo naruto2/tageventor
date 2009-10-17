@@ -1,5 +1,5 @@
 /*
-  systemTray.c - C source code for tagEventor Gtk/GNOME system tray icon
+  systemTray.c - C source code for gtagEventor Gtk/GNOME system tray icon
 
   Copyright 2009 Autelic Association (http://www.autelic.org)
 

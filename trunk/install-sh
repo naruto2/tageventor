@@ -40,6 +40,13 @@ cd -
 echo ""
 
 ############################################## gtagEventor  #######################
+# Copy the generic script that is used when no specific script is found for the tag ID
+echo "Installing tag event scripts"
+mkdir -p /etc/gtagEventor
+cp -f scripts/generic /etc/gtagEventor/
+echo Script \"./scripts/generic\" copied to /etc/gtagEventor/
+echo ""
+
 # copy the gtagEventor binary to the system directory
 echo "Installing the Program Binary"
 cp -f bin/Release/gtagEventor /usr/sbin
