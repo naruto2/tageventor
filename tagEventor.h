@@ -26,7 +26,6 @@
 #define MAX_DESCRIPTION_LENGTH  (80)
 
 #define DEFAULT_LOCK_FILE_DIR "/var/run/tagEventor"
-#define DEFAULT_COMMAND_DIR "/etc/tagEventor"
 #define DAEMON_NAME "tagEventord"
 
 #define POLL_DELAY_MILLI_SECONDS_MIN        (500)

@@ -7,7 +7,8 @@ all: Debug Release
 debug_objects = obj/Debug/tagEventor.o obj/Debug/rulesTable.o
 release_objects = obj/Release/tagEventor.o obj/Release/rulesTable.o
 
-flags = -Wall -I . -I /usr/include/PCSC -DPROGRAM_NAME="tagEventor"
+flags = -Wall -I . -I /usr/include/PCSC -DPROGRAM_NAME="tagEventor" \
+        -DDEFAULT_COMMAND_DIR='"/etc/tagEventor"'
 
 debug_flags = $(flags) -DDEBUG -g
 

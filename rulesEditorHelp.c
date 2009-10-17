@@ -1,5 +1,5 @@
 /*
-  rulesEditorHelp.c - C source code for tagEventor Gtk/GNOME help
+  rulesEditorHelp.c - C source code for gtagEventor Gtk/GNOME help
                     dialog for rules editor
 
   Copyright 2009 Autelic Association (http://www.autelic.org)

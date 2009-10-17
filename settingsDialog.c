@@ -1,5 +1,5 @@
 /*
-  settingsDialog.c - C source code for tagEventor Gtk/GNOME dettings
+  settingsDialog.c - C source code for gtagEventor Gtk/GNOME dettings
                     dialog window
 
   Copyright 2009 Autelic Association (http://www.autelic.org)

@@ -1,5 +1,5 @@
 /*
-  rulesEditorHelp.h - C header for tagEventor Gtk/GNOME rules editor
+  rulesEditorHelp.h - C header for gtagEventor Gtk/GNOME rules editor
                     help dialog
 
   Copyright 2009 Autelic Association (http://www.autelic.org)
