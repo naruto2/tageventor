@@ -65,9 +65,11 @@ systemTraySetStatus(
     else
         gtk_status_icon_set_from_icon_name( systemTrayIcon, ICON_NAME_NOT_CONNECTED );
 
+#if GTK_CHECK_VERSION( 2, 16, 0 )
     /* push the message into the tool tip for the status icon */
     sprintf( toolTipText, "%s:\n%s\n%s", PROGRAM_NAME, TOOL_TIP_TEXT, message );
     gtk_status_icon_set_tooltip_text( systemTrayIcon, toolTipText );
+#endif
 
 #ifdef BUILD_RULES_EDITOR
     /* let the ruls editor know of status updates too */
@@ -164,8 +166,10 @@ startSystemTray(
     /* until we actually connect to a reader set the icon to show not connected to one */
     systemTrayIcon = gtk_status_icon_new_from_icon_name( ICON_NAME_NOT_CONNECTED );
 
+#if GTK_CHECK_VERSION( 2, 16, 0 )
     /* Set the basic tooltip info. Tag polling routine may update it with more info */
     gtk_status_icon_set_tooltip_text( systemTrayIcon, TOOL_TIP_TEXT );
+#endif
 
 #ifdef BUILD_RULES_EDITOR
     /* if we have built the rules editor then connect up the handler for the left mouse-click */
