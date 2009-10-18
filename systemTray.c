@@ -58,7 +58,9 @@ systemTraySetStatus(
                     const char  *message
                     )
 {
+#if GTK_CHECK_VERSION( 2, 16, 0 )
     gchar   toolTipText[SYSTEM_TRAY_TOOL_TIP_TEXT_MAX];
+#endif
 
     if ( connected )
         gtk_status_icon_set_from_icon_name( systemTrayIcon, ICON_NAME_CONNECTED );
@@ -92,19 +94,19 @@ iconQuit( void )
 #ifdef BUILD_SETTINGS_DIALOG
         if ( settingsDialogQuit() )
             exit( 0 );
-#else
+#else /* BUILD_SETTINGS_DIALOG */
         exit( 0 );
-#endif
+#endif /* BUILD_SETTINGS_DIALOG */
     }
-#else
+#else /* BUILD_RULES_EDITOR */
 #ifdef BUILD_SETTINGS_DIALOG
         if ( settingsDialogQuit() )
             exit( 0 );
-#else
+#else  /* BUILD_SETTINGS_DIALOG */
     exit( 0 );
-#endif
+#endif /* BUILD_SETTINGS_DIALOG */
 
-#endif
+#endif /* BUILD_RULES_EDITOR */
 
 }
 
