@@ -1,3 +1,5 @@
+Before trying to build (OK, go ahead and try it and then come back here when it fails....!) you might want to check the SoftwareDependencies page to make sure you have what's needed for Linux and Mac OS X building.
+
 === How to 'make' - from the command line ===
 Type "make" at the command prompt in the source directory.
 You can use "make clean" then "make" to ensure you have a clean build.
