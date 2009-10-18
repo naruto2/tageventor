@@ -38,16 +38,23 @@
 
 /**************************    TYPEDEFS    **************************/
 typedef const char	t_Logical_UID_MIFARE_ULTRA[NUM_BYTES_UID_MIFARE_ULTRA];
+
 typedef struct		{
 			char		data[NUM_USER_BYTES_PER_PAGE_MIFARE_ULTRA];
-			unsigned char	locked;
+			unsigned char	locked;/* is it locked or can it be written to */
+			unsigned char	valid; /* has this data been read from tag?    */
+			unsigned char	writePending; 
+			/* data has been changed but not yet written to the actual tag */
 			} t_Logical_Page_MIFARE_ULTRA;
+
 typedef	char		t_Logical_OTP[NUM_OTP_BYTES_MIFARE_ULTRA];
+
 typedef struct		{
 			    t_Logical_UID_MIFARE_ULTRA	uid;
 			    t_Logical_OTP		OTP;
 			    t_Logical_Page_MIFARE_ULTRA	pages[NUM_PAGES_MIFARE_ULTRA];
 			} t_Logical_Tag_Contents_MIFARE_ULTRA;
+
 typedef enum		{ NXP=0x04 } t_Logical_Tag_Manufacturer_MIFARE_ULTRA;
 
 const char NXPString[] = "NXP Semiconductor";
