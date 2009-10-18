@@ -137,7 +137,7 @@ static         char		messageString[MAX_LOG_MESSAGE];
 #define PCSC_ERROR(rv, text) \
 if (rv != SCARD_S_SUCCESS) \
 { \
-   sprintf(messageString, "%s: %s (0x%lX)", text, pcsc_stringify_error(rv), rv); \
+   sprintf(messageString, "%s: %s (0x%X)", text, pcsc_stringify_error(rv), rv); \
    logMessage( LOG_ERR, 0, messageString);\
 }
 #else
@@ -601,7 +601,7 @@ void readerDisconnect(
                    tReader	*pReader
                    )
 {
-    long unsigned int rv;
+    LONG rv;
 
     if (pReader->hCard)
     {

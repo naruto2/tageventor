@@ -49,48 +49,27 @@
 			<Add library="libpcsclite.a" />
 			<Add directory="/home/andrew/tageventor/trunk" />
 		</Linker>
-		<Unit filename="aboutDialog.c">
-			<Option compilerVar="CC" />
-		</Unit>
 		<Unit filename="aboutDialog.h" />
-		<Unit filename="rules.c">
-			<Option compilerVar="CC" />
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="rulesEditor.c">
-			<Option compilerVar="CC" />
-		</Unit>
 		<Unit filename="rulesEditor.h" />
-		<Unit filename="rulesEditorHelp.c">
-			<Option compilerVar="CC" />
-		</Unit>
 		<Unit filename="rulesEditorHelp.h" />
 		<Unit filename="rulesTable.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="settingsDialog.c">
-			<Option compilerVar="CC" />
-		</Unit>
 		<Unit filename="settingsDialog.h" />
 		<Unit filename="stringConstants.h" />
-		<Unit filename="systemTray.c">
-			<Option compilerVar="CC" />
-		</Unit>
 		<Unit filename="systemTray.h" />
 		<Unit filename="tagEventor.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="tagEventor.h" />
-		<Unit filename="tagReader.c">
-			<Option compilerVar="CC" />
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
 		<Unit filename="tagReader.h">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Extensions>
 			<code_completion />
 			<debugger />
+			<envvars />
+			<lib_finder disable_auto="1" />
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>
