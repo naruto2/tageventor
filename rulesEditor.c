@@ -26,7 +26,8 @@
 #include "systemTray.h"
 #include "rulesEditor.h"
 #include "rulesEditorHelp.h"
-#include "tagEventor.h"
+#include "rulesEditor.h"
+#include "rulesTable.h"
 #include "aboutDialog.h"
 
 #define DEFAULT_WIDTH_PIX       (620)
@@ -249,7 +250,7 @@ tableAddRow( GtkTable *pTable, int i )
     GtkWidget           *matchMenu, *matchMenuItem;
     GError              *pError;
 
-    const tPanelEntry   *pTagEntry;
+    const tRulesTableEntry   *pTagEntry;
 
     /* get a pointer to this entry in the table */
     pTagEntry = rulesTableEntryGet( i );

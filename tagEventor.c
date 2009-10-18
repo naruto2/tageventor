@@ -29,8 +29,10 @@
 #include <limits.h>
 
 #include <PCSC/winscard.h>
-#include "tagReader.h"
+#include <tagReader.h>
+
 #include "tagEventor.h"
+#include "rulesTable.h"
 #include "systemTray.h"
 #include "stringConstants.h"
 
@@ -288,16 +290,16 @@ handleSignal(
       case SIGHUP: /* restart the server using  "kill -1" at the command shell */
          readerDisconnect( &(readers[0]) );
          readerConnect( &readerManager, &(readers[0]) );
-         logMessage(LOG_INFO, 1, "Hangup signal received - disconnected and reconnected");
+         readerLogMessage(LOG_INFO, 1, "Hangup signal received - disconnected and reconnected");
       break;
 
       case SIGINT: /* kill -2 or Control-C */
       case SIGTERM:/* "kill -15" or "kill" */
          readerDisconnect(&(readers[0]) );
-         logMessage( LOG_INFO, 1, "SIGTERM or SIGINT received, exiting gracefully");
+         readerLogMessage( LOG_INFO, 1, "SIGTERM or SIGINT received, exiting gracefully");
          if ( runningAsDaemon )
          {
-            logMessage( LOG_INFO, 1, "Closing and removing lockfile, closing log. Bye.");
+            readerLogMessage( LOG_INFO, 1, "Closing and removing lockfile, closing log. Bye.");
             close( lockFile );
             remove( lockFilename );
             closelog();
@@ -326,9 +328,9 @@ stopDaemon(
    if (lockFile == -1)
    {
       sprintf(messageString, "Could not open lock file %s, exiting", lockFilename);
-      logMessage(LOG_ERR, 0, messageString);
+      readerLogMessage(LOG_ERR, 0, messageString);
       sprintf(messageString, "Check you have the necessary permission for it");
-      logMessage(LOG_ERR, 0, messageString);
+      readerLogMessage(LOG_ERR, 0, messageString);
       exit( EXIT_FAILURE );
    }
 
@@ -336,7 +338,7 @@ stopDaemon(
    if (read(lockFile, pidString, 19) == -1)
    {
       sprintf(messageString, "Could not read PID from lock file %s, exiting", lockFilename);
-      logMessage(LOG_ERR, 0, messageString);
+      readerLogMessage(LOG_ERR, 0, messageString);
       exit( EXIT_FAILURE );
    }
 
@@ -345,12 +347,12 @@ stopDaemon(
    if (sscanf( pidString, "%d\n", &pid ) != 1)
    {
       sprintf(messageString, "Could not read PID from lock file %s, exiting", lockFilename);
-      logMessage(LOG_ERR, 0, messageString);
+      readerLogMessage(LOG_ERR, 0, messageString);
       exit( EXIT_FAILURE );
    }
 
    sprintf(messageString, "Stopping daemon with PID = %d on readerNumber %d", pid, readerNumber);
-   logMessage(LOG_INFO, 1, messageString);
+   readerLogMessage(LOG_INFO, 1, messageString);
 
    /* might need to be root for this to work ?  - try and kill nicely*/
    kill (pid, SIGTERM);
@@ -381,7 +383,7 @@ getLockOrDie(
    {
       sprintf(messageString,
               "Could not open lock file %s, check permissions or run as root, exiting", lockFilename);
-      logMessage(LOG_ERR, 0, messageString);
+      readerLogMessage(LOG_ERR, 0, messageString);
       exit( EXIT_FAILURE );
    }
 
@@ -393,12 +395,12 @@ getLockOrDie(
    if ( fcntl(lockFile, F_SETLK, &lock) == -1 )
    {
       sprintf(messageString, "Could not lock file %s", lockFilename);
-      logMessage(LOG_ERR, 0, messageString);
+      readerLogMessage(LOG_ERR, 0, messageString);
       sprintf(messageString, "Probably indicates a previous copy is still running or crashed");
-      logMessage(LOG_ERR, 0, messageString);
+      readerLogMessage(LOG_ERR, 0, messageString);
       sprintf(messageString, "Find PID using \"cat %s\" or \"ps -ef | grep %s\". Exiting.",
              lockFilename, DAEMON_NAME);
-      logMessage(LOG_ERR, 0, messageString);
+      readerLogMessage(LOG_ERR, 0, messageString);
       exit( EXIT_FAILURE );
    }
 
@@ -407,7 +409,7 @@ getLockOrDie(
    if (write(lockFile, pidString, strlen(pidString)) != strlen(pidString) )
    {
       sprintf(messageString, "Could not write PID to lock file %s", lockFilename);
-      logMessage(LOG_ERR, 0, messageString);
+      readerLogMessage(LOG_ERR, 0, messageString);
       exit( EXIT_FAILURE );
    }
 }
@@ -428,7 +430,7 @@ daemonize (
    if ( pid < 0 )
    { /* fork error */
       sprintf(messageString, "Error forking daemon %s, exiting", DAEMON_NAME);
-      logMessage(LOG_ERR, 0, messageString);
+      readerLogMessage(LOG_ERR, 0, messageString);
       exit( EXIT_FAILURE );
    }
 
@@ -436,7 +438,7 @@ daemonize (
    { /* fork worked, this is the parent process so exit */
       sprintf(messageString, "Started daemon %s with PID=%d on reader %d, see /var/log/syslog",
               DAEMON_NAME, pid, readerNumber);
-      logMessage(LOG_INFO, 1, messageString);
+      readerLogMessage(LOG_INFO, 1, messageString);
       exit( EXIT_FAILURE );
    }
 
@@ -456,7 +458,7 @@ daemonize (
    if ( setsid() < 0 )
    {
       sprintf(messageString, "Error creating new SID for daemon process %s with PID=%d on reader %d, see in /var/log/syslog", DAEMON_NAME, pid, readerNumber);
-      logMessage(LOG_ERR, 0, messageString);
+      readerLogMessage(LOG_ERR, 0, messageString);
       exit( EXIT_FAILURE );
    }
 
@@ -487,7 +489,7 @@ daemonize (
    signal( SIGTTIN, SIG_IGN );
 
    sprintf(messageString, "Daemon Started on reader number %d", readerNumber );
-   logMessage(LOG_INFO, 1, messageString);
+   readerLogMessage(LOG_INFO, 1, messageString);
 }
 /*********************  DAEMONIZE ****************************/
 
@@ -516,7 +518,7 @@ tagListCheck( void *updateSystemTray )
         if ( readerConnect( &readerManager, &(readers[0]) ) == SCARD_S_SUCCESS )
         {
             /* get initial list of tags on first connect to prime the pump for the later comparisons */
-            rv = getTagList( &(readers[0]), ppreviousTagList);
+            rv = readerGetTagList( &(readers[0]), ppreviousTagList);
         }
         else
             sprintf( messageString, TAGEVENTOR_STRING_PCSCD_OK_READER_NOT ,
@@ -527,7 +529,7 @@ tagListCheck( void *updateSystemTray )
     if ( ( readerManager.hContext != NULL ) && ( readers[0].hCard != NULL ) )
     {
         /* get the list of tags on reader */
-        rv = getTagList( &(readers[0]), pnewTagList);
+        rv = readerGetTagList( &(readers[0]), pnewTagList);
 
         if (rv != SCARD_S_SUCCESS)
         {
@@ -586,7 +588,7 @@ tagListCheck( void *updateSystemTray )
             /* and make the new one point to a different list so it can be overwritten */
             SWAP(pnewTagList, ppreviousTagList);
             tagListChanged = FALSE;
-        } /* if getTagList() was successful */
+        } /* if readerGetTagList() was successful */
     }
 
 #ifdef BUILD_SYSTEM_TRAY
@@ -596,7 +598,7 @@ tagListCheck( void *updateSystemTray )
 
     /* if any problems with PCSCD or with the reader, then report it */
     if  ( ( readerManager.hContext == NULL ) || ( readers[0].hCard == NULL ) )
-        logMessage(LOG_WARNING, 0, messageString);
+        readerLogMessage(LOG_WARNING, 0, messageString);
 
     /* keep calling me */
     return( TRUE );

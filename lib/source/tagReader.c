@@ -27,6 +27,7 @@
 #include <PCSC/winscard.h>
 
 #include "tagReader.h"
+#include "tagSpecs.h"
 
 /* COMMAND : [Class, Ins, P1, P2, DATA, LEN] */
 /* Direct to card commands start with 'd4', must prepend direct transmit to them*/
@@ -137,8 +138,8 @@ static         char		messageString[MAX_LOG_MESSAGE];
 #define PCSC_ERROR(rv, text) \
 if (rv != SCARD_S_SUCCESS) \
 { \
-   sprintf(messageString, "%s: %s (0x%X)", text, pcsc_stringify_error(rv), rv); \
-   logMessage( LOG_ERR, 0, messageString);\
+   sprintf(messageString, "%s: %s (0x%lX)", text, pcsc_stringify_error(rv), rv); \
+   readerLogMessage( LOG_ERR, 0, messageString);\
 }
 #else
 #define PCSC_ERROR(rv, text)
@@ -153,10 +154,11 @@ static  BOOL        runningInBackground = FALSE;
 /* type = LOG_WARNING (something unexpected, not a big problem) */
 /* type = LOG_ERR (something went wrong that was´t expected     */
 /* type = LOG_INFO (just info */
-void logMessage( int		type,
-                 int		messageLevel,
-	         const char 	*message
-	       )
+void readerLogMessage(
+                        int		    type,
+                        int		    messageLevel,
+                        const char 	*message
+                    )
 {
 
    switch (type)
@@ -225,21 +227,21 @@ static LONG apduSend (
 	BYTE 			pbSendBuffer[20];
 	DWORD 			dwSendLength = 0;
 	DWORD			rBufferMax;
-        BOOL			psuedoAPDU = FALSE;
+    BOOL			psuedoAPDU = FALSE;
 
-        /* The special psuedo APDU's to talk to a tag, need to have their */
-        /* response read back in two chunks, using GET_RESPONSE for the second */
-        if (apdu[0] == 0xd4)
-        {
-            psuedoAPDU = TRUE;
-           /* prepend the DIRECT_TRANSMIT APDU  */
-           memcpy(pbSendBuffer, APDU_DIRECT_TRANSMIT, sizeof(APDU_DIRECT_TRANSMIT));
+    /* The special psuedo APDU's to talk to a tag, need to have their */
+    /* response read back in two chunks, using GET_RESPONSE for the second */
+    if (apdu[0] == 0xd4)
+    {
+       psuedoAPDU = TRUE;
+       /* prepend the DIRECT_TRANSMIT APDU  */
+       memcpy(pbSendBuffer, APDU_DIRECT_TRANSMIT, sizeof(APDU_DIRECT_TRANSMIT));
 
-           /* then a byte that tells it the length of the psuedo APDU to follow */
-           pbSendBuffer[sizeof(APDU_DIRECT_TRANSMIT)] = (BYTE)apduLength;
+       /* then a byte that tells it the length of the psuedo APDU to follow */
+       pbSendBuffer[sizeof(APDU_DIRECT_TRANSMIT)] = (BYTE)apduLength;
 
-           dwSendLength += (sizeof(APDU_DIRECT_TRANSMIT) + 1);
-        }
+       dwSendLength += (sizeof(APDU_DIRECT_TRANSMIT) + 1);
+    }
 
         /* Add the APDU that was requested to be sent and increase length to send */
 	memcpy((pbSendBuffer + dwSendLength), apdu, apduLength);
@@ -247,7 +249,7 @@ static LONG apduSend (
 
         sprintf(messageString, "APDU: ");
         sPrintBufferHex((messageString + strlen("APDU: ")), dwSendLength, pbSendBuffer);
-        logMessage(LOG_INFO, 3, messageString);
+        readerLogMessage(LOG_INFO, 3, messageString);
 
         /* remember the size of the input buffer passed to us, so we don't exceed */
 	rBufferMax = *dwRecvLength;
@@ -262,13 +264,13 @@ static LONG apduSend (
         {
            sprintf(messageString, "Received: ");
            sPrintBufferHex((messageString + strlen("Received: ")), *dwRecvLength, pbRecvBuffer);
-           logMessage(LOG_INFO, 3, messageString);
+           readerLogMessage(LOG_INFO, 3, messageString);
 
            /* command went OK? */
            if (pbRecvBuffer[SW1] != SW1_SUCCESS)
            {
               sprintf(messageString, "APDU failed: SW1 = %02X", pbRecvBuffer[SW1]);
-              logMessage(LOG_ERR, 0, messageString);
+              readerLogMessage(LOG_ERR, 0, messageString);
               return ( SCARD_F_COMM_ERROR );
            }
 
@@ -277,7 +279,7 @@ static LONG apduSend (
            {
               sprintf(messageString, "Requesting Response Data (%d)",
                       pbRecvBuffer[SW2]);
-              logMessage(LOG_INFO, 3, messageString);
+              readerLogMessage(LOG_INFO, 3, messageString);
 
               /* copy the get_response APDU into the first bytes */
               memcpy(pbSendBuffer, APDU_GET_RESPONSE, sizeof(APDU_GET_RESPONSE));
@@ -294,7 +296,7 @@ static LONG apduSend (
               PCSC_ERROR(rv, "SCardTransmit");
               sprintf(messageString, "Received: ");
               sPrintBufferHex(messageString, rBufferMax, pbRecvBuffer);
-              logMessage(LOG_INFO, 3, messageString);
+              readerLogMessage(LOG_INFO, 3, messageString);
 
 	      *dwRecvLength = rBufferMax;
 	   }
@@ -353,7 +355,7 @@ readersEnumerate(
     }
 
     sprintf(messageString, "Found %d Readers, ", pManager->nbReaders);
-    logMessage(LOG_INFO, 2, messageString);
+    readerLogMessage(LOG_INFO, 2, messageString);
 
     /* if there was already a readers table, free it */
     if ( pManager->readers )
@@ -363,7 +365,7 @@ readersEnumerate(
     pManager->readers = calloc( pManager->nbReaders, sizeof(char *) );
     if ( pManager->readers == NULL )
     {
-        logMessage(LOG_ERR, 0, "Not enough memory for readers[]");
+        readerLogMessage(LOG_ERR, 0, "Not enough memory for readers[]");
         return(SCARD_F_INTERNAL_ERROR);
     }
 
@@ -373,7 +375,7 @@ readersEnumerate(
     while (*ptr != '\0')
     {
         sprintf(messageString, "Reader [%d]: %s", pManager->nbReaders, ptr);
-        logMessage(LOG_INFO, 3, messageString);
+        readerLogMessage(LOG_INFO, 3, messageString);
         pManager->readers[pManager->nbReaders] = ptr;
         ptr += strlen(ptr)+1;
         (pManager->nbReaders)++;
@@ -401,12 +403,12 @@ readerManagerConnect( tReaderManager *pManager )
     if (rv != SCARD_S_SUCCESS)
     {
         PCSC_ERROR(rv, "SCardEstablishContext");
-        logMessage( LOG_ERR, 1, TAGREADER_STRING_PCSCD_NO );
+        readerLogMessage( LOG_ERR, 1, TAGREADER_STRING_PCSCD_NO );
         pManager->hContext = NULL;
         return( rv );
     }
 
-    logMessage( LOG_INFO, 2, TAGREADER_STRING_PCSCD_OK );
+    readerLogMessage( LOG_INFO, 2, TAGREADER_STRING_PCSCD_OK );
 
     rv = readersEnumerate( pManager );
 
@@ -423,7 +425,7 @@ readerManagerDisconnect( tReaderManager *pManager )
 
     if ( pManager->hContext );
     {
-        logMessage(LOG_INFO, 2, "Disconnecting from pcscd server");
+        readerLogMessage(LOG_INFO, 2, "Disconnecting from pcscd server");
 
         rv = SCardReleaseContext( (SCARDCONTEXT) (pManager->hContext) );
         if ( rv != SCARD_S_SUCCESS )
@@ -492,15 +494,16 @@ int readerConnect (
 
    if ( pManager->nbReaders == 0 )
    {
-        logMessage(LOG_ERR, 0, "No readers were found" );
+        readerLogMessage(LOG_ERR, 0, "No readers were found" );
         return( SCARD_E_UNKNOWN_READER );
    }
 
    /* connect to the specified card reader */
    if (pReader->number < 0 || pReader->number >= pManager->nbReaders)
    {
-     sprintf(messageString, "Reader number '%d' out of range, only %d readers detected", pReader->number, pManager->nbReaders);
-     logMessage(LOG_ERR, 0, messageString);
+     sprintf(messageString, "Reader number '%d' out of range, only %d readers detected", 
+             pReader->number, pManager->nbReaders);
+     readerLogMessage(LOG_ERR, 0, messageString);
      return(SCARD_E_READER_UNAVAILABLE);
    }
 
@@ -515,7 +518,7 @@ int readerConnect (
    if (rv != SCARD_S_SUCCESS)
       return (rv);
    sprintf(messageString, "Connected to reader: %d", pReader->number);
-   logMessage(LOG_INFO, 2, messageString);
+   readerLogMessage(LOG_INFO, 2, messageString);
 
    /* Get firmware version and check it's a ACR122* */
    dwRecvLength = sizeof(pbRecvBuffer);
@@ -531,7 +534,7 @@ int readerConnect (
    /* NULL terminate the BYTE array for subsequent string compares */
    pbRecvBuffer[dwRecvLength] = '\0';
    sprintf(messageString, "Firmware: %s", pbRecvBuffer);
-   logMessage(LOG_INFO, 3, messageString);
+   readerLogMessage(LOG_INFO, 3, messageString);
 
    for (i = 0; (i < SUPPORTED_READER_ARRAY_COUNT) & !readerSupported ; i++)
    {
@@ -544,7 +547,7 @@ int readerConnect (
    if (!readerSupported)
    {
       sprintf(messageString, "Reader (%s) not supported", pbRecvBuffer);
-      logMessage(LOG_ERR, 0, messageString);
+      readerLogMessage(LOG_ERR, 0, messageString);
       return (SCARD_E_UNKNOWN_READER);
    }
 
@@ -555,7 +558,7 @@ int readerConnect (
                     pbAtr, &dwAtrLen);
    sprintf(messageString, "ATR: ");
    sPrintBufferHex( (messageString + strlen("ATR: ")), dwAtrLen, pbAtr);
-   logMessage(LOG_INFO, 3, messageString);
+   readerLogMessage(LOG_INFO, 3, messageString);
 
    dwRecvLength = sizeof(pbRecvBuffer);
    rv = apduSend(pReader->hCard, APDU_SET_RETRY, sizeof(APDU_SET_RETRY),
@@ -574,7 +577,7 @@ int readerConnect (
       {
          sPrintBufferHex(pReader->SAM_serial, dwRecvLength, pbRecvBuffer);
          sprintf(messageString, "SAM Serial: %s", pReader->SAM_serial);
-         logMessage(LOG_INFO, 1, messageString);
+         readerLogMessage(LOG_INFO, 1, messageString);
       }
       else
          return (rv);
@@ -586,7 +589,7 @@ int readerConnect (
       {
          sPrintBufferHex(pReader->SAM_id, dwRecvLength, pbRecvBuffer);
          sprintf(messageString, "SAM ID: %s", pReader->SAM_id);
-         logMessage(LOG_INFO, 1, messageString);
+         readerLogMessage(LOG_INFO, 1, messageString);
        }
    }
 
@@ -606,7 +609,7 @@ void readerDisconnect(
     if (pReader->hCard)
     {
         sprintf(messageString, "Disconnecting from reader %d", pReader->number);
-        logMessage(LOG_INFO, 2, messageString);
+        readerLogMessage(LOG_INFO, 2, messageString);
 
         rv = SCardDisconnect( (SCARDHANDLE) (pReader->hCard), SCARD_UNPOWER_CARD);
         pReader->hCard = NULL;
@@ -615,7 +618,7 @@ void readerDisconnect(
     else
     {
         sprintf(messageString, "Not currently connected to reader %d, cannot disconnect", pReader->number);
-        logMessage(LOG_INFO, 2, messageString);
+        readerLogMessage(LOG_INFO, 2, messageString);
     }
 }
 /************************** READER DISCONNECT ********************/
@@ -623,16 +626,16 @@ void readerDisconnect(
 
 /************************ GET CONTACTLESS STATUS *****************/
 /* TODO : this function hasn't really been tested                */
-int getContactlessStatus(
-                          const tReader	*preader
-                         )
+int readerGetContactlessStatus(
+                                const tReader	*preader
+                                )
 {
    DWORD		dwRecvLength;
    BYTE			pbRecvBuffer[20];
    LONG			rv;
 
    sprintf(messageString, "Requesting status");
-   logMessage(LOG_INFO, 2, messageString);
+   readerLogMessage(LOG_INFO, 2, messageString);
 
    dwRecvLength = sizeof(pbRecvBuffer);
    rv = apduSend(preader->hCard, APDU_GET_STATUS, sizeof(APDU_GET_STATUS),
@@ -644,10 +647,10 @@ int getContactlessStatus(
       {
          sprintf(messageString, "Status: ");
          sPrintBufferHex(messageString, dwRecvLength, pbRecvBuffer);
-         logMessage(LOG_INFO, 2, messageString);
+         readerLogMessage(LOG_INFO, 2, messageString);
 
          sprintf(messageString, "Number of Tags = %d", pbRecvBuffer[4]);
-         logMessage(LOG_INFO, 2, messageString);
+         readerLogMessage(LOG_INFO, 2, messageString);
       }
    }
 
@@ -657,7 +660,7 @@ int getContactlessStatus(
 
 
 /************************ GET TAG LIST ***************************/
-int getTagList(
+int readerGetTagList(
 		const tReader	*preader,
 		tTagList	*ptagList
                )
@@ -689,7 +692,7 @@ int getTagList(
             if (pbRecvBuffer[6] == 0x00)
             {
                sprintf(messageString, "Tag Type: MIFARE_ULTRA");
-               logMessage(LOG_INFO, 2, messageString);
+               readerLogMessage(LOG_INFO, 2, messageString);
 
                /* byte 7 is length of unique tag ID */
                uid_length = pbRecvBuffer[7];
@@ -697,7 +700,7 @@ int getTagList(
                sPrintBufferHex(ptagList->tagUID[i], uid_length, (pbRecvBuffer+8));
 
                sprintf(messageString, "Tag ID:   %s", ptagList->tagUID[i]);
-               logMessage(LOG_INFO, 2, messageString);
+               readerLogMessage(LOG_INFO, 2, messageString);
 
                /* first one ? */
                if ( i == 0 )
@@ -724,7 +727,7 @@ int getTagList(
    }
 
    sprintf(messageString, "Number of tags: %d", (int)ptagList->numTags);
-   logMessage(LOG_INFO, 2, messageString);
+   readerLogMessage(LOG_INFO, 2, messageString);
 
    return (rv);
 
