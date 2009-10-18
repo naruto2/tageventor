@@ -47,8 +47,8 @@
 /**************************    TYPEDEFS    **************************/
 typedef struct {
     int         nbReaders;
-    char 		*mszReaders;
-    char 		**readers;
+    char 	*mszReaders;
+    char 	**readers;
     void        *hContext;
 } tReaderManager;
 
@@ -65,9 +65,9 @@ typedef struct {
 typedef char	uid[MAX_TAG_UID_SIZE];
 
 typedef struct {
-	uid	        tagUID[MAX_NUM_TAGS];
-    int	        numTags;
-} tTagList;
+		uid	        tagUID[MAX_NUM_TAGS];
+    		int	        numTags;
+		} tTagList;
 
 
 /************************ EXTERNAL FUNCTIONS **********************/
@@ -76,14 +76,14 @@ extern int              readerSetOptions (  int	            verbosity,
 extern int              readerManagerConnect( tReaderManager *pManager );
 extern int              readerManagerDisconnect( tReaderManager *pManager );
 
-extern int              readerConnect(  tReaderManager   *pmanager,
-                                        tReader	*pReader );
+extern int              readerConnect(  tReaderManager  *pmanager,
+                                        tReader		*pReader );
 extern void             readerDisconnect( tReader	*pReader );
-extern int              getTagList( const tReader	*preader,
-                                    tTagList	    *ptagList);
-extern int              getContactlessStatus( const tReader	*preader );
-extern void             logMessage( int		    type,
-                                    int		    messageLevel,
-                                    const char 	*message);
+extern int              readerGetTagList( const tReader	*preader,
+                                    	  tTagList    	*ptagList);
+extern int              readerGetContactlessStatus( const tReader *pReader );
+extern void             readerLogMessage( int		messageType,
+                                    	  int	    	messageLevel,
+                                    	const char 	*message);
 
 #endif

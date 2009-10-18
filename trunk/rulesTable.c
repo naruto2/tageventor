@@ -26,7 +26,9 @@
 #include <sys/stat.h>  /* for umask() */
 #include <limits.h>
 
-#include "tagReader.h"
+#include <tagReader.h>
+
+#include "rulesTable.h"
 #include "tagEventor.h"
 
 
@@ -36,14 +38,14 @@
 /* this is the list of built-in commands, in the reverse order of which they will be tried */
 #define NUM_DEFAULT_COMMANDS   (3)
 
-static    tPanelEntry defaultCommands[NUM_DEFAULT_COMMANDS] = {
+static    tRulesTableEntry defaultCommands[NUM_DEFAULT_COMMANDS] = {
    { "*", DEFAULT_COMMAND_DIR, GENERIC_MATCH,    "Match any tag, then run script named 'generic' in command dir",    TRUE },
    { "*", DEFAULT_COMMAND_DIR, TAG_ID_MATCH,     "Match any tag, then run script with name $tagID in command dir",   TRUE },
    { "*", "./scripts",         TAG_ID_MATCH,     "Match any tag, then run script with name $tagID in './scripts/'",  TRUE },
         };
 
 static  int             numTagEntries = 0;
-static  tPanelEntry     *tagEntryArray;
+static  tRulesTableEntry     *tagEntryArray;
 static const char * const tagString[]  = { "IN", "OUT" };
 
 
@@ -52,13 +54,13 @@ rulesTableAddEntry( void )
 {
 
     int             i, newSize;
-    tPanelEntry     *newTagEntryArray;
+    tRulesTableEntry     *newTagEntryArray;
 
     /* increment counter of number of entries in array */
     numTagEntries++;
 
     /* allocate memory for the array of tag entries found */
-    newSize = (numTagEntries * sizeof(tPanelEntry) );
+    newSize = (numTagEntries * sizeof(tRulesTableEntry) );
     newTagEntryArray = malloc( newSize );
 
 /* TODO figure out where to save this type of config stuff???? via GConf or something */
@@ -114,7 +116,7 @@ rulesTableEntryEnable( int index, char enable )
 
 }
 
-const tPanelEntry *
+const tRulesTableEntry *
 rulesTableEntryGet(
             int index
             )
@@ -153,7 +155,7 @@ rulesTableRead( void )
             and maybe checking execute permissions, etc */
 
     /* allocate memory for the array of tag entries found */
-    size = (numTagEntries * sizeof(tPanelEntry) );
+    size = (numTagEntries * sizeof(tRulesTableEntry) );
     tagEntryArray = malloc( size ); /* TODO check about alignment and need to pad out */
 
 /* TODO figure out where to read/save this type of config stuff???? via GConf or something */
@@ -206,26 +208,26 @@ execScript(
    if ( pid < 0 )
    { /* PARENT process - fork error */
       sprintf(messageString, "Error forking for script execution, fork() returned %d", pid);
-      logMessage(LOG_ERR, 0, messageString);
+      readerLogMessage(LOG_ERR, 0, messageString);
       return ( pid ); /* TODO , not sure returning that is correct...check later */
    }
 
    if ( pid > 0 ) /* PARENT process - fork worked */
    {
       sprintf(messageString, "Fork of child process successful with child pid=%d", pid);
-      logMessage(LOG_INFO, 3, messageString);
+      readerLogMessage(LOG_INFO, 3, messageString);
       return( 0 );  /* success = 0 */
    }
 
    /* If we got this far, then "pid" = 0 and we are in the child process */
    sprintf(messageString, "Attempting to execl() tag event script %s in child process with pid=%d",
            scriptPath, getpid());
-   logMessage(LOG_INFO, 2, messageString);
+   readerLogMessage(LOG_INFO, 2, messageString);
    ret = execl( scriptPath, argv0, SAM_serial, tagUID, eventTypeString, NULL );
    /* If any of the exec() functions returns, an error will have occurred. The return value is -1,
       and the global variable errno will be set to indicate the error. */
    sprintf(messageString, "Return value from execl() of script was = %d, errno=%d", ret, errno);
-   logMessage(LOG_INFO, 2, messageString);
+   readerLogMessage(LOG_INFO, 2, messageString);
 
    /* exit the child process and return the return value, parent keeps on going */
    exit( ret );
@@ -244,7 +246,7 @@ rulesTableEventDispatch(
     char            scriptName[PATH_MAX];
 
     sprintf(messageString, "Event: Tag %s - UID: %s", tagString[eventType], tagUID);
-    logMessage(LOG_INFO, 1, messageString);
+    readerLogMessage(LOG_INFO, 1, messageString);
 
     /* run through the list of rules:
            - try to match tags detected tag with regex in rule for tagID
@@ -278,7 +280,7 @@ rulesTableEventDispatch(
                     sprintf( scriptName, "%d", preader->number );
                 break;
                 default:
-                    logMessage(LOG_ERR, 0, "Invalid 'scriptMatchType' no script execution attempted" );
+                    readerLogMessage(LOG_ERR, 0, "Invalid 'scriptMatchType' no script execution attempted" );
                     return;
                 break;
             }
@@ -290,5 +292,5 @@ rulesTableEventDispatch(
     }
 
    /* if we got this far, then nothing worked */
-   logMessage(LOG_ERR, 0, "Failed to execute a script for tag event" );
+   readerLogMessage(LOG_ERR, 0, "Failed to execute a script for tag event" );
 }

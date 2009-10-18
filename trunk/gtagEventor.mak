@@ -10,42 +10,42 @@ all:Debug Release
 	@echo ""
 
 ###### Build Flags
-# Add these flags to the cflags on the gcc command line with the -D option
-# BUILD_SYSTEM_TRAY
-# BUILD_CONTROL_PANEL (requires BUILD_SYSTEM_TRAY to be defined to be useful)
-# BUILD_ABOUT_DIALOG (can be used with both/either BUILD_SYSTEM_TRAY or BUILD_CONTROL_PANEL)
-# BUILD_CONTROL_PANEL_HELP (requires BUILD_CONTROL_PANEL to be defined to be useful)
-# BUILD_SETTINGS_DIALOG
-# BUILD_RULES_EDITOR
-# BUILD_RULES_EDITOR_HELP
-build_flags = -DBUILD_SYSTEM_TRAY -DBUILD_CONTROL_PANEL -DBUILD_ABOUT_DIALOG -DBUILD_CONTROL_PANEL_HELP -DBUILD_SETTINGS_DIALOG -DBUILD_RULES_EDITOR -DBUILD_RULES_EDITOR_HELP -DDEFAULT_COMMAND_DIR='"/etc/gtagEventor"'
+build_flags = -DBUILD_SYSTEM_TRAY \
+              -DBUILD_CONTROL_PANEL \
+              -DBUILD_ABOUT_DIALOG \
+              -DBUILD_CONTROL_PANEL_HELP \
+              -DBUILD_SETTINGS_DIALOG \
+              -DBUILD_RULES_EDITOR \
+              -DBUILD_RULES_EDITOR_HELP \
+              -DDEFAULT_COMMAND_DIR='"/etc/gtagEventor"'
 
-icon_flags = -DICON_INSTALL_DIR='"/usr/share/gtagEventor/icons/"' -DICON_NAME_CONNECTED='"gtagEventor"' -DICON_NAME_NOT_CONNECTED='"gtagEventorNoReader"'
+icon_flags = -DICON_INSTALL_DIR='"/usr/share/gtagEventor/icons/"' \
+             -DICON_NAME_CONNECTED='"gtagEventor"' \
+             -DICON_NAME_NOT_CONNECTED='"gtagEventorNoReader"'
 
-os = $(shell uname)
+os = $( shell uname )
 ifeq ($(os),Darwin)
 	architecture = $(shell arch)
 	linker = /usr/bin/gcc
-	os_link_flags = -framework PCSC \
-                        -L/Library/Frameworks/GLib.framework/Libraries -lglib-2.0.0 -lgobject-2.0.0 \
-                        -L/Library/Frameworks/Cairo.framework/Libraries -lcairo.2 \
-                        -L/Library/Frameworks/Gtk.framework/Libraries -lgtk-quartz-2.0.0 -arch $(architecture) -lc
+	link_flags = -framework PCSC \
+                     -L/Library/Frameworks/GLib.framework/Libraries -lglib-2.0.0 -lgobject-2.0.0 \
+                     -L/Library/Frameworks/Cairo.framework/Libraries -lcairo.2 \
+                     -L/Library/Frameworks/Gtk.framework/Libraries -lgtk-quartz-2.0.0 \
+                     -arch $(architecture) -lc  $(common_link_flags)
 	os_cc_flags = -I /Library/Frameworks/GLib.framework/Headers/ \
                       -I /Library/Frameworks/Cairo.framework/Headers/ \
                       -I /Library/Frameworks/Gtk.framework/Headers/
 else
 	linker = gcc
-	os_link_flags = `pkg-config --cflags --libs gtk+-2.0 gmodule-2.0` -l pcsclite
-	os_cc_flags = `pkg-config --cflags --libs gtk+-2.0 gmodule-2.0`  -I /usr/include/PCSC
+	link_flags =  `pkg-config --cflags --libs gtk+-2.0 gmodule-2.0` -l tagReader -l pcsclite 
+	os_cc_flags = `pkg-config --cflags --libs gtk+-2.0 gmodule-2.0` -I /usr/include/PCSC
 endif
 
-flags = $(build_flags) $(icon_flags) -I . -Wall -DPROGRAM_NAME='"gtagEventor"' $(os_cc_flags)
+cc_flags = $(build_flags) $(icon_flags) -I . -I lib/ -Wall -DPROGRAM_NAME='"gtagEventor"' $(os_cc_flags)
 
-debug_flags = $(flags) -DDEBUG -g -DVERSION_STRING='"0.0.0.0 Debug"'
+debug_cc_flags = $(cc_flags) -DDEBUG -g -DVERSION_STRING='"0.0.0.0 Debug"'
 
-release_flags = $(flags) -DVERSION_STRING='"0.0.0.0 Release"'
-
-link_flags = $(os_link_flags) -L./lib/Debug -ltagReader
+release_cc_flags = $(cc_flags) -DVERSION_STRING='"0.0.0.0 Release"'
 
 cleanDebug:
 	@rm -f $(debug_binaries) $(debug_objects)
@@ -55,19 +55,19 @@ Debug: bin/Debug/gtagEventor
 
 ###### Debug version LINK
 bin/Debug/gtagEventor: lib/Debug/libtagReader.a $(debug_objects)
-	$(linker) $(link_flags)  $(debug_objects) -o $@
-	@echo gtagEventor Debug version BUILT \(./bin/Debug/gtagEventor\)
+	@$(linker)  $(debug_objects) -Llib/Debug $(link_flags) -o $@
+	@echo gtagEventor Debug version BUILT $@
 	@echo ""
 
 lib/Debug/libtagReader.a:
 
 ###### Debug version COMPILE
 obj/Debug/gtagEventor.o : tagEventor.c
-	@gcc -c $< $(debug_flags) -o $@
+	gcc -c $< $(debug_cc_flags) -o $@
 	@echo "Compiling " $< "---->" $@
 
 obj/Debug/%.o : %.c
-	@gcc -c $< $(debug_flags) -o $@
+	@gcc -c $< $(debug_cc_flags) -o $@
 	@echo "Compiling " $<
 
 cleanRelease:
@@ -78,19 +78,19 @@ Release: bin/Release/gtagEventor
 
 ########## Release version LINK
 bin/Release/gtagEventor: lib/Release/libtagReader.a $(release_objects)
-	@$(linker) $(link_flags) $(release_objects) -o $@
-	@echo gtagEventor Release version BUILT \(./bin/Release/gtagEventor\)
+	@$(linker)  $(release_objects) -Llib/Release $(link_flags) -o $@
+	@echo gtagEventor Release version BUILT $@
 	@echo ""
 
 lib/Release/libtagReader.a:
 
 ########## Release version COMPILE
 obj/Release/gtagEventor.o : tagEventor.c
-	@gcc -c $< $(release_flags) -o $@
+	@gcc -c $< $(release_cc_flags) -o $@
 	@echo "Compiling " $< "---->" $@
 
 obj/Release/%.o : %.c
-	@gcc -c $< $(release_flags) -o $@
+	@gcc -c $< $(release_cc_flags) -o $@
 	@echo "Compiling " $<
 
 # Clean up all stray editor back-up files, any .o or .a left around in this directory

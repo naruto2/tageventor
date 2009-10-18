@@ -16,14 +16,11 @@
   limitations under the License.
 */
 
-#include "tagReader.h"
 
 #ifndef TRUE
 #define TRUE 1
 #define FALSE 0
 #endif
-
-#define MAX_DESCRIPTION_LENGTH  (80)
 
 #define DEFAULT_LOCK_FILE_DIR "/var/run/tagEventor"
 #define DAEMON_NAME "tagEventord"
@@ -48,21 +45,7 @@
 #define READER_NUM_5        (1<<6)
 #define READER_NUM_DEFAULT  READER_NUM_AUTO
 
-/* different options for matching script names */
-#define TAG_ID_MATCH		(1)
-#define GENERIC_MATCH		(2)
-#define SAM_ID_MATCH	    (3)
-#define SAM_SERIAL_MATCH    (4)
-#define READER_NUM_MATCH	(5)
 
-/* where to save this type of config stuff???? via GConf or something */
-typedef struct {
-   	char		*IDRegex;         /* specific ID or a regular expression - Max size = sizeof(uid) */
-	char		*folder;          /* folder where to look for script     - Max size = PATH_MAX */
-	int		    scriptMatchType;  /* type of match to use for script name */
-	char		*description;     /* Max size = MAX_DESCRIPTION_LENGTH */
-	char		enabled;
-} tPanelEntry;
 
 extern int  readerSettingGet( void );
 extern int  readerSettingSet( int bitmap );
@@ -72,18 +55,3 @@ extern int  pollDelayGet( void );
 
 extern int  verbosityLevelSet( int     newLevel );
 extern int  verbosityLevelGet( void );
-
-
-/*************** RULES TABLE *************/
-extern int  rulesTableAddEntry( void );
-extern void rulesTableSave( void );
-extern int  rulesTableNumber( void );
-extern int  rulesTableRead( void );
-extern void rulesTableEntryEnable( int index, char enable );
-extern const tPanelEntry *rulesTableEntryGet( int index );
-extern void  rulesTableEventDispatch(
-                int	  	        eventType,
-                uid       	    tagUID,
-                const tReader	*preader
-                );
-
