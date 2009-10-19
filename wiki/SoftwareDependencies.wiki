@@ -7,7 +7,9 @@ To develop against PCSCD, including building tagEventor you will need the packag
   * libpcsclite-dev - the header files
 
 === Build dependencies for gtagEventor ===
-   * If you want to compile the GUI version called gtagEventor then you will need Gtk2-0, GLib and GObjects.
+If you want to compile the GUI version called gtagEventor then you will need Gtk2-0, GLib and GObjects.
+  * libgtk2.0-dev
+
 Projects are included for Code::Blocks IDE so you might want to get that IDE for build and debug.
 
 === Run Time dependencies ===
