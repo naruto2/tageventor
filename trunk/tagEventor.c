@@ -249,8 +249,9 @@ parseCommandLine(
 
          /* 'h' option is to request print out help */
          case 'h':
-                fprintf(stderr, TAGEVENTOR_STRING_USAGE, argv[0], POLL_DELAY_MILLI_SECONDS_MIN, POLL_DELAY_MILLI_SECONDS_DEFAULT,
-                        POLL_DELAY_MILLI_SECONDS_MAX);
+                fprintf(stderr, TAGEVENTOR_STRING_USAGE, argv[0],
+                        POLL_DELAY_MILLI_SECONDS_MIN, POLL_DELAY_MILLI_SECONDS_DEFAULT,
+                        POLL_DELAY_MILLI_SECONDS_MAX, VERSION_STRING );
             exit ( 0 );
             break;
 
@@ -261,8 +262,9 @@ parseCommandLine(
 
    if (parseError)
    {
-      fprintf(stderr, TAGEVENTOR_STRING_USAGE, argv[0], POLL_DELAY_MILLI_SECONDS_MIN, POLL_DELAY_MILLI_SECONDS_DEFAULT,
-              POLL_DELAY_MILLI_SECONDS_MAX);
+      fprintf(stderr, TAGEVENTOR_STRING_USAGE, argv[0], POLL_DELAY_MILLI_SECONDS_MIN,
+              POLL_DELAY_MILLI_SECONDS_DEFAULT, POLL_DELAY_MILLI_SECONDS_MAX,
+              VERSION_STRING );
       exit( EXIT_FAILURE );
    }
 

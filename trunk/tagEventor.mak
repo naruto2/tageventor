@@ -9,13 +9,20 @@ release_library = lib/Release/libtagReader.a
 debug_objects = obj/Debug/tagEventor.o obj/Debug/rulesTable.o
 release_objects = obj/Release/tagEventor.o obj/Release/rulesTable.o
 
+##### Get revision number of the version we're compiling
+rev_string = $(shell, svnversion)
+version_string = "0.0.0"
+
 ##### Compile Flags
-cc_flags = -Wall -I . -I /usr/include/PCSC -I lib -DPROGRAM_NAME="tagEventor" \
+cc_flags = -Wall -I . -I /usr/include/PCSC -I lib \
+           -DPROGRAM_NAME="tagEventor" \
            -DDEFAULT_COMMAND_DIR='"/etc/tagEventor"'
 
-debug_cc_flags = $(cc_flags) -DDEBUG -g
+debug_cc_flags = $(cc_flags) -DDEBUG -g \
+                 -DVERSION_STRING='$(version_string) $(rev_string) " Debug"'
 
-release_cc_flags = $(cc_flags)
+release_cc_flags = $(cc_flags) \
+                 -DVERSION_STRING='$(version_string) $(rev_string) " Release"'
 
 os = $(shell uname)
 ifeq ($(os),Darwin)
@@ -35,7 +42,7 @@ Debug: $(debug_binary)
 ###### Debug version LINK
 $(debug_binary): $(debug_objects) $(debug_library)
 	@gcc $(debug_objects) $(debug_link_flags) -o $@
-	@echo tagEventor Debug version BUILT $@
+	@echo tagEventor Debug version $(rev_string) BUILT $@
 	@echo ""
 
 $(debug_library):
@@ -54,7 +61,7 @@ Release: $(release_binary)
 
 $(release_binary): $(release_library) $(release_objects)
 	@gcc $(release_objects) $(release_link_flags) -o $@
-	@echo tagEventor Release version BUILT $@
+	@echo tagEventor Release version $(rev_string) BUILT $@
 	@echo ""
 
 $(release_library):

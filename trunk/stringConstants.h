@@ -23,7 +23,7 @@
 #define TAGEVENTOR_STRING_COMMAND_LINE_READER_NUM_ERROR_1 "Reader number must be AUTO or a valid number between 0 and %d\n"
 #define TAGEVENTOR_STRING_COMMAND_LINE_READER_NUM_ERROR_2 "Reader number argument '%s' ignored\n"
 
-#define TAGEVENTOR_STRING_USAGE "Usage: %s <options>\n\t-n <reader number> : default = AUTO, min = 0, max = 4\n\t-v <verbosity level> : default = 0 (silent), max = 3 \n\t-d start | stop (daemon options)\n\t-p <msecs> : tag polling delay, min = %d, default = %d, max = %d\n\t-h : print this message\n"
+#define TAGEVENTOR_STRING_USAGE "Usage: %s <options>\n\t-n <reader number> : default = AUTO, min = 0, max = 4\n\t-v <verbosity level> : default = 0 (silent), max = 3 \n\t-d start | stop (daemon options)\n\t-p <msecs> : tag polling delay, min = %d, default = %d, max = %d\n\t-h : print this message\nVersion Number: %s\n"
 
 #define TOOL_TIP_TEXT               "Left-click for Rules Editor.\nRight-click for menu."
 

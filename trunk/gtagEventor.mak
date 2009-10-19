@@ -37,15 +37,25 @@ ifeq ($(os),Darwin)
                       -I /Library/Frameworks/Gtk.framework/Headers/
 else
 	linker = gcc
-	link_flags =  `pkg-config --cflags --libs gtk+-2.0 gmodule-2.0` -l tagReader -l pcsclite 
-	os_cc_flags = `pkg-config --cflags --libs gtk+-2.0 gmodule-2.0` -I /usr/include/PCSC
+	link_flags =  `pkg-config --cflags --libs gtk+-2.0 gmodule-2.0` \
+                      -l tagReader -l pcsclite 
+	os_cc_flags = `pkg-config --cflags --libs gtk+-2.0 gmodule-2.0` \
+                      -I /usr/include/PCSC
 endif
 
-cc_flags = $(build_flags) $(icon_flags) -I . -I lib/ -Wall -DPROGRAM_NAME='"gtagEventor"' $(os_cc_flags)
+##### Get revision number of the version we're compiling
+rev_string = $(shell, svnversion)
+version_string = "0.0.0"
 
-debug_cc_flags = $(cc_flags) -DDEBUG -g -DVERSION_STRING='"0.0.0.0 Debug"'
+##### Compile flahs
+cc_flags = $(build_flags) $(icon_flags) -I . -I lib/ -Wall \
+          -DPROGRAM_NAME='"gtagEventor"' $(os_cc_flags)
 
-release_cc_flags = $(cc_flags) -DVERSION_STRING='"0.0.0.0 Release"'
+debug_cc_flags = $(cc_flags) -DDEBUG -g \
+                 -DVERSION_STRING='$(version_string) $(rev_string) " Debug"'
+
+release_cc_flags = $(cc_flags) \
+                 -DVERSION_STRING='$(version_string) $(rev_string) " Release"'
 
 cleanDebug:
 	@rm -f $(debug_binaries) $(debug_objects)
