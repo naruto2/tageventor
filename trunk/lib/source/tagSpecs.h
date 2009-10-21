@@ -30,7 +30,7 @@
 #define SEL_RES_MIFARE_MINI                     (0x09)
 #define SEL_RES_MIFARE_4K                       (0x18)
 #define SEL_RES_MIFARE_DESFIRE                  (0x20)
-#define SEL_RES_JCOP30                          (0x28)
+#define SEL_RES_JCOP30                          (0x28)  /* TYPE A */
 #define SEL_RES_GEMPLUS_MPCOS                   (0x98)
 
 
