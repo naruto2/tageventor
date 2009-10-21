@@ -28,19 +28,6 @@
 #include "tagSpecs.h"
 #include "readerDriver.h"
 
-/* COMMAND : [Class, Ins, P1, P2, DATA, LEN] */
-/* Direct to card commands start with 'd4', must prepend direct transmit to them*/
-#define ACS_14443_A {0xd4,  0x40,  0x01}
-
-#define ACS_IN_LIST_PASSIVE_TARGET  {0xd4, 0x4a}
-#define ACS_MIFARE_LOGIN  {0xd4, 0x40, 0x01}
-#define ACS_POWER_OFF  {0xd4, 0x32, 0x01, 0x00}
-#define ACS_POWER_ON  {0xd4, 0x32, 0x01, 0x01}
-#define ACS_RATS_14443_4_OFF  {0xd4, 0x12, 0x24}
-#define ACS_RATS_14443_4_ON  {0xd4, 0x12, 0x34}
-#define ACS_SET_PARAMETERS  {0xd4, 0x12}
-
-
 /***************************** LED CONTROL *********************/
 #define ACS_LED_GREEN     {0xff, 0x00, 0x40, 0x0e, 0x04, 0x00, 0x00, 0x00, 0x00}
 #define ACS_LED_ORANGE    {0xff, 0x00, 0x40, 0x0f, 0x04, 0x00, 0x00, 0x00, 0x00}
@@ -55,23 +42,6 @@
 
 
 /************************** PSUEDO APDU ************************/
-#define ACS_GET_STATUS  { 0xd4, 0x04 }
-#define ACS_POLL_MIFARE { 0xd4, 0x4a, 0x01, 0x00 }
-
-/* This will avoid blocking on a Poll*/
-#define ACS_SET_RETRY  {0xd4, 0x32, 0x05, 0x00, 0x00, 0x00}
-
-/* TODO do a read block function */
-/* READ Block 'n' = read (d4,40,1,30) + 'n=0x04' */
-#define ACS_READ_MIFARE { 0xd4, 0x40, 0x01, 0x30, 0x04 }
-
-/* GetResponse  =   0xFF 0xC0 0x00 0x00 NumbBytesRetrieve      */
-#define ACS_GET_RESPONSE  {0xff, 0xc0, 0x00, 0x00}
-
-#define ACS_TAG_FOUND {0xD5, 0x4B}
-#define ACS_DATA_OK {0xD5, 0x41}
-#define ACS_NO_SAM {0x3B, 0x00}
-
 /* Command response bytes - array indexes */
 #define SW1             (0)
 #define SW2             (1)
@@ -116,6 +86,37 @@ if (rv != SCARD_S_SUCCESS) \
 
 
 /**********************    CONSTANT ****************************/
+/* COMMAND : [Class, Ins, P1, P2, DATA, LEN] */
+/* Direct to card commands start with 'd4', must prepend direct transmit to them*/
+#define ACS_14443_A {0xd4,  0x40,  0x01}
+
+#define ACS_IN_LIST_PASSIVE_TARGET  {0xd4, 0x4a}
+#define ACS_MIFARE_LOGIN  {0xd4, 0x40, 0x01}
+#define ACS_POWER_OFF  {0xd4, 0x32, 0x01, 0x00}
+#define ACS_POWER_ON  {0xd4, 0x32, 0x01, 0x01}
+#define ACS_RATS_14443_4_OFF  {0xd4, 0x12, 0x24}
+#define ACS_RATS_14443_4_ON  {0xd4, 0x12, 0x34}
+#define ACS_SET_PARAMETERS  {0xd4, 0x12}
+
+#define ACS_GET_STATUS  { 0xd4, 0x04 }
+#define ACS_POLL_MIFARE { 0xd4, 0x4a, 0x01, 0x00 }
+#define ACS_POLL_TYPE_B { 0xd4, 0x4a, 0x01, 0x03, 0x00 }
+#define ACS_POLL_FELICA { 0xd4, 0x4a, 0x01, 0x01, 0x00 , 0x00, 0xFF, 0xFF, 0x00, 0x00}
+
+/* This will avoid blocking on a Poll*/
+#define ACS_SET_RETRY  {0xd4, 0x32, 0x05, 0x00, 0x00, 0x00}
+
+/* TODO do a read block function */
+/* READ Block 'n' = read (d4,40,1,30) + 'n=0x04' */
+#define ACS_READ_MIFARE { 0xd4, 0x40, 0x01, 0x30, 0x04 }
+
+/* GetResponse  =   0xFF 0xC0 0x00 0x00 NumbBytesRetrieve      */
+#define ACS_GET_RESPONSE  {0xff, 0xc0, 0x00, 0x00}
+
+#define ACS_TAG_FOUND {0xD5, 0x4B}
+#define ACS_DATA_OK {0xD5, 0x41}
+#define ACS_NO_SAM {0x3B, 0x00}
+
 /* See API_ACR122.pdf from ACS */
 /*                  CLS  INS  P1   P2   Lc             Data In */
 /* DirectTransmit = 0xFF 0x00 0x00 0x00 NumbBytesSend          */
@@ -131,7 +132,15 @@ static const BYTE APDU_GET_STATUS[] = ACS_GET_STATUS;
    >> D5 05 [Err] [Field] [NbTg] [Tg] [BrRx] [BrTx] [Type] 80 90 00
 */
 
+
+static const BYTE APDU_RATS_14443_4_OFF[] = ACS_RATS_14443_4_OFF;
+
 static const BYTE APDU_POLL_MIFARE[] = ACS_POLL_MIFARE;
+
+static const BYTE APDU_POLL_TYPE_B[] = ACS_POLL_TYPE_B;
+
+static const BYTE APDU_POLL_FELICA[] = ACS_POLL_FELICA;
+
 static const BYTE APDU_READ_MIFARE[] = ACS_READ_MIFARE;
 static const BYTE APDU_GET_RESPONSE[] =  ACS_GET_RESPONSE;
 static const BYTE APDU_GET_SAM_SERIAL[] = ACS_APDU_GET_SAM_SERIAL;
@@ -369,8 +378,28 @@ LONG   acr122UGetTagList(
              /* byte 7 is length of unique tag ID */
              uid_length = pbRecvBuffer[UID_LENGTH];
 
-             /* the uid is in the next 'uid_length' number bytes */
-             sPrintBufferHex(pTagList->tag[i].uid, uid_length, (pbRecvBuffer + UID_START) );
+             /* how the rest is organized depends on tag Type */
+             switch ( pbRecvBuffer[SEL_RES_BYTE] )
+             {
+                case SEL_RES_MIFARE_ULTRA:
+                case SEL_RES_MIFARE_1K:
+                case SEL_RES_MIFARE_MINI:      /* not sure but I think so */
+                case SEL_RES_MIFARE_4K:
+                case SEL_RES_MIFARE_DESFIRE:   /* not sure but I think so */
+                    /* the uid is in the next 'uid_length' number bytes */
+                    sPrintBufferHex(pTagList->tag[i].uid, uid_length, (pbRecvBuffer + UID_START) );
+                    break;
+
+                case SEL_RES_JCOP30:
+                    break;
+
+                case SEL_RES_GEMPLUS_MPCOS:
+                    break;
+
+                default:
+                    sprintf( pTagList->tag[i].uid, "Unknown" );
+                    break;
+             }
 
              sprintf(messageString, "Tag ID:   %s", pTagList->tag[i].uid );
              readerLogMessage(LOG_INFO, 2, messageString);
@@ -506,6 +535,10 @@ LONG   acr122UGetTagList(
           readerLogMessage(LOG_INFO, 1, messageString);
         }
     }
+
+    /* Turning RATS off thus a JCOP tag will be detected as emulating a DESFIRE */
+    rv = apduSend(pReader->hCard, APDU_RATS_14443_4_OFF, sizeof(APDU_RATS_14443_4_OFF),
+                      pbRecvBuffer, &dwRecvLength);
 
     return( SCARD_S_SUCCESS );
 
