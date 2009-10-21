@@ -3,13 +3,15 @@ Here is the list of currently supported hardware (readers and tags). See below f
 The first version of tagEventor was written to work with touchatag (previously tikitag) tag reader and tags. 
 This is an OEM of the ACS ACR122U reader and the tags are MiFare Ultalight tags.
 
-== Contactless Tag Readers ==
+== Readers Devices ==
   * ACS 122U Tag reader
+    * NFC Type 1 (Jewel / Topaz) - should work, haven't been able to test yet
+    * NFC Type 2
+      * MiFare Ultralight - OK, Tested
+    * MiFare 1K - OK, Tested
+    * NFC Type 4 - JCOP - Causes error at the moment
 
-== Contactless tags ==
-  * MiFare Ultra
-
-=== ACS 122U Tag Reader ===
+=== ACS 122U Tag Reader Details ===
 NOTE: When checking the reader connected using  'lsusb' this reader reports:-
 {{{
 Bus 002 Device 005: ID 072f:90cc Advanced Card Systems, Ltd ACR38 SmartCard Reader
@@ -27,6 +29,4 @@ where 'ACR122U102' is the string reported from the reader. I suspect the '102' a
 It parses the firmware string and will support any reader that reports a firmware string that contains one of the supported readers in a list. 
 At the moment this list contains just one entry "ACR122U", but it can easily be expanded in the code when newer ones are tested.
 NOTE: "contains", the extra 102 string will not cause an issue and will still be supported even if that ´minor´ firmware rev code changes.
-
-
 
