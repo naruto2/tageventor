@@ -38,7 +38,7 @@ ifeq ($(os),Darwin)
 else
 	linker = gcc
 	link_flags =  `pkg-config --cflags --libs gtk+-2.0 gmodule-2.0` \
-                      -l tagReader -l pcsclite 
+                      -l tagReader -l pcsclite
 	os_cc_flags = `pkg-config --cflags --libs gtk+-2.0 gmodule-2.0` \
                       -I /usr/include/PCSC
 endif
@@ -73,7 +73,7 @@ lib/Debug/libtagReader.a:
 
 ###### Debug version COMPILE
 obj/Debug/gtagEventor.o : tagEventor.c
-	gcc -c $< $(debug_cc_flags) -o $@
+	@gcc -c $< $(debug_cc_flags) -o $@
 	@echo "Compiling " $< "---->" $@
 
 obj/Debug/%.o : %.c
