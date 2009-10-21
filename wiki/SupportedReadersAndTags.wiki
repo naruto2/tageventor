@@ -10,7 +10,10 @@ This is an OEM of the ACS ACR122U reader and the tags are MiFare Ultalight tags.
       * MiFare Ultralight - OK, Tested
       * MiFare 1K         - OK, Tested
       * MiFare 4K         - OK, Tested
+    * NFC Type 3 - Sony FeliCa - not been able to test yet.
     * NFC Type 4 - JCOP - Causes error at the moment
+  * SCM SCL 3710 USB-dongle NFC Reader/Writer 
+    * working on it
 
 === ACS 122U Tag Reader Details ===
 NOTE: When checking the reader connected using  'lsusb' this reader reports:-
