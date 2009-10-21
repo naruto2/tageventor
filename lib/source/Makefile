@@ -5,8 +5,8 @@ external_headers = tagReader.h
 
 all: Debug Release
 
-debug_objects = ../obj/Debug/tagReader.o
-release_objects = ../obj/Release/tagReader.o
+debug_objects = ../obj/Debug/tagReader.o ../obj/Debug/acr122UDriver.o
+release_objects = ../obj/Release/tagReader.o ../obj/Release/acr122UDriver.o
 
 os = $( shell uname )
 ifeq ($(os),Darwin)
@@ -17,7 +17,7 @@ ifeq ($(os),Darwin)
 #	os_cc_flags = -arch $(architecture)
 else
 	archiver = ar
-	archiver_flags = rcs
+	archiver_flags = rcsv
 	os_cc_flags =
 endif
 
@@ -34,7 +34,8 @@ cleanDebug:
 Debug: $(debug_archive)
 
 $(debug_archive): $(debug_objects)
-	@$(archiver) $(archiver_flags) $@ $<
+	@echo "Creating library..."
+	@$(archiver) $(archiver_flags) $@ $(debug_objects)
 	@cp -f $(external_headers) ../
 	@echo Library BUILT $@
 	@echo ""
@@ -52,7 +53,8 @@ cleanRelease:
 Release: $(release_archive)
 
 $(release_archive): $(release_objects)
-	@$(archiver) $(archiver_flags) $@ $<
+	@echo "Creating library..."
+	@$(archiver) $(archiver_flags) $@ $(release_objects)
 	@cp -f $(external_headers) ../
 	@echo Library BUILT $@
 	@echo ""

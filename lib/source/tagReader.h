@@ -19,6 +19,9 @@
 #ifndef TAG_READER_INCLUDED
 #define TAG_READER_INCLUDED
 
+/* this is needed for definitions of different types of log messages etc */
+#include <syslog.h>
+
 /**************************** CONSTANTS ******************************/
 #ifndef TRUE
 #define TRUE 1
@@ -46,17 +49,19 @@
 
 /**************************    TYPEDEFS    **************************/
 typedef struct {
-    int         nbReaders;
+    int     nbReaders;
     char 	*mszReaders;
     char 	**readers;
-    void        *hContext;
+    void    *hContext;
 } tReaderManager;
 
 typedef void    *tCardHandle;
 
 typedef struct {
    int      		number;
+   char             *name;
    tCardHandle		hCard;
+   void             *pDriver;  /* hide the driver details to the outside world */
    char     		SAM;
    char     		SAM_serial[MAX_SAM_SERIAL_SIZE];
    char     		SAM_id[MAX_SAM_ID_SIZE];
