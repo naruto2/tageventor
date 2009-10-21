@@ -43,7 +43,7 @@ typedef struct		{
 			char		data[NUM_USER_BYTES_PER_PAGE_MIFARE_ULTRA];
 			unsigned char	locked;/* is it locked or can it be written to */
 			unsigned char	valid; /* has this data been read from tag?    */
-			unsigned char	writePending; 
+			unsigned char	writePending;
 			/* data has been changed but not yet written to the actual tag */
 			} t_Logical_Page_MIFARE_ULTRA;
 
@@ -57,8 +57,11 @@ typedef struct		{
 
 typedef enum		{ NXP=0x04 } t_Logical_Tag_Manufacturer_MIFARE_ULTRA;
 
+#if 0
 const char NXPString[] = "NXP Semiconductor";
 const char UnknownString[] = "Unknown Semiconductor";
+#endif
+
 typedef union		{
 			    const char *NXPString;
 			    const char *Unknown;
@@ -68,15 +71,15 @@ typedef union		{
 /*********************************************************************/
 /******************************* Global ******************************/
 /*********************************************************************/
-typedef union 		{ 
+typedef union 		{
 			    t_Logical_Tag_Manufacturer_MIFARE_ULTRA mifareManufacturer;
 			} t_Logical_Tag_Manufacturer;
 
-typedef union 		{ 
+typedef union 		{
 			    t_Logical_Tag_Manufacturer_String_MIFARE_ULTRA mifareManufacturerString;
 			} t_Logical_Tag_Manufacturer_String;
 
-typedef union		{ 
+typedef union		{
 			    t_Logical_UID_MIFARE_ULTRA mifareCOntents;
 			} t_Logical_Tag_Contents;
 
