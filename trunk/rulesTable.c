@@ -82,7 +82,7 @@ rulesTableAddEntry( void )
     tagEntryArray = newTagEntryArray;
 
     /* malloc each string for new entry added and add to tagEntryArray*/
-    tagEntryArray[numTagEntries -1].IDRegex = malloc( sizeof( uid ) );
+    tagEntryArray[numTagEntries -1].IDRegex = malloc( sizeof( tUID ) );
     /* paste in some text for now, although it's not yet editable by the user */
     sprintf( tagEntryArray[numTagEntries -1].IDRegex, "Tag ID Match Regexp" );
     tagEntryArray[numTagEntries -1].folder = malloc( PATH_MAX );
@@ -162,7 +162,7 @@ rulesTableRead( void )
     for (i = 0; i < numTagEntries; i++)
     {
         /* malloc each string for new entry added and add to tagEntryArray*/
-        tagEntryArray[i].IDRegex = malloc( sizeof( uid ) );
+        tagEntryArray[i].IDRegex = malloc( sizeof( tUID ) );
         tagEntryArray[i].folder = malloc( PATH_MAX );
         tagEntryArray[i].description = malloc( MAX_DESCRIPTION_LENGTH );
 
@@ -237,7 +237,7 @@ execScript(
 void
 rulesTableEventDispatch(
                 int	  	        eventType,
-                uid       	    tagUID,
+                tUID       	    tagUID,
                 const tReader	*preader
                 )
 {

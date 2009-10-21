@@ -73,8 +73,15 @@
 #define ACS_NO_SAM {0x3B, 0x00}
 
 /* Command response bytes - array indexes */
-#define SW1 0
-#define SW2 1
+#define SW1             (0)
+#define SW2             (1)
+#define NUM_TAGS_FOUND  (2)
+#define TARGET_NUMBER   (3)
+#define SENS_RES_1      (4)
+#define SENS_RES_2      (5)
+#define SEL_RES_BYTE    (6)
+#define UID_LENGTH      (7)
+#define UID_START       (8)
 
 /* SW1 return codes */
 #define SW1_SUCCESS 0x61
@@ -84,6 +91,8 @@
 #define GET_STATUS_NO_ERROR 0x00
 
 #define MAX_FIRMWARE_STRING_LENGTH  (30)
+
+#define ACR122U_MAX_NUM_TAGS        (2)
 
 /*******************   MACROS ************************************/
 #define sPrintBufferHex(string, num, array)\
@@ -304,7 +313,7 @@ LONG   acr122UGetTagList(
    pTagList->numTags = 0;
 
    /* loop until we have read possible two unique tags on the reader */
-   for (i = 0; i < MAX_NUM_TAGS; i++)
+   for (i = 0; i < ACR122U_MAX_NUM_TAGS; i++)
    {
       /* Poll for tag - actually seems to cause a block if no tag is present */
       dwRecvLength = sizeof(pbRecvBuffer);
@@ -315,40 +324,74 @@ LONG   acr122UGetTagList(
          /* ACS_TAG_FOUND = {0xD5, 0x4B}  */
          if ( (pbRecvBuffer[SW1] == 0xD5) &&
               (pbRecvBuffer[SW2] == 0x4B) &&
-              (pbRecvBuffer[2] != 0x00) )
+              (pbRecvBuffer[NUM_TAGS_FOUND] != 0x00) )
          {
-            /* Check it's a MIFARE_ULTRA - byte 6 is tag type index */
-            if (pbRecvBuffer[6] == 0x00)
-            {
-               sprintf(messageString, "Tag Type: MIFARE_ULTRA");
-               readerLogMessage(LOG_INFO, 2, messageString);
+             switch( pbRecvBuffer[SEL_RES_BYTE] )
+             {
+                case SEL_RES_MIFARE_ULTRA:
+                    sprintf(messageString, "Tag Type: MIFARE_ULTRA");
+                    break;
 
-               /* byte 7 is length of unique tag ID */
-               uid_length = pbRecvBuffer[7];
-               /* the uid is in the next 'uid_length' number bytes */
-               sPrintBufferHex(pTagList->tagUID[i], uid_length, (pbRecvBuffer+8));
+                case SEL_RES_MIFARE_1K:
+                    sprintf(messageString, "Tag Type: MIFARE_1K");
+                    break;
 
-               sprintf(messageString, "Tag ID:   %s", pTagList->tagUID[i]);
-               readerLogMessage(LOG_INFO, 2, messageString);
+                case SEL_RES_MIFARE_MINI:
+                    sprintf(messageString, "Tag Type: MIFARE_MINI");
+                    break;
 
-               /* first one ? */
-               if ( i == 0 )
-                  (pTagList->numTags)++; /* got first one */
-               else
-               {
-                  /* check if this ID is already in our list */
-                  known = FALSE;
-                  for (other = 0; ((other < i) && (!known)) ; other++)
-                  {
-                     /* is this tag id already in our list? */
-                     if (strcmp(pTagList->tagUID[i],
-                                pTagList->tagUID[other]) == 0)
-                        known = TRUE;
-                  }
-                  if (!known)
-                    (pTagList->numTags)++; /* got another one */
-               }
-            }
+                case SEL_RES_MIFARE_4K:
+                    sprintf(messageString, "Tag Type: MIFARE_4K");
+                    break;
+
+                case SEL_RES_MIFARE_DESFIRE:
+                    sprintf(messageString, "Tag Type: MIFARE_DESFIRE");
+                    break;
+
+                case SEL_RES_JCOP30:
+                    sprintf(messageString, "Tag Type: JCOP30");
+                    break;
+
+                case SEL_RES_GEMPLUS_MPCOS:
+                    sprintf(messageString, "Tag Type: GEMPLUS_MPCOS");
+                    break;
+
+                default:
+                    sprintf(messageString, "Tag Type: Unknown");
+                    break;
+             }
+
+             readerLogMessage(LOG_INFO, 2, messageString);
+
+             /* store tag type in tag struct */
+             pTagList->tag[i].tagType = (tTagType)pbRecvBuffer[SEL_RES_BYTE];
+
+             /* byte 7 is length of unique tag ID */
+             uid_length = pbRecvBuffer[UID_LENGTH];
+
+             /* the uid is in the next 'uid_length' number bytes */
+             sPrintBufferHex(pTagList->tag[i].uid, uid_length, (pbRecvBuffer + UID_START) );
+
+             sprintf(messageString, "Tag ID:   %s", pTagList->tag[i].uid );
+             readerLogMessage(LOG_INFO, 2, messageString);
+
+             /* first one ? */
+             if ( i == 0 )
+                (pTagList->numTags)++; /* got first one */
+             else
+             {
+                /* check if this ID is already in our list */
+                known = FALSE;
+                for (other = 0; ((other < i) && (!known)) ; other++)
+                {
+                   /* is this tag id already in our list? */
+                   if (strcmp(pTagList->tag[i].uid,
+                              pTagList->tag[other].uid) == 0)
+                      known = TRUE;
+                }
+                if (!known)
+                  (pTagList->numTags)++; /* got another one */
+             }
          }
       }
       else

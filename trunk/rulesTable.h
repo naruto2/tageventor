@@ -50,8 +50,8 @@ extern int   rulesTableRead( void );
 extern void  rulesTableEntryEnable( int index, char enable );
 extern const tRulesTableEntry *rulesTableEntryGet( int index );
 extern void  rulesTableEventDispatch(
-                int	  	eventType,
-                uid       	tagUID,
+                int	  	        eventType,
+                tUID       	    tagUID,
                 const tReader	*pReader
                 );
 
