@@ -25,15 +25,25 @@
 #define FALSE 0
 #endif
 
+#define SEL_RES_MIFARE_ULTRA                    (0x00)
+#define SEL_RES_MIFARE_1K                       (0x08)
+#define SEL_RES_MIFARE_MINI                     (0x09)
+#define SEL_RES_MIFARE_4K                       (0x18)
+#define SEL_RES_MIFARE_DESFIRE                  (0x20)
+#define SEL_RES_JCOP30                          (0x28)
+#define SEL_RES_GEMPLUS_MPCOS                   (0x98)
+
+
 /*********************************************************************/
 /**************************** MiFARE Ultra ***************************/
 /*********************************************************************/
 
 /**************************** CONSTANTS ******************************/
-#define	NUM_BYTES_UID_MIFARE_ULTRA		(7)
+#define	NUM_BYTES_UID_MIFARE_ULTRA		        (7)
 #define NUM_USER_BYTES_PER_PAGE_MIFARE_ULTRA	(4)
-#define NUM_OTP_BYTES_MIFARE_ULTRA		(4)
-#define NUM_PAGES_MIFARE_ULTRA			(12)
+#define NUM_OTP_BYTES_MIFARE_ULTRA		        (4)
+#define NUM_PAGES_MIFARE_ULTRA			        (12)
+
 
 
 /**************************    TYPEDEFS    **************************/
@@ -55,7 +65,7 @@ typedef struct		{
 			    t_Logical_Page_MIFARE_ULTRA	pages[NUM_PAGES_MIFARE_ULTRA];
 			} t_Logical_Tag_Contents_MIFARE_ULTRA;
 
-typedef enum		{ NXP=0x04 } t_Logical_Tag_Manufacturer_MIFARE_ULTRA;
+typedef enum	{ NXP=0x04 } t_Logical_Tag_Manufacturer_MIFARE_ULTRA;
 
 #if 0
 const char NXPString[] = "NXP Semiconductor";
@@ -84,9 +94,9 @@ typedef union		{
 			} t_Logical_Tag_Contents;
 
 typedef struct		{
-			    t_Logical_Tag_Manufacturer		manufacturer;
+			    t_Logical_Tag_Manufacturer		    manufacturer;
 			    t_Logical_Tag_Manufacturer_String	manufacturerString;
-			    t_Logical_Tag_Contents		logicalTagContents;
+			    t_Logical_Tag_Contents		        logicalTagContents;
 			} t_Logical_Tag;
 
 #endif /* TAG_SPECS_INCLUDED */

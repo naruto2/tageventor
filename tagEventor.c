@@ -503,7 +503,7 @@ tagListCheck( void *updateSystemTray )
     tTagList        *temp;
     int  		    rv;
     unsigned char	found;
-    uid             ID;
+    tUID            uid;
     int			    i, j;
     char			messageString[MAX_LOG_MESSAGE];
 
@@ -549,8 +549,8 @@ tagListCheck( void *updateSystemTray )
                     readerManager.nbReaders, readers[0].number, (int)(pnewTagList->numTags) );
             for (i=0; i < pnewTagList->numTags; i++)
             {
-                sprintf( ID, " %s", pnewTagList->tagUID[i]);
-                strcat( messageString, ID );
+                sprintf( uid, " %s", pnewTagList->tag[i].uid );
+                strcat( messageString, uid );
             }
 
             /* for each tags that was here before */
@@ -559,14 +559,14 @@ tagListCheck( void *updateSystemTray )
                 found = FALSE;
                 /* Look for it in the new list */
                 for (j = 0; (j < pnewTagList->numTags); j++)
-                    if ( strcmp(ppreviousTagList->tagUID[i],
-                          pnewTagList->tagUID[j]) == 0 )
+                    if ( strcmp(ppreviousTagList->tag[i].uid,
+                          pnewTagList->tag[j].uid) == 0 )
                         found = TRUE;
 
                 if (!found)
                 {
                     tagListChanged = TRUE;
-                    rulesTableEventDispatch(TAG_OUT, ppreviousTagList->tagUID[i], &(readers[0]) );
+                    rulesTableEventDispatch(TAG_OUT, ppreviousTagList->tag[i].uid, &(readers[0]) );
                 }
             }
 
@@ -576,13 +576,13 @@ tagListCheck( void *updateSystemTray )
                 found = FALSE;
                 /* Look for it in the old list */
                 for (j = 0; ((j < ppreviousTagList->numTags) && (!found)); j++)
-                    if ( strcmp(ppreviousTagList->tagUID[j],
-                          pnewTagList->tagUID[i]) == 0 )
+                    if ( strcmp(ppreviousTagList->tag[j].uid,
+                          pnewTagList->tag[i].uid) == 0 )
                         found = TRUE;
                 if (!found)
                 {
                     tagListChanged = TRUE;
-                    rulesTableEventDispatch(TAG_IN, pnewTagList->tagUID[i], &(readers[0]) );
+                    rulesTableEventDispatch(TAG_IN, pnewTagList->tag[i].uid, &(readers[0]) );
                 }
             }
 

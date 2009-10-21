@@ -67,11 +67,18 @@ typedef struct {
    char     		SAM_id[MAX_SAM_ID_SIZE];
 } tReader;
 
-typedef char	uid[MAX_TAG_UID_SIZE];
+typedef char	tUID[MAX_TAG_UID_SIZE];
+
+typedef enum { MIFARE_ULTRALIGHT=0x00, MIFARE_1K=0x08, MIFARE_MINI=0x09, MIFARE_4K=0x18, MIFARE_DESFIRE=0x20, JCOP=0x28, GEMPLUS_MPCOS=0x98 } tTagType;
 
 typedef struct {
-		uid	        tagUID[MAX_NUM_TAGS];
-    		int	        numTags;
+                tUID        uid;
+                tTagType    tagType;
+                } tTag;
+
+typedef struct {
+		tTag        tag[MAX_NUM_TAGS];
+    	int	        numTags;
 		} tTagList;
 
 
