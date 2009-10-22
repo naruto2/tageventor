@@ -3,8 +3,6 @@ all: Debug Release
 debug_archive = ../Debug/libtagReader.a
 release_archive = ../Release/libtagReader.a
 
-external_headers = tagReader.h
-
 sources = $(*.c)
 
 debug_objects = ../obj/Debug/tagReader.o ../obj/Debug/acr122UDriver.o
@@ -46,7 +44,6 @@ release_flags = $(os_cc_flags) $(cc_flags)
 ###### Debug version of library
 cleanDebug:
 	@rm -f $(debug_objects) $(debug_archive)
-	@rm -f ../$(external_headers)
 	@rm -f ../obj/Debug/*.d
 	@echo "libtagReader Debug files cleaned"
 
@@ -55,7 +52,6 @@ Debug: $(debug_archive)
 $(debug_archive): $(debug_objects)
 	@echo "Creating library..."
 	@$(archiver) $(archiver_flags) $@ $^
-	@cp -f $(external_headers) ../
 	@echo Library BUILT $@
 	@echo ""
 
@@ -66,7 +62,6 @@ $(debug_archive): $(debug_objects)
 ###### Release version of library
 cleanRelease:
 	@rm -f $(release_objects) $(release_archive)
-	@rm -f ../$(external_headers)
 	@rm -f ../obj/Release/*.d
 	@echo "libtagReader Release files cleaned"
 
@@ -75,7 +70,6 @@ Release: $(release_archive)
 $(release_archive): $(release_objects)
 	@echo "Creating library..."
 	@$(archiver) $(archiver_flags) $@ $^
-	@cp -f $(external_headers) ../
 	@echo Library BUILT $@
 	@echo ""
 

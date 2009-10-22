@@ -29,6 +29,7 @@
 #include <limits.h>
 
 #include <PCSC/winscard.h>
+
 #include <tagReader.h>
 
 #include "tagEventor.h"

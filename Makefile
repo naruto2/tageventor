@@ -17,16 +17,16 @@ Release:
 	@echo ""
 
 cleanDebug:
-	@make -s -C lib/source/ -f Makefile cleanDebug
 	@make -s -f tagEventor.mak cleanDebug
 	@make -s -f gtagEventor.mak cleanDebug
+	@make -s -C lib/source/ -f Makefile cleanDebug
 	@echo "cleanDebug Done."
 	@echo ""
 
 cleanRelease:
-	@make -s -C lib/source/ -f Makefile cleanRelease
 	@make -s -f tagEventor.mak cleanRelease
 	@make -s -f gtagEventor.mak cleanRelease
+	@make -s -C lib/source/ -f Makefile cleanRelease
 	@echo "cleanRelease Done."
 	@echo ""
 
@@ -34,7 +34,7 @@ cleanRelease:
 # Remove all built object files (.o and .a) and compiled and linked binaries
 clean:
 	@rm -f *~ scripts/*~
-	@make -s -C lib/source/ -f Makefile clean
 	@make -s -f tagEventor.mak clean
 	@make -s -f gtagEventor.mak clean
+	@make -s -C lib/source/ -f Makefile clean
 	@echo "Clean Done."

@@ -26,8 +26,6 @@
 #include <sys/stat.h>  /* for umask() */
 #include <limits.h>
 
-#include <tagReader.h>
-
 #include "rulesTable.h"
 #include "tagEventor.h"
 
