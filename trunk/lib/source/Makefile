@@ -1,12 +1,30 @@
+all: Debug Release
+     
 debug_archive = ../Debug/libtagReader.a
 release_archive = ../Release/libtagReader.a
 
 external_headers = tagReader.h
 
-all: Debug Release
+sources = $(*.c)
 
 debug_objects = ../obj/Debug/tagReader.o ../obj/Debug/acr122UDriver.o
 release_objects = ../obj/Release/tagReader.o ../obj/Release/acr122UDriver.o
+
+../obj/Release/%.d: %.c
+	@set -e; rm -f $@; \
+	gcc -MM $(release_flags) $< > $@.$$$$; \
+	sed 's,\($*\)\.o[ :]*,$(@D)/$*.o $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$
+
+../obj/Debug/%.d: %.c
+	@set -e; rm -f $@; \
+	gcc -MM $(debug_flags) $< > $@.$$$$; \
+	sed 's,\($*\)\.o[ :]*,$(@D)/$*.o $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$
+
+#dependancy generation and use
+include $(debug_objects:.o=.d)
+include $(release_objects:.o=.d)
 
 os = $( shell uname )
 ifeq ($(os),Darwin)
@@ -29,13 +47,14 @@ release_flags = $(os_cc_flags) $(cc_flags)
 cleanDebug:
 	@rm -f $(debug_objects) $(debug_archive)
 	@rm -f ../$(external_headers)
+	@rm -f ../obj/Debug/*.d
 	@echo "libtagReader Debug files cleaned"
 
 Debug: $(debug_archive)
 
 $(debug_archive): $(debug_objects)
 	@echo "Creating library..."
-	@$(archiver) $(archiver_flags) $@ $(debug_objects)
+	@$(archiver) $(archiver_flags) $@ $^
 	@cp -f $(external_headers) ../
 	@echo Library BUILT $@
 	@echo ""
@@ -48,13 +67,14 @@ $(debug_archive): $(debug_objects)
 cleanRelease:
 	@rm -f $(release_objects) $(release_archive)
 	@rm -f ../$(external_headers)
+	@rm -f ../obj/Release/*.d
 	@echo "libtagReader Release files cleaned"
 
 Release: $(release_archive)
 
 $(release_archive): $(release_objects)
 	@echo "Creating library..."
-	@$(archiver) $(archiver_flags) $@ $(release_objects)
+	@$(archiver) $(archiver_flags) $@ $^
 	@cp -f $(external_headers) ../
 	@echo Library BUILT $@
 	@echo ""
