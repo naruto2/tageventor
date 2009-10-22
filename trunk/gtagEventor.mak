@@ -1,3 +1,11 @@
+all:Debug Release
+	@echo ""
+
+# Clean up all stray editor back-up files, any .o or .a left around in this directory
+# Remove all built object files (.o and .a) and compiled and linked binaries
+clean: cleanDebug cleanRelease
+	@echo ""
+
 debug_binaries = bin/Debug/gtagEventor
 release_binaries = bin/Release/gtagEventor
 binaries = $(debug_binaries) $(release_binaries)
@@ -6,8 +14,12 @@ debug_objects = obj/Debug/gtagEventor.o obj/Debug/rulesTable.o obj/Debug/aboutDi
 
 release_objects = obj/Release/gtagEventor.o obj/Release/rulesTable.o obj/Release/aboutDialog.o obj/Release/rulesEditor.o obj/Release/rulesEditorHelp.o obj/Release/settingsDialog.o obj/Release/systemTray.o
 
-all:Debug Release
-	@echo ""
+debug_dependencies = $(debug_objects:.o=.d)
+release_dependencies = $(release_objects:.o=.d)
+
+#dependancy generation and use
+include $(debug_dependencies)
+include $(release_dependencies)
 
 ###### Build Flags
 build_flags = -DBUILD_SYSTEM_TRAY \
@@ -47,8 +59,8 @@ endif
 rev_string = $(shell, svnversion)
 version_string = "0.0.0"
 
-##### Compile flahs
-cc_flags = $(build_flags) $(icon_flags) -I . -I lib/ -Wall \
+##### Compile flags
+cc_flags = $(build_flags) $(icon_flags) -I . -I lib/source -Wall \
           -DPROGRAM_NAME='"gtagEventor"' $(os_cc_flags)
 
 debug_cc_flags = $(cc_flags) -DDEBUG -g \
@@ -71,10 +83,23 @@ bin/Debug/gtagEventor: lib/Debug/libtagReader.a $(debug_objects)
 
 lib/Debug/libtagReader.a:
 
+########## Debug version DEPENDENCIES
+obj/Debug/%.d: %.c
+	@set -e; rm -f $@; \
+	gcc -M $(debug_cc_flags) $< > $@.$$$$; \
+	sed 's,\($*\)\.o[ :]*,$(@D)/$*.o $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$
+
 ###### Debug version COMPILE
 obj/Debug/gtagEventor.o : tagEventor.c
 	@gcc -c $< $(debug_cc_flags) -o $@
 	@echo "Compiling " $< "---->" $@
+
+obj/Debug/gtagEventor.d: tagEventor.c
+	@set -e; rm -f $@; \
+	gcc -M $(debug_cc_flags) $< > $@.$$$$; \
+	sed 's,\($*\)\.o[ :]*,$(@D)/$*.o $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$
 
 obj/Debug/%.o : %.c
 	@gcc -c $< $(debug_cc_flags) -o $@
@@ -99,11 +124,21 @@ obj/Release/gtagEventor.o : tagEventor.c
 	@gcc -c $< $(release_cc_flags) -o $@
 	@echo "Compiling " $< "---->" $@
 
+obj/Release/gtagEventor.d: tagEventor.c
+	@set -e; rm -f $@; \
+	gcc -M $(release_cc_flags) $< > $@.$$$$; \
+	sed 's,\($*\)\.o[ :]*,$(@D)/$*.o $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$
+
+########## Release version DEPENDENCIES
+obj/Release/%.d: %.c
+	@set -e; rm -f $@; \
+	gcc -M $(release_cc_flags) $< > $@.$$$$; \
+	sed 's,\($*\)\.o[ :]*,$(@D)/$*.o $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$
+
 obj/Release/%.o : %.c
 	@gcc -c $< $(release_cc_flags) -o $@
 	@echo "Compiling " $<
 
-# Clean up all stray editor back-up files, any .o or .a left around in this directory
-# Remove all built object files (.o and .a) and compiled and linked binaries
-clean: cleanDebug cleanRelease
-	@echo ""
+

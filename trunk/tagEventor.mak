@@ -9,12 +9,31 @@ release_library = lib/Release/libtagReader.a
 debug_objects = obj/Debug/tagEventor.o obj/Debug/rulesTable.o
 release_objects = obj/Release/tagEventor.o obj/Release/rulesTable.o
 
+debug_dependencies = $(debug_objects:.o=.d)
+release_dependencies = $(release_objects:.o=.d)
+
+# Clean up all stray editor back-up files, any .o or .a left around in this directory
+# Remove all built object files (.o and .a) and compiled and linked binaries
+clean: cleanDebug cleanRelease
+
+cleanRelease:
+	@rm -f $(release_objects) $(release_binary) $(release_dependencies)
+	@echo "tagEventor Release files cleaned"
+
+cleanDebug:
+	@rm -f $(debug_objects) $(debug_binary) $(debug_dependencies)
+	@echo "tagEventor Debug files cleaned"
+
+#dependancy generation and use
+include $(debug_dependencies)
+include $(release_dependencies)
+
 ##### Get revision number of the version we're compiling
 rev_string = $(shell, svnversion)
 version_string = "0.0.0"
 
 ##### Compile Flags
-cc_flags = -Wall -I . -I /usr/include/PCSC -I lib \
+cc_flags = -Wall -I . -I /usr/include/PCSC -I lib/source \
            -DPROGRAM_NAME="tagEventor" \
            -DDEFAULT_COMMAND_DIR='"/etc/tagEventor"'
 
@@ -33,9 +52,12 @@ else
 	release_link_flags = -Llib/Release -l tagReader -l pcsclite
 endif
 
-cleanDebug:
-	@rm -f $(debug_objects) $(debug_binary)
-	@echo "tagEventor Debug files cleaned"
+########## Debug version DEPENDENCIES
+obj/Debug/%.d: %.c
+	@set -e; rm -f $@; \
+	gcc -M $(debug_cc_flags) $< > $@.$$$$; \
+	sed 's,\($*\)\.o[ :]*,$(@D)/$*.o $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$
 
 Debug: $(debug_binary)
 
@@ -52,9 +74,12 @@ obj/Debug/%.o : %.c
 	@gcc -c $< $(debug_cc_flags) -o $@
 	@echo "Compiling " $<
 
-cleanRelease:
-	@rm -f $(release_objects) $(release_binary)
-	@echo "tagEventor Release files cleaned"
+########## Release version DEPENDENCIES
+obj/Release/%.d: %.c
+	@set -e; rm -f $@; \
+	gcc -M $(release_cc_flags) $< > $@.$$$$; \
+	sed 's,\($*\)\.o[ :]*,$(@D)/$*.o $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$
 
 ########## Release version LINK
 Release: $(release_binary)
@@ -70,7 +95,3 @@ $(release_library):
 obj/Release/%.o : %.c
 	@gcc -c $< $(release_cc_flags) -o $@
 	@echo "Compiling " $<
-
-# Clean up all stray editor back-up files, any .o or .a left around in this directory
-# Remove all built object files (.o and .a) and compiled and linked binaries
-clean: cleanDebug cleanRelease
