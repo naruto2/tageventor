@@ -28,6 +28,7 @@
 #include "aboutDialog.h"
 #include "systemTray.h"
 #include "settingsDialog.h"
+#include "readersDialog.h"
 
 #define SYSTEM_TRAY_TOOL_TIP_TEXT_MAX    (260)
 
@@ -124,10 +125,11 @@ iconPopupMenu(GtkStatusIcon *status_icon,
 
 void
 startSystemTray(
-                int     *argc,
-                char    ***argv,
-                int    (*pollFunction)( void *data ),
-                int     pollDelay
+                int             *argc,
+                char            ***argv,
+                int             (*pollFunction)( void *data ),
+                int             pollDelay,
+                void            *readerArray
                 )
 {
     GtkWidget       *popupMenu, *quitMenuItem;
@@ -145,6 +147,10 @@ startSystemTray(
 
 #ifdef BUILD_SETTINGS_DIALOG
     GtkWidget       *settingsDialogMenuItem;
+#endif
+
+#ifdef BUILD_READERS_DIALOG
+    GtkWidget       *readersDialogMenuItem;
 #endif
 
     /* Init GTK+ it might modify significantly the command line options */
@@ -195,8 +201,17 @@ startSystemTray(
     gtk_menu_shell_append( GTK_MENU_SHELL( popupMenu ), settingsDialogMenuItem );
     g_signal_connect (G_OBJECT (settingsDialogMenuItem), "activate", G_CALLBACK (settingsDialogActivate), NULL );
     gtk_widget_show( settingsDialogMenuItem );
+#endif
 
-    /* put in a separator after the settings menu item */
+#ifdef BUILD_READERS_DIALOG
+    readersDialogMenuItem = gtk_menu_item_new_with_label( "Readers" );
+    gtk_menu_shell_append( GTK_MENU_SHELL( popupMenu ), readersDialogMenuItem );
+    g_signal_connect (G_OBJECT (readersDialogMenuItem), "activate", G_CALLBACK (readersDialogActivate), readerArray );
+    gtk_widget_show( readersDialogMenuItem );
+#endif
+
+#if defined ( BUILD_SETTINGS_DIALOG ) || defined ( BUILD_READERS_DIALOG )
+    /* put in a separator */
     separator = gtk_separator_menu_item_new();
     gtk_menu_shell_append( GTK_MENU_SHELL( popupMenu ), separator );
     gtk_widget_show( separator );

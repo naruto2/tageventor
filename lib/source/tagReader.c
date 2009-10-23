@@ -51,15 +51,69 @@ if (rv != SCARD_S_SUCCESS) \
 #endif
 
 /**********    STATIC VARIABLES TO THIS FILE     ***************/
+static  int     readerSetting = 0; /* no readers, not even AUTO to start with */
 static  int     verbosityLevel = 0;
 static  BOOL    runningInBackground = FALSE;
 static char		messageString[MAX_LOG_MESSAGE];
 
 extern tReaderDriver    acr122UDriver;
-
 /* This is a NULL terminated list of pointers to driver structures */
 /* one for each driver we know about                               */
-tReaderDriver   *readerDriverTable[] = { &acr122UDriver, NULL };
+static tReaderDriver   *readerDriverTable[] = { &acr122UDriver, NULL };
+
+/* utility function for other modules that returns the current setting for the reader number bitmap */
+int
+readerSettingBitmapGet(
+                void
+                )
+{
+    return ( readerSetting );
+}
+
+/* utility function for settings modules that sets the state of current setting for the reader number bitmap */
+int
+readerSettingBitmapSet(
+                int             readerSettingBitmap
+                )
+{
+
+    readerSetting = readerSettingBitmap;
+
+    return ( readerSetting );
+
+}
+
+/* Utility function to add one specific reader number to the bitmap */
+void
+readerSettingBitmapBitAdd( int bitmap )
+{
+    /* bit 0 of the bitmap is reserved for AUTO */
+    /* so OR in the bit shifted an extra 1   number 0 = bit 1 etc */
+    readerSetting |= bitmap;
+
+}
+
+
+int
+readerSettingBitmapNumberAdd(
+                            int     numberOfTheBitToSet
+                            )
+{
+
+    readerSetting |= (1 << numberOfTheBitToSet );
+
+    return (readerSetting);
+}
+
+/* Utility function to add one specific reader number to the bitmap */
+int
+readerSettingBitmapBitTest( int bitmap )
+{
+    /* bit 0 of the bitmap is reserved for AUTO */
+    /* so test  number 0 = bit 0 etc */
+    return( readerSetting & bitmap );
+
+}
 
 /**************************** LOG MESSAGE************************/
 /* type = LOG_WARNING (something unexpected, not a big problem) */
@@ -137,9 +191,26 @@ readersEnumerate(
 
     /* Call with a null buffer to get the number of bytes to allocate */
     rv = SCardListReaders( (SCARDCONTEXT)(pManager->hContext), NULL, NULL, &dwReaders);
-    if (rv != SCARD_S_SUCCESS)
+    if ( rv != SCARD_S_SUCCESS )
     {
-        PCSC_ERROR(rv, "SCardListReaders");
+        /* if there are no readers, then zero everything out but don't report an error */
+        if ( rv == SCARD_E_NO_READERS_AVAILABLE )
+        {
+            pManager->nbReaders = 0;
+
+            if ( pManager->mszReaders )
+                free( pManager->mszReaders );
+            pManager->mszReaders = NULL;
+
+            if ( pManager->readers )
+                free( pManager->readers );
+            pManager->readers = NULL;
+
+            readerLogMessage(LOG_INFO, 2, "Found 0 Readers, ");
+        }
+        else
+            PCSC_ERROR(rv, "SCardListReaders");
+
         return ( rv );
     }
 
@@ -154,7 +225,9 @@ readersEnumerate(
     rv = SCardListReaders( (SCARDCONTEXT)(pManager->hContext), NULL, pManager->mszReaders, &dwReaders);
     if (rv != SCARD_S_SUCCESS)
     {
-        PCSC_ERROR(rv, "SCardListReaders");
+        /* Avoid reporting an error just because no reader is connected */
+        if ( rv != SCARD_E_NO_READERS_AVAILABLE )
+            PCSC_ERROR(rv, "SCardListReaders");
         return (rv);
     }
 
@@ -213,17 +286,21 @@ readerManagerConnect( tReaderManager *pManager )
 {
     LONG 		    rv;
 
+    if ( pManager == NULL )
+        return( SCARD_E_INVALID_PARAMETER );
+
     rv = SCardEstablishContext(SCARD_SCOPE_SYSTEM, NULL, NULL, (LPSCARDCONTEXT)&(pManager->hContext) );
     if (rv != SCARD_S_SUCCESS)
     {
         PCSC_ERROR(rv, "SCardEstablishContext");
-        readerLogMessage( LOG_ERR, 1, TAGREADER_STRING_PCSCD_NO );
+        readerLogMessage( LOG_ERR, 1, LIBTAGREADER_STRING_PCSCD_NO );
         pManager->hContext = NULL;
         return( rv );
     }
 
-    readerLogMessage( LOG_INFO, 2, TAGREADER_STRING_PCSCD_OK );
+    readerLogMessage( LOG_INFO, 2, LIBTAGREADER_STRING_PCSCD_OK );
 
+    /* Find all the readers and fill the readerManager data structure */
     rv = readersEnumerate( pManager );
 
     return (rv);
@@ -237,15 +314,16 @@ readerManagerDisconnect( tReaderManager *pManager )
 {
     LONG 		    rv;
 
-    if ( pManager->hContext );
+    if ( pManager == NULL )
+        return( SCARD_E_INVALID_PARAMETER );
+
+    if ( pManager->hContext )
     {
         readerLogMessage(LOG_INFO, 2, "Disconnecting from pcscd server");
 
         rv = SCardReleaseContext( (SCARDCONTEXT) (pManager->hContext) );
         if ( rv != SCARD_S_SUCCESS )
             PCSC_ERROR(rv, "SCardReleaseContext");
-
-/* TODO, make these memory pointers part of the hCOntext structure associated with manager */
 
         /* Free up memory that was allocated when we connected to manager */
         if (pManager->mszReaders)
@@ -261,6 +339,8 @@ readerManagerDisconnect( tReaderManager *pManager )
             pManager->readers = NULL;
         }
     }
+    else
+        rv = SCARD_E_INVALID_PARAMETER;
 
     /* now it should be NULL either way */
     pManager->hContext = NULL;
@@ -281,7 +361,11 @@ int readerConnect (
    DWORD 		    dwActiveProtocol;
    int              i;
 
-   /* if not already connected to daemon that manager readers */
+
+    if ( pManager == NULL )
+        return( SCARD_E_INVALID_PARAMETER );
+
+    /* if not already connected to daemon that manages readers */
    if ( pManager->hContext == NULL )
    { /* then try and connect to the pcscd server */
        rv = readerManagerConnect( pManager );
@@ -300,7 +384,7 @@ int readerConnect (
    if ( pManager->nbReaders == 0 )
    {
         readerLogMessage(LOG_ERR, 0, "No readers were found" );
-        return( SCARD_E_UNKNOWN_READER );
+        return( SCARD_E_NO_READERS_AVAILABLE );
    }
 
    /* connect to the specified card reader */
@@ -353,6 +437,7 @@ int readerConnect (
    {
        /* if we got this far then a driver was successfully found, remember it! */
        pReader->pDriver = readerDriverTable[i -1];
+       pReader->driverDescriptor = readerDriverTable[i -1]->driverDescriptor;
    }
 
    return (rv);
@@ -375,6 +460,14 @@ void readerDisconnect(
 
         rv = SCardDisconnect( (SCARDHANDLE) (pReader->hCard), SCARD_UNPOWER_CARD);
         pReader->hCard = NULL;
+        pReader->number = 0;
+        pReader->name = NULL;
+        pReader->pDriver = NULL;
+        pReader->driverDescriptor = NULL;
+        pReader->SAM = FALSE;
+        pReader->SAM_serial[0] = '\0';
+        pReader->SAM_id[0] = '\0';
+
         PCSC_ERROR(rv, "SCardDisconnect");
     }
     else
@@ -388,17 +481,19 @@ void readerDisconnect(
 
 /************************ GET CONTACTLESS STATUS *****************/
 /* TODO : this function hasn't really been tested                */
-int readerGetContactlessStatus(
-                                const tReader	*pReader
-                                )
+int
+readerGetContactlessStatus(
+                           const tReader	*pReader
+                          )
 {
    DWORD		dwRecvLength;
    BYTE			pbRecvBuffer[20];
    LONG			rv;
 
+
    /* check we have connected and have a driver for this reader */
-   if ( pReader->pDriver == NULL )
-      return ( SCARD_E_UNKNOWN_READER );
+   if ( ( pReader->hCard == NULL ) || ( pReader->pDriver == NULL ) )
+      return ( SCARD_E_INVALID_HANDLE );
 
    sprintf(messageString, "Requesting status");
    readerLogMessage(LOG_INFO, 2, messageString);
@@ -425,16 +520,17 @@ int readerGetContactlessStatus(
 
 
 /************************ GET TAG LIST ***************************/
-int readerGetTagList(
-                    const tReader	*pReader,
-                    tTagList	    *pTagList
-               )
+int
+readerGetTagList(
+                const tReader	*pReader,
+                tTagList	    *pTagList
+                )
 {
    LONG			rv;
 
    /* check we have connected and have a driver for this reader */
-   if ( pReader->pDriver == NULL )
-      return ( SCARD_E_UNKNOWN_READER );
+   if ( ( pReader->hCard == NULL ) || ( pReader->pDriver == NULL ) )
+      return ( SCARD_E_INVALID_HANDLE );
 
    rv = ((tReaderDriver *)(pReader->pDriver))->getTagList( pReader, pTagList );
 

@@ -36,10 +36,13 @@ typedef LONG   (*tGetTagListFunction)(
                                     tTagList	    *pTagList
                                     );
 
+typedef const char    * tDriverDescriptor;
+
 typedef struct  {
                  tReaderCheckFunction           readerCheck;
                  tGetContactlessStatusFunction  getContactlessStatus;
                  tGetTagListFunction            getTagList;
+                 tDriverDescriptor              driverDescriptor;
                 } tReaderDriver;
 
 

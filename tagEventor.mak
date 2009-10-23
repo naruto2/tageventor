@@ -35,7 +35,9 @@ version_string = "0.0.0"
 ##### Compile Flags
 cc_flags = -Wall -I . -I /usr/include/PCSC -I lib/source \
            -DPROGRAM_NAME="tagEventor" \
-           -DDEFAULT_COMMAND_DIR='"/etc/tagEventor"'
+           -DDEFAULT_COMMAND_DIR='"/etc/tagEventor"' \
+           -DDEFAULT_LOCK_FILE_DIR='"/var/run/tagEventor"' \
+           -DDAEMON_NAME='"tagEventord"'
 
 debug_cc_flags = $(cc_flags) -DDEBUG -g \
                  -DVERSION_STRING='$(version_string) $(rev_string) " Debug"'

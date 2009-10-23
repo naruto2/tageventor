@@ -10,9 +10,23 @@ debug_binaries = bin/Debug/gtagEventor
 release_binaries = bin/Release/gtagEventor
 binaries = $(debug_binaries) $(release_binaries)
 
-debug_objects = obj/Debug/gtagEventor.o obj/Debug/rulesTable.o obj/Debug/aboutDialog.o obj/Debug/rulesEditor.o obj/Debug/rulesEditorHelp.o obj/Debug/settingsDialog.o obj/Debug/systemTray.o
+debug_objects = obj/Debug/gtagEventor.o \
+                obj/Debug/rulesTable.o  \
+                obj/Debug/aboutDialog.o \
+                obj/Debug/rulesEditor.o \
+                obj/Debug/rulesEditorHelp.o \
+                obj/Debug/settingsDialog.o \
+                obj/Debug/readersDialog.o \
+                obj/Debug/systemTray.o
 
-release_objects = obj/Release/gtagEventor.o obj/Release/rulesTable.o obj/Release/aboutDialog.o obj/Release/rulesEditor.o obj/Release/rulesEditorHelp.o obj/Release/settingsDialog.o obj/Release/systemTray.o
+release_objects = obj/Release/gtagEventor.o \
+                  obj/Release/rulesTable.o \
+                  obj/Release/aboutDialog.o \
+                  obj/Release/rulesEditor.o \
+                  obj/Release/rulesEditorHelp.o \
+                  obj/Release/settingsDialog.o \
+                  obj/Release/readersDialog.o \
+                  obj/Release/systemTray.o
 
 debug_dependencies = $(debug_objects:.o=.d)
 release_dependencies = $(release_objects:.o=.d)
@@ -29,7 +43,10 @@ build_flags = -DBUILD_SYSTEM_TRAY \
               -DBUILD_SETTINGS_DIALOG \
               -DBUILD_RULES_EDITOR \
               -DBUILD_RULES_EDITOR_HELP \
-              -DDEFAULT_COMMAND_DIR='"/etc/gtagEventor"'
+              -DBUILD_READERS_DIALOG \
+              -DDEFAULT_COMMAND_DIR='"/etc/gtagEventor"' \
+              -DDEFAULT_LOCK_FILE_DIR='"/var/run/tagEventor"' \
+              -DDAEMON_NAME='"tagEventord"'
 
 icon_flags = -DICON_INSTALL_DIR='"/usr/share/gtagEventor/icons/"' \
              -DICON_NAME_CONNECTED='"gtagEventor"' \

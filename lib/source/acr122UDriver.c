@@ -174,8 +174,8 @@ static const int SUPPORTED_READER_FIRMWARE_ARRAY_COUNT = 1;
 static const char * const SUPPORTED_READER_FIRMWARE_ARRAY[] = { "ACR122U" };
 
 /* Prototypes for each of the functions needed to constitute a driver */
- LONG   acr122UReaderCheck(tReader   *pReader,
-                           BOOL      *pReaderSupported );
+LONG   acr122UReaderCheck(tReader   *pReader,
+                          BOOL      *pReaderSupported );
 
 LONG   acr122UGetContactlessStatus(const tReader	*pReader,
                                    BYTE			    *pRecvBuffer,
@@ -183,10 +183,14 @@ LONG   acr122UGetContactlessStatus(const tReader	*pReader,
 LONG   acr122UGetTagList(const tReader	*pReader,
                          tTagList	    *pTagList );
 
+/******** A Text Descriptor for this driver ************/
+static const char acr122UDescriptor[] = "Andrew's acr122U driver";
+
 /******** Reader Driver Structure for this reader code */
 tReaderDriver acr122UDriver = { &acr122UReaderCheck,
                                 &acr122UGetContactlessStatus,
-                                &acr122UGetTagList
+                                &acr122UGetTagList,
+                                acr122UDescriptor
                               };
 
 /**************************** APDU SEND ************************/
@@ -484,6 +488,9 @@ LONG   acr122UGetTagList(
        if ( strncmp( ((char *)pbRecvBuffer), SUPPORTED_READER_FIRMWARE_ARRAY[i],
                     sizeof(SUPPORTED_READER_FIRMWARE_ARRAY[i])-1) == 0 )
           *pReaderSupported = TRUE;
+
+        sprintf(messageString, "Reader: %s, with Firmware: '%s' supported by driver='%s'", pReader->name, pbRecvBuffer, acr122UDescriptor );
+        readerLogMessage(LOG_INFO, 3, messageString);
     }
 
     if ( *pReaderSupported == FALSE )
@@ -534,6 +541,10 @@ LONG   acr122UGetTagList(
           sprintf(messageString, "SAM ID: %s", pReader->SAM_id);
           readerLogMessage(LOG_INFO, 1, messageString);
         }
+        else
+            return( rv );
+
+        pReader->SAM = TRUE;
     }
 
     /* Turning RATS off thus a JCOP tag will be detected as emulating a DESFIRE */

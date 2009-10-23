@@ -128,6 +128,10 @@ setSettingsSavePending( unsigned char pending )
     gtk_widget_set_sensitive( applyButton, pending );
     gtk_widget_set_sensitive( closeButton, !pending );
 
+    /* put some help text in the status bar */
+    if ( settingsDialog )
+        gtk_statusbar_push((GtkStatusbar *)statusBar, 0, (gchar *)TAGEVENTOR_STRING_SETTINGS_SAVE_PENDING );
+
 }
 
 
@@ -154,22 +158,20 @@ static void
 applyChanges( void )
 {
     int     i;
-    int     readerBitmap = 0;
 
     /* get the reader settings, form a bitmap and set it */
     for ( i = 0; i <  (MAX_NUM_READERS +1); i++ )
     {
         /* if the GUI toggle is set */
         if ( gtk_toggle_button_get_active( (GtkToggleButton *)readerNumToggle[i].toggle ) )
-            readerBitmap |= readerNumToggle[i].setting; /* OR in that bit to the bitmap */
+            readerSettingBitmapBitAdd( readerNumToggle[i].setting );
     }
-    readerSettingSet( readerBitmap );
 
     /* save the setting for poll delay */
-    pollDelaySet( gtk_range_get_value( (GtkRange *)pollDelayScale ) );
+    appPollDelaySet( gtk_range_get_value( (GtkRange *)pollDelayScale ) );
 
     /* and for verbosityLevel */
-    verbosityLevelSet( gtk_range_get_value( (GtkRange *)verbosityScale ) );
+    appVerbosityLevelSet( gtk_range_get_value( (GtkRange *)verbosityScale ) );
 
     /* change means a save is now NOT needed */
     setSettingsSavePending( FALSE );
@@ -220,7 +222,7 @@ buildSettingsDialog ( void  )
     GtkWidget   *dialog;
     GtkWidget   *vbox, *buttonBox, *table, *label;
     GtkWidget   *cancelButton;
-    int         i, readerSettingBitmap;
+    int         i;
     char        windowTitle[strlen(PROGRAM_NAME) + strlen(SETTINGS_DIALOG_WINDOW_TITLE) + 10];
 
     dialog = gtk_window_new( GTK_WINDOW_TOPLEVEL );
@@ -263,15 +265,11 @@ buildSettingsDialog ( void  )
     gtk_table_attach( (GtkTable *)table, label, 0, 1, 0, 1, GTK_FILL, GTK_FILL, 0, 10 );
     gtk_widget_show( label );
 
-    /* Get the current setting for the readers enabled, which is a bitmap */
-    readerSettingBitmap = readerSettingGet();
-
     /* the 6 possible options are  AUTO plus the readers 0, 1, 2, 3, 4, 5, */
     for ( i = 0; i < (MAX_NUM_READERS +1); i++ )
     {
         readerNumToggle[i].toggle = gtk_check_button_new_with_label( readerNumToggle[i].label);
-        gtk_toggle_button_set_active( (GtkToggleButton *)readerNumToggle[i].toggle,
-                                      (readerSettingBitmap & (1 << i) ) );
+        gtk_toggle_button_set_active( (GtkToggleButton *)readerNumToggle[i].toggle, readerSettingBitmapBitTest( 1 << i) );
 
         /* attach a new widget into the table, row 0, for the 6 columns */
         gtk_table_attach( (GtkTable *)table, readerNumToggle[i].toggle, i+1, i+2, 0, 1, GTK_FILL, GTK_FILL, 5, 0 );
@@ -293,7 +291,7 @@ buildSettingsDialog ( void  )
     pollDelayScale = gtk_hscale_new_with_range( POLL_DELAY_MILLI_SECONDS_MIN, POLL_DELAY_MILLI_SECONDS_MAX, 100 );
 
     /* set it up with the actual value */
-    gtk_range_set_value( (GtkRange *)pollDelayScale, pollDelayGet() );
+    gtk_range_set_value( (GtkRange *)pollDelayScale, appPollDelayGet() );
 
     /* add a callback for when the setting value is changed */
     g_signal_connect (G_OBJECT (pollDelayScale), "value-changed", G_CALLBACK (scaleChanged), NULL );
@@ -311,7 +309,7 @@ buildSettingsDialog ( void  )
     verbosityScale = gtk_hscale_new_with_range( VERBOSITY_MIN, VERBOSITY_MAX, 1 );
 
     /* set it up with the actual value */
-    gtk_range_set_value( (GtkRange *)verbosityScale, verbosityLevelGet() );
+    gtk_range_set_value( (GtkRange *)verbosityScale, appVerbosityLevelGet() );
 
     /* add a callback for when the setting value is changed */
     g_signal_connect (G_OBJECT (verbosityScale), "value-changed", G_CALLBACK (scaleChanged), NULL );
