@@ -1,6 +1,6 @@
 /*
-  systemTray.h - headerfile that defines the entry point for code
-                 that will create and start and run a system tray icon
+  readersDialog.h - headerfile that defines the entry point for code
+                 that will create and start dialog box of readers
 
   Copyright 2009 Autelic Association (http://www.autelic.org)
 
@@ -17,11 +17,12 @@
   limitations under the License.
 */
 
-#ifdef BUILD_SYSTEM_TRAY
+#ifdef BUILD_READERS_DIALOG
 
-/* define the function we must implement for tagEventor.c to start system tray icon */
-extern void startSystemTray( int     *argc, char    ***argv, int (*pollFunction)( void  *data ), int pollDelay, void *readerArray );
-extern void systemTraySetStatus( char connected, const char *message );
-extern void systemTraySetPollDelay( int validPollDelay );
+/* this is a function that systemTray.c expects to exist to pop-up the settings */
+/* dialog box                                                             */
+extern void readersDialogActivate( void * pReadersArray);
+
+extern char readersDialogQuit( void );
 
 #endif

@@ -54,19 +54,14 @@ typedef enum { FOREGROUND, START_DAEMON, STOP_DAEMON, SYSTEM_TRAY } tRunOptions;
 
 
 /************* VARIABLES STATIC TO THIS FILE  ********************/
-
-/* This is needed by handleSignal to clean-up, so can't be local :-( */
-static  tReader         readers[MAX_NUM_READERS];
-static  tReaderManager  readerManager = { 0, NULL, NULL, NULL };
-static  int             readerSetting = 0; /* no readers, not even AUTO to start with */
 static  int		        lockFile = -1;
 static  char		    lockFilename[PATH_MAX];
 static  unsigned char	runningAsDaemon = FALSE;
 
 
 /* strings used for tag events, for text output and name of scipts */
-static int		    pollDelayms;
-static int			verbosityLevel;
+static int		    appPollDelayms;
+static int			appVerbosityLevel;
 
 static tTagList		tagList1, tagList2;
 
@@ -74,41 +69,14 @@ static tTagList		tagList1, tagList2;
 static tTagList		*pnewTagList = &tagList1, *ppreviousTagList = &tagList2;
 static unsigned char tagListChanged = FALSE;
 
+/************** GLOBALS *******************************************/
+/* these are only needed globally as a horrible workaround for
+   readersTable */
+tReaderManager  readerManager = { 0, NULL, NULL, NULL };
+tReader         readers[MAX_NUM_READERS];
 
-/* utility function for other modules that returns the current setting for the reader number bitmap */
 int
-readerSettingGet(
-                void
-                )
-{
-    return ( readerSetting );
-}
-
-/* utility function for settings modules that sets the state of current setting for the reader number bitmap */
-int
-readerSettingSet(
-                int             readerSettingBitmap
-                )
-{
-
-    readerSetting = readerSettingBitmap;
-
-    return ( readerSetting );
-
-}
-
-/* Utility function to add one specific reader number to the bitmap */
-static void
-readerNumberAdd( int number )
-{
-    /* bit 0 of the bitmap is reserved for AUTO */
-    /* so OR in the bit shifted an extra 1   number 0 = bit 1 etc */
-    readerSetting |= ( 1 << (number +1) );
-
-}
-
-
-int pollDelaySet(
+appPollDelaySet(
                 int     newPollDelay
                 )
 {
@@ -120,24 +88,24 @@ int pollDelaySet(
         newPollDelay = POLL_DELAY_MILLI_SECONDS_MIN;
 
     /* set the new delay to the capped value */
-    pollDelayms = newPollDelay;
+    appPollDelayms = newPollDelay;
 
 #ifdef BUILD_SYSTEM_TRAY
-    systemTraySetPollDelay( pollDelayms );
+    systemTraySetPollDelay( appPollDelayms );
 #endif
 
     /* return the value that was actually set */
-    return ( pollDelayms );
+    return ( appPollDelayms );
 
 }
 
 int
-pollDelayGet( void )
+appPollDelayGet( void )
 {
-    return( pollDelayms );
+    return( appPollDelayms );
 }
 
-int verbosityLevelSet(
+int appVerbosityLevelSet(
                     int     newLevel
                     )
 {
@@ -149,17 +117,17 @@ int verbosityLevelSet(
     if ( newLevel < VERBOSITY_MIN )
         newLevel = VERBOSITY_MIN;
 
-    verbosityLevel = newLevel;
+    appVerbosityLevel = newLevel;
 
     /* return the value that was actually set */
-    return ( verbosityLevel );
+    return ( appVerbosityLevel );
 
 }
 
 int
-verbosityLevelGet( void )
+appVerbosityLevelGet( void )
 {
-    return( verbosityLevel );
+    return( appVerbosityLevel );
 }
 
 /************************ PARSE COMMAND LINE OPTIONS ********/
@@ -176,7 +144,7 @@ parseCommandLine(
    int      number;
 
    /* Set default values */
-   verbosityLevel = VERBOSITY_DEFAULT;
+   appVerbosityLevel = VERBOSITY_DEFAULT;
 
 #ifdef BUILD_SYSTEM_TRAY
    /* this is the gtagEventor GUI version built to install in system tray */
@@ -186,7 +154,7 @@ parseCommandLine(
    *pRunOptions = FOREGROUND;
 #endif
 
-   pollDelayms = POLL_DELAY_MILLI_SECONDS_DEFAULT;
+   appPollDelayms = POLL_DELAY_MILLI_SECONDS_DEFAULT;
 
    while ( ((option = getopt(argc, argv, "n:v:d:p:h")) != EOF) && (!parseError) )
       switch (option)
@@ -198,9 +166,7 @@ parseCommandLine(
         /* the program logic will take notice of Auto, but GUI will also reflect the others */
          case 'n':
             if ( strcmp( optarg, "AUTO" ) == strlen( "AUTO" ) )
-            {
-                readerSetting |= READER_NUM_DEFAULT;
-            }
+                readerSettingBitmapBitAdd( READER_NUM_AUTO );
             else
             {
                 number = atoi(optarg);
@@ -210,7 +176,7 @@ parseCommandLine(
                     fprintf(stderr, TAGEVENTOR_STRING_COMMAND_LINE_READER_NUM_ERROR_2, optarg);
                 }
                 else
-                    readerNumberAdd( number );
+                    readerSettingBitmapNumberAdd( number );
             }
             break;
 
@@ -218,10 +184,10 @@ parseCommandLine(
          case 'v':
             newVerbosity = atoi(optarg);
             /* check if the new verbosity was within range when set */
-            if ( verbosityLevelSet( newVerbosity ) != newVerbosity )
+            if ( appVerbosityLevelSet( newVerbosity ) != newVerbosity )
             {
                fprintf(stderr, "Verbosity level must be greater or equal to 0\n");
-               fprintf(stderr, "Verbosity level has been forced to %d\n", verbosityLevelGet() );
+               fprintf(stderr, "Verbosity level has been forced to %d\n", appVerbosityLevelGet() );
             }
             break;
 
@@ -241,10 +207,10 @@ parseCommandLine(
          case 'p':
             newDelay = atoi(optarg);
             /* check if the new delay was within range when set */
-            if ( pollDelaySet ( newDelay ) != newDelay )
+            if ( appPollDelaySet ( newDelay ) != newDelay )
             {
                fprintf(stderr, "Poll delay must be greater or equal to 0\n");
-               fprintf(stderr, "Poll delay has been forced to %d\n", pollDelayGet() );
+               fprintf(stderr, "Poll delay has been forced to %d\n", appPollDelayGet() );
             }
             break;
 
@@ -270,8 +236,8 @@ parseCommandLine(
    }
 
     /* if no reader numbers were specified and AUTO neither, then set default */
-    if ( readerSetting == 0 )
-        readerSetting = READER_NUM_DEFAULT;
+    if ( readerSettingBitmapGet() == READER_NUM_NONE )
+        readerSettingBitmapSet( READER_NUM_DEFAULT );
 
 }
 /************************ PARSE COMMAND LINE OPTIONS ********/
@@ -508,6 +474,12 @@ tagListCheck( void *updateSystemTray )
     int			    i, j;
     char			messageString[MAX_LOG_MESSAGE];
 
+    /*** All this work about connecting to readers is done inside the poll */
+    /* function to enable disconnect and reconnect of readers in operation */
+    /* so that a "best effort" is always done, and hotplugging works       */
+    /* Even late starting of the pcscd daemon, or killing it and restarting */
+    /* should be recovered from by tagEventor, connecting to it when avail.*/
+
     /* If not connected to PCSCD, then try and connect */
     if ( readerManager.hContext == NULL )
     {
@@ -532,7 +504,9 @@ tagListCheck( void *updateSystemTray )
     if ( ( readerManager.hContext != NULL ) && ( readers[0].hCard != NULL ) )
     {
         /* get the list of tags on reader */
-        rv = readerGetTagList( &(readers[0]), pnewTagList);
+        rv = readerGetTagList( readers, pnewTagList);
+
+/* TODO move some of this into tag library */
 
         if (rv != SCARD_S_SUCCESS)
         {
@@ -634,7 +608,7 @@ int main(
 
    /* set reader library options other than defaults (i.e. verbosity) from command line */
    /* here we are always foreground, not a daemon, it maybe recalled from the daemon */
-   readerSetOptions( verbosityLevel, FALSE );
+   readerSetOptions( appVerbosityLevel, FALSE );
 
 	/* load the table of rules */
     rulesTableRead();
@@ -655,12 +629,12 @@ int main(
          /* enter the loop to poll for tag and execute events, FALSE to not update system tray */
          /* Loop forever - doing our best - only way out is via a signal */
          while ( tagListCheck( FALSE  ) )
-             usleep(pollDelayms * 1000);
+             usleep(appPollDelayms * 1000);
          break;
       case SYSTEM_TRAY:
 #ifdef BUILD_SYSTEM_TRAY
          /* build the status icon in the system tray area */
-         startSystemTray( &argc, &argv, &tagListCheck, pollDelayms );
+         startSystemTray( &argc, &argv, &tagListCheck, appPollDelayms, &(readers[0]) );
 #endif
          break;
       default:

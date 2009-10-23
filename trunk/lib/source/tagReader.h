@@ -42,16 +42,30 @@
 #define MAX_SAM_SERIAL_SIZE (30)    /* TODO what is max size? */
 #define MAX_SAM_ID_SIZE     (30)    /* TODO what is max size? */
 
+
+#define MAX_NUM_READERS     (6)
+/* NOTE that the first bit is used for AUTO, so we use MAX_NUM_READERS +1 bits */
+/* reader setting is a bitmap so that multiple can be set and remember at same time */
+#define READER_NUM_NONE     (0)
+#define READER_NUM_AUTO     (1<<0)
+#define READER_NUM_0        (1<<1)
+#define READER_NUM_1        (1<<2)
+#define READER_NUM_2        (1<<3)
+#define READER_NUM_3        (1<<4)
+#define READER_NUM_4        (1<<5)
+#define READER_NUM_5        (1<<6)
+#define READER_NUM_DEFAULT  READER_NUM_AUTO
+
 /**********************    STRINGS ****************************/
-#define TAGREADER_STRING_PCSCD_OK              "Successfully connected to pcscd server"
-#define TAGREADER_STRING_PCSCD_NO              "Failed to connect to pcscd server"
+#define LIBTAGREADER_STRING_PCSCD_OK              "Successfully connected to pcscd server"
+#define LIBTAGREADER_STRING_PCSCD_NO              "Failed to connect to pcscd server"
 
 
 /**************************    TYPEDEFS    **************************/
 typedef struct {
     int     nbReaders;
     char 	*mszReaders;
-    char 	**readers;
+    char 	**readers;      /* List of reader names/descriptors or NULL */
     void    *hContext;
 } tReaderManager;
 
@@ -62,6 +76,7 @@ typedef struct {
    char             *name;
    tCardHandle		hCard;
    void             *pDriver;  /* hide the driver details to the outside world */
+   const char       *driverDescriptor;
    char     		SAM;
    char     		SAM_serial[MAX_SAM_SERIAL_SIZE];
    char     		SAM_id[MAX_SAM_ID_SIZE];
@@ -83,6 +98,12 @@ typedef struct {
 
 
 /************************ EXTERNAL FUNCTIONS **********************/
+extern int              readerSettingBitmapGet( void );
+extern int              readerSettingBitmapSet( int bitmap );
+extern int              readerSettingBitmapNumberAdd( int );
+extern void             readerSettingBitmapBitAdd( int bitmap );
+extern int              readerSettingBitmapBitTest( int bitmap );
+
 extern int              readerSetOptions (  int	            verbosity,
                                             unsigned char	background );
 extern int              readerManagerConnect( tReaderManager *pManager );

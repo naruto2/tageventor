@@ -25,8 +25,11 @@
 
 #define TAGEVENTOR_STRING_USAGE "Usage: %s <options>\n\t-n <reader number> : default = AUTO, min = 0, max = 4\n\t-v <verbosity level> : default = 0 (silent), max = 3 \n\t-d start | stop (daemon options)\n\t-p <msecs> : tag polling delay, min = %d, default = %d, max = %d\n\t-h : print this message\nVersion Number: %s\n"
 
+#define TAGEVENTOR_STRING_SETTINGS_SAVE_PENDING "Press 'Apply' to save settings, then 'Close', or 'Cancel' to exit without saving changes"
+
 #define TOOL_TIP_TEXT               "Left-click for Rules Editor.\nRight-click for menu."
 
 #define RULES_EDITOR_WINDOW_TITLE   " - Rules Editor"
 #define SETTINGS_DIALOG_WINDOW_TITLE " - Settings"
+#define READERS_DIALOG_WINDOW_TITLE " - Readers"
 

@@ -16,14 +16,12 @@
   limitations under the License.
 */
 
+#include <tagReader.h>
 
 #ifndef TRUE
 #define TRUE 1
 #define FALSE 0
 #endif
-
-#define DEFAULT_LOCK_FILE_DIR "/var/run/tagEventor"
-#define DAEMON_NAME "tagEventord"
 
 #define POLL_DELAY_MILLI_SECONDS_MIN        (500)
 #define POLL_DELAY_MILLI_SECONDS_DEFAULT    (1000)
@@ -33,25 +31,16 @@
 #define VERBOSITY_DEFAULT   (0)
 #define VERBOSITY_MAX       (3)
 
-#define MAX_NUM_READERS     (6)
-/* NOTE that the first bit is used for AUTO, so we use MAX_NUM_READERS +1 bits */
-/* reader setting is a bitmap so that multiple can be set and remember at same time */
-#define READER_NUM_AUTO     (1<<0)
-#define READER_NUM_0        (1<<1)
-#define READER_NUM_1        (1<<2)
-#define READER_NUM_2        (1<<3)
-#define READER_NUM_3        (1<<4)
-#define READER_NUM_4        (1<<5)
-#define READER_NUM_5        (1<<6)
-#define READER_NUM_DEFAULT  READER_NUM_AUTO
 
+/************** GLOBALS *******************************************/
+/* these are only needed globally as a horrible workaround for
+   readersTable */
+extern tReaderManager  readerManager;
+extern tReader         readers[];
 
+/*************** GLOBAL FUNCTIONS *********************************/
+extern int  appPollDelaySet( int     newPollDelay );
+extern int  appPollDelayGet( void );
 
-extern int  readerSettingGet( void );
-extern int  readerSettingSet( int bitmap );
-
-extern int  pollDelaySet( int     newPollDelay );
-extern int  pollDelayGet( void );
-
-extern int  verbosityLevelSet( int     newLevel );
-extern int  verbosityLevelGet( void );
+extern int  appVerbosityLevelSet( int     newLevel );
+extern int  appVerbosityLevelGet( void );
