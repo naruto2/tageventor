@@ -35,23 +35,27 @@ version_string = "0.0.0"
 ##### Compile Flags
 cc_flags = -Wall -I . -I /usr/include/PCSC -I lib/source \
            -DPROGRAM_NAME="tagEventor" \
-           -DDEFAULT_COMMAND_DIR='"/etc/tagEventor"' \
            -DDEFAULT_LOCK_FILE_DIR='"/var/run/tagEventor"' \
            -DDAEMON_NAME='"tagEventord"'
-
-debug_cc_flags = $(cc_flags) -DDEBUG -g \
-                 -DVERSION_STRING='$(version_string) $(rev_string) " Debug"'
-
-release_cc_flags = $(cc_flags) \
-                 -DVERSION_STRING='$(version_string) $(rev_string) " Release"'
 
 os = $(shell uname)
 ifeq ($(os),Darwin)
 	debug_link_flags =   -Llib/Debug   -l tagReader -framework PCSC
 	release_link_flags = -Llib/Release -l tagReader -framework PCSC
+	debug_cc_flags = $(cc_flags) -DDEBUG -g \
+                 -DDEFAULT_COMMAND_DIR='"/Library/Application Support/tagEventor"' \
+                 -DVERSION_STRING='$(version_string) $(rev_string) " Debug"'
+	release_cc_flags = $(cc_flags) \
+                 -DDEFAULT_COMMAND_DIR='"/Library/Application Support/tagEventor"' \
+                 -DVERSION_STRING='$(version_string) $(rev_string) " Release"'
 else
 	debug_link_flags =   -Llib/Debug   -l tagReader -l pcsclite
 	release_link_flags = -Llib/Release -l tagReader -l pcsclite
+	debug_cc_flags = $(cc_flags) -DDEBUG -g -DDEFAULT_COMMAND_DIR='"/etc/tagEventor"' \
+                 -DVERSION_STRING='$(version_string) $(rev_string) " Debug"'
+
+	release_cc_flags = $(cc_flags) -DDEFAULT_COMMAND_DIR='"/etc/tagEventor"' \
+                 -DVERSION_STRING='$(version_string) $(rev_string) " Release"'
 endif
 
 ########## Debug version DEPENDENCIES
