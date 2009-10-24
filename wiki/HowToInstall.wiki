@@ -1,31 +1,21 @@
-You must be able to run as root to install tagEventor/gtagEventor on the local machine.
+To install, use the "install-sh" script.
 
-If you can do this, then use 
   * 'cd' to the directory where you downloaded the source
-  * type 'sudo sh install-sh'. This should do a clean Release build before installing.
+  * type 'make' - just to be sure we have an updated set of binaries to install
+  * type 'sudo ./install-sh'
 
-This will do a number of things:
+You must be able to run as root to install on the local machine.
+The install script checks this, warns you if you are not root and exists.
 
-=== tagEventor ===
-  # Copy the "./bin/Release/tagEventor" binary into /usr/sbin/
-     * check this works and you can execute it from there with "/usr/sbin/tagEventor"
-     * if that works, in another terminal from your home directory see if you can execute it by typing just "tagEventor". "/usr/bin" should be in your $PATH and you shouldn't have problems.
-  # Creates (if needed) the /etc/tagEventor directory, and copies the "generic" action script into it.
-
-=== tagEventord ===
-  # Copies the "tagEventord" daemon init shell script into /etc/init.d for use in starting as a system daemon
-    * This script can be run manually from here also to start and stop the daemon as init would do
-    * Use "sudo /etc/init.d/tagEventord start|stop|reload|restart" (one of those four options)
-  # It then creates appropriate links in the different runlevel directories (/etc/rc?.d) that each point to the script in /etc/init.d
-    * FYI it uses the command "update-rc.d -f tagEventord start 80 2 3 4 5 ." to do this
-
-This script invokes the tagEventor binary with the appropriate options to start a daemon version of it.
-
-Now when you restart your system tagEventor should be started as a daemon with verbosity level = 2.
-You can check things work by looking in /var/log/syslog for lines with "tagEventor" in them.
-You will also notice a regular (1 second) slight blink of the LED on the reader as it is polled one per second by the daemon.
-
-=== gtagEventor ===
-  # Copy the gtagEventor binary into the same /usr/sbin directory.
-  # Copies a GNOME desktop short cut "gtagEventor.desktop" into the standard GNOME auto-start directory, which is /etc/xdg/autostart
-  # Copies the gtagEventor icons into /usr/share/gtagEventor/icons/hicolor (where "hicolor" is the name of the Gnome icon-theme) 
+This script is now improved to:
+  * if invoked as "sudo ./install-sh -" then it enters a menu driven interactive mode that will allow you to install the bits and pieces you want.
+  * if invoked as "sudo ./install-sh" then it will install the "default" pieces and explain to you what they are, and show you what's installed where. "default" includes:
+    * command_line_version - "tagEventor" command line version and scripts
+    * gtk_version - "gtagEventor" Gtk version and it's scripts
+    * gtk_autostart - A GNOME desktop shortcut that will start gtagEventor with every session
+  * if invoked as "sudo ./install-sh $option" then it will install the option(s) you specify. Available values for $option are:
+    * command_line_version - "tagEventor" command line version and scripts
+    * daemon - a daemon that uses "tagEventor" command line version running in background, and that is started when the machine starts
+    * gtk_version - "gtagEventor" Gtk version and it's scripts
+    * gtk_autostart - A GNOME desktop shortcut that will start gtagEventor with every session
+    * all - all of the above options
