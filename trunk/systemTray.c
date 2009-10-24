@@ -33,8 +33,8 @@
 #define SYSTEM_TRAY_TOOL_TIP_TEXT_MAX    (260)
 
 static GtkStatusIcon    *systemTrayIcon = NULL;
-static int    (*readerPollFunction)( void *data );
-static guint    timeoutID = 0;
+static int              (*readerPollFunction)( void *data ) = NULL;
+static guint            timeoutID = 0;
 
 
 void systemTraySetPollDelay(
@@ -47,8 +47,8 @@ void systemTraySetPollDelay(
         g_source_remove( timeoutID );
 
     /* add a new timeout to check for tags, TRUE to ask it to update system tray */
-    if ( readerPollFunction )
-        timeoutID = g_timeout_add( validPollDelay, readerPollFunction, (gpointer)TRUE );
+    if ( readerPollFunction != NULL )
+        timeoutID = g_timeout_add( validPollDelay, readerPollFunction, (gpointer)(&systemTraySetStatus) );
 
 }
 
@@ -56,7 +56,8 @@ void systemTraySetPollDelay(
 void
 systemTraySetStatus(
                     char        connected,
-                    const char  *message
+                    const char  *generalMessage,
+                    const char  *tagsMessage
                     )
 {
 #if GTK_CHECK_VERSION( 2, 16, 0 )
@@ -70,13 +71,13 @@ systemTraySetStatus(
 
 #if GTK_CHECK_VERSION( 2, 16, 0 )
     /* push the message into the tool tip for the status icon */
-    sprintf( toolTipText, "%s:\n%s\n%s", PROGRAM_NAME, TOOL_TIP_TEXT, message );
+    sprintf( toolTipText, "%s:\n%s\n%s\n%s", PROGRAM_NAME, TOOL_TIP_TEXT, generalMessage, tagsMessage );
     gtk_status_icon_set_tooltip_text( systemTrayIcon, toolTipText );
 #endif
 
 #ifdef BUILD_RULES_EDITOR
     /* let the ruls editor know of status updates too */
-    rulesEditorSetStatus( connected, message );
+    rulesEditorSetStatus( connected, generalMessage );
 #endif
 
 }
@@ -243,9 +244,9 @@ startSystemTray(
     /* set the global variable for the polling function as we'll need it later */
     readerPollFunction = pollFunction;
 
-    /* add a timeout to check for tags, TRUE to ask it to update system tray */
-    /* pass in the value for the delay in milliseconds */
-    timeoutID = g_timeout_add( pollDelay, readerPollFunction, (gpointer)TRUE );
+    /* add a timeout to check for tags, pass in the value for the delay in milliseconds  */
+    /* and a callback to call with updates */
+    timeoutID = g_timeout_add( pollDelay, readerPollFunction, (gpointer)(&systemTraySetStatus) );
 
     /* Start main loop processing UI events */
     gtk_main();

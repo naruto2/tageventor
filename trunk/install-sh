@@ -150,6 +150,10 @@ install_gtk_autostart
 ################## all         ###########################
 function install_all {
 echo Installing all
+install_command_line_version 
+install_daemon 
+install_gtk_version 
+install_gtk_autostart
 }
 
 ################## exec_command ##########################

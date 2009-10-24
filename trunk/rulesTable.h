@@ -30,8 +30,6 @@
 #define GENERIC_MATCH	    (2)
 #define SAM_ID_MATCH	    (3)
 #define SAM_SERIAL_MATCH    (4)
-#define READER_NUM_MATCH    (5)
-
 
 /* where to save this type of config stuff???? via GConf or something */
 typedef struct {

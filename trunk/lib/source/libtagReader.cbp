@@ -44,20 +44,8 @@
 			<Add option="`pkg-config gtk+-2.0 --libs`" />
 			<Add directory="/home/andrew/tageventor/trunk" />
 		</Linker>
-		<Unit filename="aboutDialog.h">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="rulesEditor.h">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="rulesEditorHelp.h">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="settingsDialog.h">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="stringConstants.h">
-			<Option target="&lt;{~None~}&gt;" />
+		<Unit filename="acr122UDriver.c">
+			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="systemTray.h">
 			<Option target="&lt;{~None~}&gt;" />
