@@ -44,7 +44,6 @@ build_flags = -DBUILD_SYSTEM_TRAY \
               -DBUILD_RULES_EDITOR \
               -DBUILD_RULES_EDITOR_HELP \
               -DBUILD_READERS_DIALOG \
-              -DDEFAULT_COMMAND_DIR='"/etc/gtagEventor"' \
               -DDEFAULT_LOCK_FILE_DIR='"/var/run/tagEventor"' \
               -DDAEMON_NAME='"tagEventord"'
 
@@ -63,13 +62,15 @@ ifeq ($(os),Darwin)
                      -arch $(architecture) -lc  $(common_link_flags)
 	os_cc_flags = -I /Library/Frameworks/GLib.framework/Headers/ \
                       -I /Library/Frameworks/Cairo.framework/Headers/ \
-                      -I /Library/Frameworks/Gtk.framework/Headers/
+                      -I /Library/Frameworks/Gtk.framework/Headers/ \
+                      -DDEFAULT_COMMAND_DIR='"/Library/Application Support/gtagEventor"'
 else
 	linker = gcc
 	link_flags =  `pkg-config --cflags --libs gtk+-2.0 gmodule-2.0` \
                       -l tagReader -l pcsclite
 	os_cc_flags = `pkg-config --cflags --libs gtk+-2.0 gmodule-2.0` \
-                      -I /usr/include/PCSC
+                      -I /usr/include/PCSC \
+                      -DDEFAULT_COMMAND_DIR='"/etc/gtagEventor"'
 endif
 
 ##### Get revision number of the version we're compiling
@@ -87,7 +88,7 @@ release_cc_flags = $(cc_flags) \
                  -DVERSION_STRING='$(version_string) $(rev_string) " Release"'
 
 cleanDebug:
-	@rm -f $(debug_binaries) $(debug_objects)
+	@rm -f $(debug_binaries) $(debug_objects) $(debug_dependencies)rm 
 	@echo "gtagEventor Debug files cleaned"
 
 Debug: bin/Debug/gtagEventor
@@ -123,7 +124,7 @@ obj/Debug/%.o : %.c
 	@echo "Compiling " $<
 
 cleanRelease:
-	@rm -f $(release_binaries) $(release_objects)
+	@rm -f $(release_binaries) $(release_objects) $(release_dependencies)
 	@echo "gtagEventor Release files cleaned"
 
 Release: bin/Release/gtagEventor
@@ -157,5 +158,3 @@ obj/Release/%.d: %.c
 obj/Release/%.o : %.c
 	@gcc -c $< $(release_cc_flags) -o $@
 	@echo "Compiling " $<
-
-
