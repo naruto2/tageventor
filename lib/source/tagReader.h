@@ -28,10 +28,7 @@
 #define FALSE 0
 #endif
 
-/* ACR122U can read two tags simulataneously, code can do more */
-#define	MAX_NUM_TAGS	(2)
-
-/* for MiFare tags the UID should be 14 hex digits I think */
+/* for MiFare tags the UID should be 7 bytes or 14 hex digits plus a null */
 #define MAX_TAG_UID_SIZE (20)
 
 #define	MAX_LOG_MESSAGE	(200)
@@ -46,33 +43,31 @@
 #define MAX_NUM_READERS     (6)
 /* NOTE that the first bit is used for AUTO, so we use MAX_NUM_READERS +1 bits */
 /* reader setting is a bitmap so that multiple can be set and remember at same time */
-#define READER_NUM_NONE     (0)
-#define READER_NUM_AUTO     (1<<0)
-#define READER_NUM_0        (1<<1)
-#define READER_NUM_1        (1<<2)
-#define READER_NUM_2        (1<<3)
-#define READER_NUM_3        (1<<4)
-#define READER_NUM_4        (1<<5)
-#define READER_NUM_5        (1<<6)
-#define READER_NUM_DEFAULT  READER_NUM_AUTO
+#define READER_BIT_NONE     (0)
+#define READER_BIT_AUTO     (1<<0)
+#define READER_BIT_0        (1<<1)
+#define READER_BIT_1        (1<<2)
+#define READER_BIT_2        (1<<3)
+#define READER_BIT_3        (1<<4)
+#define READER_BIT_4        (1<<5)
+#define READER_BIT_5        (1<<6)
+#define READER_BIT_DEFAULT  READER_BIT_AUTO
 
 /**********************    STRINGS ****************************/
-#define LIBTAGREADER_STRING_PCSCD_OK              "Successfully connected to pcscd server"
-#define LIBTAGREADER_STRING_PCSCD_NO              "Failed to connect to pcscd server"
+#define LIBTAGREADER_STRING_PCSCD_OK              "libTagReader: Successfully connected to pcscd server"
+#define LIBTAGREADER_STRING_PCSCD_NO              "libTagReader: Failed to connect to pcscd server"
 
 
 /**************************    TYPEDEFS    **************************/
 typedef struct {
     int     nbReaders;
     char 	*mszReaders;
-    char 	**readers;      /* List of reader names/descriptors or NULL */
     void    *hContext;
 } tReaderManager;
 
 typedef void    *tCardHandle;
 
 typedef struct {
-   int      		number;
    char             *name;
    tCardHandle		hCard;
    void             *pDriver;  /* hide the driver details to the outside world */
@@ -84,7 +79,13 @@ typedef struct {
 
 typedef char	tUID[MAX_TAG_UID_SIZE];
 
-typedef enum { MIFARE_ULTRALIGHT=0x00, MIFARE_1K=0x08, MIFARE_MINI=0x09, MIFARE_4K=0x18, MIFARE_DESFIRE=0x20, JCOP=0x28, GEMPLUS_MPCOS=0x98 } tTagType;
+typedef enum {  MIFARE_ULTRALIGHT   =0x00,
+                MIFARE_1K           =0x08,
+                MIFARE_MINI         =0x09,
+                MIFARE_4K           =0x18,
+                MIFARE_DESFIRE      =0x20,
+                JCOP                =0x28,
+                GEMPLUS_MPCOS       =0x98 } tTagType;
 
 typedef struct {
                 tUID        uid;
@@ -92,30 +93,33 @@ typedef struct {
                 } tTag;
 
 typedef struct {
-		tTag        tag[MAX_NUM_TAGS];
+		tTag        *pTags;    /* really a pointer to an array of tags */
     	int	        numTags;
 		} tTagList;
 
 
 /************************ EXTERNAL FUNCTIONS **********************/
-extern int              readerSettingBitmapGet( void );
-extern int              readerSettingBitmapSet( int bitmap );
-extern int              readerSettingBitmapNumberAdd( int );
-extern void             readerSettingBitmapBitAdd( int bitmap );
-extern int              readerSettingBitmapBitTest( int bitmap );
+extern unsigned int     readersSettingBitmapGet( void );
+extern unsigned int     readersSettingBitmapSet( unsigned int bitmap );
+extern void             readersSettingBitmapBitSet( unsigned int bitmap );
+extern void             readersSettingBitmapBitUnset( unsigned int bitmap );
+extern unsigned int     readersSettingBitmapBitTest( unsigned int bitmap );
+extern unsigned int     readersSettingBitmapNumberSet( unsigned int number );
+extern unsigned int     readersSettingBitmapNumberTest( unsigned int bitNumber );
 
-extern int              readerSetOptions (  int	            verbosity,
+extern int              readersSetOptions (  int	            verbosity,
                                             unsigned char	background );
-extern int              readerManagerConnect( tReaderManager *pManager );
-extern int              readerManagerDisconnect( tReaderManager *pManager );
+extern int              readersManagerConnect( tReaderManager *pManager, tReader *pReader );
+extern int              readersManagerDisconnect( tReaderManager *pManager );
 
-extern int              readerConnect(  tReaderManager  *pmanager,
+extern int              readersConnect(  tReaderManager  *pmanager,
                                         tReader		*pReader );
-extern void             readerDisconnect( tReader	*pReader );
-extern int              readerGetTagList( const tReader	*preader,
-                                    	  tTagList    	*ptagList);
-extern int              readerGetContactlessStatus( const tReader *pReader );
-extern void             readerLogMessage( int		messageType,
+extern void             readersDisconnect( tReaderManager *pManager, tReader	*pReader );
+extern int              readersGetTagList( tReaderManager *pManager,
+                                          tReader	     *preader,
+                                    	  tTagList    	 *ptagList);
+extern int              readersGetContactlessStatus( tReaderManager *pManager, tReader *pReader );
+extern void             readersLogMessage( int		messageType,
                                     	  int	    	messageLevel,
                                     	const char 	*message);
 

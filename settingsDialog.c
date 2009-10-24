@@ -34,18 +34,18 @@ static char         settingsSavePending = FALSE;
 
 typedef struct {
                 char        *label;
-                int         setting;    /* corresponding bit in the reader bitmap */
+                int         bit;    /* corresponding bit in the reader bitmap */
                 GtkWidget   *toggle;
 } tReaderNumToggle;
 
 static tReaderNumToggle readerNumToggle[MAX_NUM_READERS+1] = {
-                {"AUTO",    READER_NUM_AUTO,    NULL},
-                {"0",       READER_NUM_0,       NULL},
-                {"1",       READER_NUM_1,       NULL},
-                {"2",       READER_NUM_2,       NULL},
-                {"3",       READER_NUM_3,       NULL},
-                {"4",       READER_NUM_4,       NULL},
-                {"5",       READER_NUM_5,       NULL}
+                {"AUTO",    READER_BIT_AUTO,    NULL},
+                {"0",       READER_BIT_0,       NULL},
+                {"1",       READER_BIT_1,       NULL},
+                {"2",       READER_BIT_2,       NULL},
+                {"3",       READER_BIT_3,       NULL},
+                {"4",       READER_BIT_4,       NULL},
+                {"5",       READER_BIT_5,       NULL}
                 };
 
 static void
@@ -130,8 +130,12 @@ setSettingsSavePending( unsigned char pending )
 
     /* put some help text in the status bar */
     if ( settingsDialog )
-        gtk_statusbar_push((GtkStatusbar *)statusBar, 0, (gchar *)TAGEVENTOR_STRING_SETTINGS_SAVE_PENDING );
-
+    {
+        if ( pending )
+            gtk_statusbar_push((GtkStatusbar *)statusBar, 0, (gchar *)TAGEVENTOR_STRING_SETTINGS_SAVE_PENDING );
+        else
+            gtk_statusbar_push((GtkStatusbar *)statusBar, 0, (gchar *)"" );
+    }
 }
 
 
@@ -164,7 +168,9 @@ applyChanges( void )
     {
         /* if the GUI toggle is set */
         if ( gtk_toggle_button_get_active( (GtkToggleButton *)readerNumToggle[i].toggle ) )
-            readerSettingBitmapBitAdd( readerNumToggle[i].setting );
+            readersSettingBitmapBitSet( readerNumToggle[i].bit );
+        else
+            readersSettingBitmapBitUnset( readerNumToggle[i].bit );
     }
 
     /* save the setting for poll delay */
@@ -189,13 +195,13 @@ toggleChange(
 
     unsigned char autoSet;
 
-    if ( (int)readerNumSetting == READER_NUM_AUTO )
+    if ( (int)readerNumSetting == READER_BIT_AUTO )
     {
         /* see if AUTO has been set or unset */
         autoSet = gtk_toggle_button_get_active( (GtkToggleButton *)widget );
 
         /* then , starting at the second widget, make the other toggles insensitive */
-        for ( i = 1; i <  (MAX_NUM_READERS +1); i++ )
+        for ( i = 1; i <  (readerManager.nbReaders +1); i++ )
             gtk_widget_set_sensitive( readerNumToggle[i].toggle, !autoSet );
     }
 
@@ -269,15 +275,15 @@ buildSettingsDialog ( void  )
     for ( i = 0; i < (MAX_NUM_READERS +1); i++ )
     {
         readerNumToggle[i].toggle = gtk_check_button_new_with_label( readerNumToggle[i].label);
-        gtk_toggle_button_set_active( (GtkToggleButton *)readerNumToggle[i].toggle, readerSettingBitmapBitTest( 1 << i) );
+        gtk_toggle_button_set_active( (GtkToggleButton *)readerNumToggle[i].toggle, readersSettingBitmapBitTest( 1 << i) );
 
         /* attach a new widget into the table, row 0, for the 6 columns */
         gtk_table_attach( (GtkTable *)table, readerNumToggle[i].toggle, i+1, i+2, 0, 1, GTK_FILL, GTK_FILL, 5, 0 );
         /* add a callback to the button which will be passed the setting value */
-        g_signal_connect (G_OBJECT (readerNumToggle[i].toggle), "toggled", G_CALLBACK (toggleChange), (gpointer)(readerNumToggle[i].setting) );
+        g_signal_connect (G_OBJECT (readerNumToggle[i].toggle), "toggled", G_CALLBACK (toggleChange), (gpointer)(readerNumToggle[i].bit) );
 
         /* however, if AUTO is set, then set the other toggles to insensitive */
-        if ( ( i > 0) && ( readerNumToggle[0].setting & READER_NUM_AUTO ) )
+        if ( ( i > 0) && ( readerNumToggle[0].bit & READER_BIT_AUTO ) )
             gtk_widget_set_sensitive( readerNumToggle[i].toggle, FALSE );
     }
 

@@ -78,7 +78,7 @@
 if (rv != SCARD_S_SUCCESS) \
 { \
    sprintf(messageString, "%s: %s (0x%lX)", text, pcsc_stringify_error(rv), rv); \
-   readerLogMessage( LOG_ERR, 0, messageString);\
+   readersLogMessage( LOG_ERR, 0, messageString);\
 }
 #else
 #define PCSC_ERROR(rv, text)
@@ -181,7 +181,8 @@ LONG   acr122UGetContactlessStatus(const tReader	*pReader,
                                    BYTE			    *pRecvBuffer,
                                    DWORD		    *pRecvLength);
 LONG   acr122UGetTagList(const tReader	*pReader,
-                         tTagList	    *pTagList );
+                         int            *pNumTags,
+                         tTag	        *pTags );
 
 /******** A Text Descriptor for this driver ************/
 static const char acr122UDescriptor[] = "Andrew's acr122U driver";
@@ -190,7 +191,8 @@ static const char acr122UDescriptor[] = "Andrew's acr122U driver";
 tReaderDriver acr122UDriver = { &acr122UReaderCheck,
                                 &acr122UGetContactlessStatus,
                                 &acr122UGetTagList,
-                                acr122UDescriptor
+                                acr122UDescriptor,
+                                ACR122U_MAX_NUM_TAGS
                               };
 
 /**************************** APDU SEND ************************/
@@ -230,7 +232,7 @@ apduSend (
 
     sprintf(messageString, "APDU: ");
     sPrintBufferHex((messageString + strlen("APDU: ")), dwSendLength, pbSendBuffer);
-    readerLogMessage(LOG_INFO, 3, messageString);
+    readersLogMessage(LOG_INFO, 3, messageString);
 
     /* remember the size of the input buffer passed to us, so we don't exceed */
 	rBufferMax = *dwRecvLength;
@@ -245,13 +247,13 @@ apduSend (
     {
        sprintf(messageString, "Received: ");
        sPrintBufferHex((messageString + strlen("Received: ")), *dwRecvLength, pbRecvBuffer);
-       readerLogMessage(LOG_INFO, 3, messageString);
+       readersLogMessage(LOG_INFO, 3, messageString);
 
        /* command went OK? */
        if (pbRecvBuffer[SW1] != SW1_SUCCESS)
        {
           sprintf(messageString, "APDU failed: SW1 = %02X", pbRecvBuffer[SW1]);
-          readerLogMessage(LOG_ERR, 0, messageString);
+          readersLogMessage(LOG_ERR, 0, messageString);
           return ( SCARD_F_COMM_ERROR );
        }
 
@@ -260,7 +262,7 @@ apduSend (
        {
           sprintf(messageString, "Requesting Response Data (%d)",
                   pbRecvBuffer[SW2]);
-          readerLogMessage(LOG_INFO, 3, messageString);
+          readersLogMessage(LOG_INFO, 3, messageString);
 
           /* copy the get_response APDU into the first bytes */
           memcpy(pbSendBuffer, APDU_GET_RESPONSE, sizeof(APDU_GET_RESPONSE));
@@ -278,7 +280,7 @@ apduSend (
           PCSC_ERROR(rv, "SCardTransmit");
           sprintf(messageString, "Received: ");
           sPrintBufferHex(messageString, rBufferMax, pbRecvBuffer);
-          readerLogMessage(LOG_INFO, 3, messageString);
+          readersLogMessage(LOG_INFO, 3, messageString);
 
 	      *dwRecvLength = rBufferMax;
 	   }
@@ -313,7 +315,8 @@ LONG   acr122UGetContactlessStatus(
 /************************ GET TAG LIST ***************************/
 LONG   acr122UGetTagList(
                          const tReader	*pReader,
-                         tTagList	    *pTagList
+                         int            *pNumTags,
+                         tTag	        *pTags    /* an array of tags that will be filled */
                          )
 {
    LONG			rv;
@@ -323,7 +326,7 @@ LONG   acr122UGetTagList(
    int			i, other;
    BOOL			known;
 
-   pTagList->numTags = 0;
+   *pNumTags = 0;
 
    /* loop until we have read possible two unique tags on the reader */
    for (i = 0; i < ACR122U_MAX_NUM_TAGS; i++)
@@ -374,10 +377,10 @@ LONG   acr122UGetTagList(
                     break;
              }
 
-             readerLogMessage(LOG_INFO, 2, messageString);
+             readersLogMessage(LOG_INFO, 2, messageString);
 
              /* store tag type in tag struct */
-             pTagList->tag[i].tagType = (tTagType)pbRecvBuffer[SEL_RES_BYTE];
+             pTags[i].tagType = (tTagType)pbRecvBuffer[SEL_RES_BYTE];
 
              /* byte 7 is length of unique tag ID */
              uid_length = pbRecvBuffer[UID_LENGTH];
@@ -391,7 +394,7 @@ LONG   acr122UGetTagList(
                 case SEL_RES_MIFARE_4K:
                 case SEL_RES_MIFARE_DESFIRE:   /* not sure but I think so */
                     /* the uid is in the next 'uid_length' number bytes */
-                    sPrintBufferHex(pTagList->tag[i].uid, uid_length, (pbRecvBuffer + UID_START) );
+                    sPrintBufferHex(pTags[i].uid, uid_length, (pbRecvBuffer + UID_START) );
                     break;
 
                 case SEL_RES_JCOP30:
@@ -401,16 +404,16 @@ LONG   acr122UGetTagList(
                     break;
 
                 default:
-                    sprintf( pTagList->tag[i].uid, "Unknown" );
+                    sprintf( pTags[i].uid, "Unknown" );
                     break;
              }
 
-             sprintf(messageString, "Tag ID:   %s", pTagList->tag[i].uid );
-             readerLogMessage(LOG_INFO, 2, messageString);
+             sprintf(messageString, "Tag ID:   %s", pTags[i].uid );
+             readersLogMessage(LOG_INFO, 2, messageString);
 
              /* first one ? */
              if ( i == 0 )
-                (pTagList->numTags)++; /* got first one */
+                (*pNumTags)++; /* got first one */
              else
              {
                 /* check if this ID is already in our list */
@@ -418,12 +421,12 @@ LONG   acr122UGetTagList(
                 for (other = 0; ((other < i) && (!known)) ; other++)
                 {
                    /* is this tag id already in our list? */
-                   if (strcmp(pTagList->tag[i].uid,
-                              pTagList->tag[other].uid) == 0)
+                   if (strcmp(pTags[i].uid,
+                              pTags[other].uid) == 0)
                       known = TRUE;
                 }
                 if (!known)
-                  (pTagList->numTags)++; /* got another one */
+                  (*pNumTags)++; /* got another one */
              }
          }
       }
@@ -490,13 +493,13 @@ LONG   acr122UGetTagList(
           *pReaderSupported = TRUE;
 
         sprintf(messageString, "Reader: %s, with Firmware: '%s' supported by driver='%s'", pReader->name, pbRecvBuffer, acr122UDescriptor );
-        readerLogMessage(LOG_INFO, 3, messageString);
+        readersLogMessage(LOG_INFO, 3, messageString);
     }
 
     if ( *pReaderSupported == FALSE )
     {
         sprintf(messageString, "Reader: %s, with Firmware: '%s' is not supported", pReader->name, pbRecvBuffer);
-        readerLogMessage(LOG_INFO, 3, messageString);
+        readersLogMessage(LOG_INFO, 3, messageString);
     }
 
     /* If we got this far then the general name and specific firmware version is supported */
@@ -508,7 +511,7 @@ LONG   acr122UGetTagList(
                      pbAtr, &dwAtrLen);
     sprintf(messageString, "ATR: ");
     sPrintBufferHex( (messageString + strlen("ATR: ")), dwAtrLen, pbAtr);
-    readerLogMessage(LOG_INFO, 3, messageString);
+    readersLogMessage(LOG_INFO, 3, messageString);
 
     dwRecvLength = sizeof(pbRecvBuffer);
     rv = apduSend(pReader->hCard, APDU_SET_RETRY, sizeof(APDU_SET_RETRY),
@@ -527,7 +530,7 @@ LONG   acr122UGetTagList(
        {
           sPrintBufferHex(pReader->SAM_serial, dwRecvLength, pbRecvBuffer);
           sprintf(messageString, "SAM Serial: %s", pReader->SAM_serial);
-          readerLogMessage(LOG_INFO, 1, messageString);
+          readersLogMessage(LOG_INFO, 1, messageString);
        }
        else
           return (rv);
@@ -539,7 +542,7 @@ LONG   acr122UGetTagList(
        {
           sPrintBufferHex(pReader->SAM_id, dwRecvLength, pbRecvBuffer);
           sprintf(messageString, "SAM ID: %s", pReader->SAM_id);
-          readerLogMessage(LOG_INFO, 1, messageString);
+          readersLogMessage(LOG_INFO, 1, messageString);
         }
         else
             return( rv );

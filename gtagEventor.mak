@@ -88,7 +88,7 @@ release_cc_flags = $(cc_flags) \
                  -DVERSION_STRING='$(version_string) $(rev_string) " Release"'
 
 cleanDebug:
-	@rm -f $(debug_binaries) $(debug_objects) $(debug_dependencies)rm 
+	@rm -f $(debug_binaries) $(debug_objects) $(debug_dependencies)rm
 	@echo "gtagEventor Debug files cleaned"
 
 Debug: bin/Debug/gtagEventor
@@ -109,14 +109,14 @@ obj/Debug/%.d: %.c
 	rm -f $@.$$$$
 
 ###### Debug version COMPILE
-obj/Debug/gtagEventor.o : tagEventor.c
+obj/Debug/gtagEventor.o: tagEventor.c
 	@gcc -c $< $(debug_cc_flags) -o $@
 	@echo "Compiling " $< "---->" $@
 
 obj/Debug/gtagEventor.d: tagEventor.c
 	@set -e; rm -f $@; \
 	gcc -M $(debug_cc_flags) $< > $@.$$$$; \
-	sed 's,\($*\)\.o[ :]*,$(@D)/$*.o $@ : ,g' < $@.$$$$ > $@; \
+	sed 's,tagEventor.o[ :]*,$(@D)/gtagEventor.o $@ : ,g' < $@.$$$$ > $@; \
 	rm -f $@.$$$$
 
 obj/Debug/%.o : %.c
@@ -144,8 +144,8 @@ obj/Release/gtagEventor.o : tagEventor.c
 
 obj/Release/gtagEventor.d: tagEventor.c
 	@set -e; rm -f $@; \
-	gcc -M $(release_cc_flags) $< > $@.$$$$; \
-	sed 's,\($*\)\.o[ :]*,$(@D)/$*.o $@ : ,g' < $@.$$$$ > $@; \
+	gcc -M $(debug_cc_flags) $< > $@.$$$$; \
+	sed 's,tagEventor.o[ :]*,$(@D)/gtagEventor.o $@ : ,g' < $@.$$$$ > $@; \
 	rm -f $@.$$$$
 
 ########## Release version DEPENDENCIES

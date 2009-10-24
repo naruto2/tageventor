@@ -89,10 +89,6 @@ tableAddReader( GtkTable *pTable, const tReaderManager *manager, const tReader *
     GtkWidget           *number, *name, *driverDescriptor, *SAM_id, *SAM_serial;
     char                numberString[5];
 
-/* TODO check the numbers match!
-    contents are only valid if hCard != NULL
-    sprintf( numberString, "%d", pReader->number ); */
-
     sprintf( numberString, "%d", i );
     number = gtk_label_new( numberString );
     gtk_table_attach(pTable, number,  0, 1, i+1, i+2, GTK_FILL, GTK_FILL, 10, 3 );
@@ -131,11 +127,10 @@ tableAddReader( GtkTable *pTable, const tReaderManager *manager, const tReader *
             gtk_widget_show( name );
         }
         else
-        {   /* there is such a reader in the system */
-            /* see is readerManager knows it name */
-            if ( manager->readers[i] != NULL )
+        {   /* there is such a reader in the system, although we're not connect */
+            if ( pReader->name != NULL )
             {
-                name = gtk_label_new( manager->readers[i] );
+                name = gtk_label_new( pReader->name );
                 gtk_table_attach(pTable, name,  1, 2, i+1, i+2, GTK_FILL, GTK_FILL, 10, 3 );
                 gtk_widget_show( name );
 

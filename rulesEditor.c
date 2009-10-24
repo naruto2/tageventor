@@ -301,7 +301,7 @@ gchar*              g_filename_to_utf8                  (const gchar *opsysstrin
     /* otherwise it's a new blank name, so default to width of 10 characters */
     gtk_file_chooser_button_set_width_chars((GtkFileChooserButton *)chooser, 10 );
     /* add short-cut to the dialog to help the user find folders related to gtagEventor */
-    gtk_file_chooser_add_shortcut_folder( GTK_FILE_CHOOSER (chooser), 
+    gtk_file_chooser_add_shortcut_folder( GTK_FILE_CHOOSER (chooser),
                                           DEFAULT_COMMAND_DIR, &pError );
 
 
@@ -326,11 +326,6 @@ gchar*              g_filename_to_utf8                  (const gchar *opsysstrin
     matchMenuItem = gtk_radio_menu_item_new_with_label( NULL, "SAM Serial Number" );
     gtk_menu_shell_append( GTK_MENU_SHELL( matchMenu ), matchMenuItem );
     g_signal_connect (G_OBJECT (matchMenuItem), "toggled", G_CALLBACK (matchChosen), (gpointer)SAM_SERIAL_MATCH );
-    gtk_widget_show( matchMenuItem );
-
-    matchMenuItem = gtk_radio_menu_item_new_with_label( NULL, "Reader Number" );
-    gtk_menu_shell_append( GTK_MENU_SHELL( matchMenu ), matchMenuItem );
-    g_signal_connect (G_OBJECT (matchMenuItem), "toggled", G_CALLBACK (matchChosen), (gpointer)READER_NUM_MATCH );
     gtk_widget_show( matchMenuItem );
 
     gtk_widget_show( matchMenu );

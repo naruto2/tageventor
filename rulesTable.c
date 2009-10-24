@@ -206,26 +206,26 @@ execScript(
    if ( pid < 0 )
    { /* PARENT process - fork error */
       sprintf(messageString, "Error forking for script execution, fork() returned %d", pid);
-      readerLogMessage(LOG_ERR, 0, messageString);
+      readersLogMessage(LOG_ERR, 0, messageString);
       return ( pid ); /* TODO , not sure returning that is correct...check later */
    }
 
    if ( pid > 0 ) /* PARENT process - fork worked */
    {
       sprintf(messageString, "Fork of child process successful with child pid=%d", pid);
-      readerLogMessage(LOG_INFO, 3, messageString);
+      readersLogMessage(LOG_INFO, 3, messageString);
       return( 0 );  /* success = 0 */
    }
 
    /* If we got this far, then "pid" = 0 and we are in the child process */
    sprintf(messageString, "Attempting to execl() tag event script %s in child process with pid=%d",
            scriptPath, getpid());
-   readerLogMessage(LOG_INFO, 2, messageString);
+   readersLogMessage(LOG_INFO, 2, messageString);
    ret = execl( scriptPath, argv0, SAM_serial, tagUID, eventTypeString, NULL );
    /* If any of the exec() functions returns, an error will have occurred. The return value is -1,
       and the global variable errno will be set to indicate the error. */
    sprintf(messageString, "Return value from execl() of script was = %d, errno=%d", ret, errno);
-   readerLogMessage(LOG_INFO, 2, messageString);
+   readersLogMessage(LOG_INFO, 2, messageString);
 
    /* exit the child process and return the return value, parent keeps on going */
    exit( ret );
@@ -244,7 +244,7 @@ rulesTableEventDispatch(
     char            scriptName[PATH_MAX];
 
     sprintf(messageString, "Event: Tag %s - UID: %s", tagString[eventType], tagUID);
-    readerLogMessage(LOG_INFO, 1, messageString);
+    readersLogMessage(LOG_INFO, 1, messageString);
 
     /* run through the list of rules:
            - try to match tags detected tag with regex in rule for tagID
@@ -274,11 +274,8 @@ rulesTableEventDispatch(
                 case SAM_SERIAL_MATCH:
                     strcpy( scriptName, preader->SAM_serial );
                 break;
-                case READER_NUM_MATCH:
-                    sprintf( scriptName, "%d", preader->number );
-                break;
                 default:
-                    readerLogMessage(LOG_ERR, 0, "Invalid 'scriptMatchType' no script execution attempted" );
+                    readersLogMessage(LOG_ERR, 0, "Invalid 'scriptMatchType' no script execution attempted" );
                     return;
                 break;
             }
@@ -290,5 +287,5 @@ rulesTableEventDispatch(
     }
 
    /* if we got this far, then nothing worked */
-   readerLogMessage(LOG_ERR, 0, "Failed to execute a script for tag event" );
+   readersLogMessage(LOG_ERR, 0, "Failed to execute a script for tag event" );
 }
