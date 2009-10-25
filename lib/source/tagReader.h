@@ -59,23 +59,6 @@
 
 
 /**************************    TYPEDEFS    **************************/
-typedef struct {
-    int     nbReaders;
-    char 	*mszReaders;
-    void    *hContext;
-} tReaderManager;
-
-typedef void    *tCardHandle;
-
-typedef struct {
-   char             *name;
-   tCardHandle		hCard;
-   void             *pDriver;  /* hide the driver details to the outside world */
-   const char       *driverDescriptor;
-   char     		SAM;
-   char     		SAM_serial[MAX_SAM_SERIAL_SIZE];
-   char     		SAM_id[MAX_SAM_ID_SIZE];
-} tReader;
 
 typedef char	tUID[MAX_TAG_UID_SIZE];
 
@@ -97,6 +80,27 @@ typedef struct {
     	int	        numTags;
 		} tTagList;
 
+typedef void    *tCardHandle;
+
+typedef struct {
+   char             *name;
+   tCardHandle		hCard;
+   void             *pDriver;  /* hide the driver details to the outside world */
+   const char       *driverDescriptor;
+   char     		SAM;
+   char     		SAM_serial[MAX_SAM_SERIAL_SIZE];
+   char     		SAM_id[MAX_SAM_ID_SIZE];
+   unsigned char    scanning; /* BOOL if being scanned currently or not */
+   tTagList         tagList;     /* the tags in this reader */
+} tReader;
+
+typedef struct {
+    int         nbReaders;
+    tReader     readers[MAX_NUM_READERS];
+    char 	    *mszReaders;
+    void        *hContext;
+    tTagList    tagList;  /* overall list of tags in all readers */
+} tReaderManager;
 
 /************************ EXTERNAL FUNCTIONS **********************/
 extern unsigned int     readersSettingBitmapGet( void );
@@ -109,16 +113,13 @@ extern unsigned int     readersSettingBitmapNumberTest( unsigned int bitNumber )
 
 extern int              readersSetOptions (  int	            verbosity,
                                             unsigned char	background );
-extern int              readersManagerConnect( tReaderManager *pManager, tReader *pReader );
+extern int              readersManagerConnect( tReaderManager *pManager );
 extern int              readersManagerDisconnect( tReaderManager *pManager );
 
-extern int              readersConnect(  tReaderManager  *pmanager,
-                                        tReader		*pReader );
-extern void             readersDisconnect( tReaderManager *pManager, tReader	*pReader );
-extern int              readersGetTagList( tReaderManager *pManager,
-                                          tReader	     *preader,
-                                    	  tTagList    	 *ptagList);
-extern int              readersGetContactlessStatus( tReaderManager *pManager, tReader *pReader );
+extern int              readersConnect(  tReaderManager  *pManager );
+extern void             readersDisconnect( tReaderManager *pManager );
+extern int              readersGetTagList( tReaderManager *pManager );
+extern int              readersGetContactlessStatus( tReaderManager *pManager );
 extern void             readersLogMessage( int		messageType,
                                     	  int	    	messageLevel,
                                     	const char 	*message);

@@ -84,7 +84,7 @@ destroy(
 }
 
 static void
-tableAddReader( GtkTable *pTable, const tReaderManager *manager, const tReader *pReader, int i )
+tableAddReader( GtkTable *pTable, const tReaderManager *pManager, int i )
 {
     GtkWidget           *number, *name, *driverDescriptor, *SAM_id, *SAM_serial;
     char                numberString[5];
@@ -95,31 +95,31 @@ tableAddReader( GtkTable *pTable, const tReaderManager *manager, const tReader *
     gtk_widget_show( number );
 
     /* if the reader has been connected to we can fill in mode info */
-    if ( pReader->hCard != NULL )
+    if ( pManager->readers[i].hCard != NULL )
     {
-        name = gtk_label_new( pReader->name );
+        name = gtk_label_new( pManager->readers[i].name );
         gtk_table_attach(pTable, name,  1, 2, i+1, i+2, GTK_FILL, GTK_FILL, 10, 3 );
         gtk_widget_show( name );
 
-        driverDescriptor = gtk_label_new( pReader->driverDescriptor );
+        driverDescriptor = gtk_label_new( pManager->readers[i].driverDescriptor );
         gtk_table_attach(pTable, driverDescriptor,  2, 3, i+1, i+2, GTK_FILL, GTK_FILL, 10, 3 );
         gtk_widget_show( driverDescriptor );
 
         /* if there is a SAM present then show it's details */
-        if ( pReader->SAM )
+        if ( pManager->readers[i].SAM )
         {
-            SAM_id = gtk_label_new( pReader->SAM_id );
+            SAM_id = gtk_label_new( pManager->readers[i].SAM_id );
             gtk_table_attach(pTable, SAM_id,  3, 4, i+1, i+2, GTK_FILL, GTK_FILL, 10, 3 );
             gtk_widget_show( SAM_id );
 
-            SAM_serial = gtk_label_new( pReader->SAM_serial );
+            SAM_serial = gtk_label_new( pManager->readers[i].SAM_serial );
             gtk_table_attach(pTable, SAM_serial,  4, 5, i+1, i+2, GTK_FILL, GTK_FILL, 10, 3 );
             gtk_widget_show( SAM_serial );
         }
     }
     else
     {   /* we have not connected to this reader, see if it exists */
-        if ( i >= manager->nbReaders )
+        if ( i >= pManager->nbReaders )
         {
             /* No such reader, put that in as text */
             name = gtk_label_new( "No reader detected" );
@@ -128,9 +128,9 @@ tableAddReader( GtkTable *pTable, const tReaderManager *manager, const tReader *
         }
         else
         {   /* there is such a reader in the system, although we're not connect */
-            if ( pReader->name != NULL )
+            if ( pManager->readers[i].name != NULL )
             {
-                name = gtk_label_new( pReader->name );
+                name = gtk_label_new( pManager->readers[i].name );
                 gtk_table_attach(pTable, name,  1, 2, i+1, i+2, GTK_FILL, GTK_FILL, 10, 3 );
                 gtk_widget_show( name );
 
@@ -148,7 +148,6 @@ buildReadersDialog ( void *pData )
     GtkWidget   *dialog;
     GtkWidget   *vbox, *buttonBox, *pTable, *label, *closeButton, *statusBar;
     int         i;
-    tReader     *readerArray;
     char        windowTitle[strlen(PROGRAM_NAME) + strlen(READERS_DIALOG_WINDOW_TITLE) + 10];
 
     dialog = gtk_window_new( GTK_WINDOW_TOPLEVEL );
@@ -198,13 +197,11 @@ buildReadersDialog ( void *pData )
     /* the data passed in via the callback is a pointer to a reader Array */
 /* ADM TODO I can't figure out why passing the pointer via the callback doesn't work,
    so a hack for now
-   readerArray = pData; */
-
-    readerArray = readers;
+   pManager = pData; */
 
     /* add rows for each reader */
     for ( i = 0; i < MAX_NUM_READERS; i++ )
-        tableAddReader( (GtkTable *)pTable, &readerManager, &(readerArray[i]), i );
+        tableAddReader( (GtkTable *)pTable, &readerManager, i );
 
     /******************************* Button Box ***************************************/
     /* create the box for the buttons */
