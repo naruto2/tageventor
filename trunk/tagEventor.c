@@ -56,13 +56,12 @@ static  unsigned char	runningAsDaemon = FALSE;
 static int		    appPollDelayms;
 static int			appVerbosityLevel;
 
-static tTagList		currentTagList = { NULL, 0 }, previousTagList = { NULL, 0 };
+static tTagList		previousTagList = { NULL, 0 };
 
 /************** GLOBALS *******************************************/
 /* these are only needed globally as a horrible workaround for
    readersTable */
-tReaderManager  readerManager = { 0, NULL, NULL };
-tReader         readers[MAX_NUM_READERS];
+tReaderManager  readerManager;
 
 int
 appPollDelaySet(
@@ -246,14 +245,14 @@ handleSignal(
       break;
 
       case SIGHUP: /* restart the server using  "kill -1" at the command shell */
-         readersDisconnect( &readerManager, readers );
-         readersConnect( &readerManager, &(readers[0]) );
+         readersDisconnect( &readerManager );
+         readersConnect( &readerManager );
          readersLogMessage(LOG_INFO, 1, "Hangup signal received - disconnected and reconnected");
       break;
 
       case SIGINT: /* kill -2 or Control-C */
       case SIGTERM:/* "kill -15" or "kill" */
-         readersDisconnect( &readerManager, readers );
+         readersDisconnect( &readerManager );
          readersLogMessage( LOG_INFO, 1, "SIGTERM or SIGINT received, exiting gracefully");
          if ( runningAsDaemon )
          {
@@ -473,7 +472,7 @@ tagListCheck(
     /* If not connected to PCSCD, then try and connect */
     if ( readerManager.hContext == NULL )
     {
-        if ( readersManagerConnect( &readerManager, readers ) != SCARD_S_SUCCESS )
+        if ( readersManagerConnect( &readerManager ) != SCARD_S_SUCCESS )
         {
             sprintf( messageString, TAGEVENTOR_STRING_PCSCD_PROBLEM );
 
@@ -486,7 +485,7 @@ tagListCheck(
         else
         {
             /* try and connect to the specified readers on first connect */
-            if ( readersConnect( &readerManager, readers ) != SCARD_S_SUCCESS )
+            if ( readersConnect( &readerManager ) != SCARD_S_SUCCESS )
                 sprintf( messageString, TAGEVENTOR_STRING_PCSCD_OK_READER_NOT ,
                         readerManager.nbReaders );
         }
@@ -496,29 +495,24 @@ tagListCheck(
             - make 'previous' be 'current' from the previous iteration */
     if ( previousTagList.pTags != NULL )
         free ( previousTagList.pTags );
-    previousTagList.pTags = currentTagList.pTags;  /* this will be freed next time around */
-
-    previousTagList.numTags = currentTagList.numTags;
+    previousTagList = readerManager.tagList;  /* this will be freed next time around */
 
     /* get the new list of tags into currentTagList */
-    rv = readersGetTagList( &readerManager, readers, &currentTagList);
+    rv = readersGetTagList( &readerManager );
     if (rv != SCARD_S_SUCCESS)
     {
         sprintf( messageString, TAGEVENTOR_STRING_PCSCD_OK_READER_NOT,
                  readerManager.nbReaders );
         if ( callBack )
             (*callBack)( FALSE, messageString, "" );
-
-        currentTagList.pTags = NULL;
-        currentTagList.numTags = 0;
     }
     else
     {
         /* create a string with some status text and a list of the UIDs of the tags found */
-        sprintf( messageString, TAGEVENTOR_STRING_CONNECTED_READER, readerManager.nbReaders, (int)(currentTagList.numTags));
-        for ( i = 0; i < currentTagList.numTags; i++ )
+        sprintf( messageString, TAGEVENTOR_STRING_CONNECTED_READER, readerManager.nbReaders, (int)(readerManager.tagList.numTags));
+        for ( i = 0; i < readerManager.tagList.numTags; i++ )
         {
-            sprintf( tagLine, TAGEVENTOR_STRING_TAG_LINE, currentTagList.pTags[i].uid);
+            sprintf( tagLine, TAGEVENTOR_STRING_TAG_LINE, readerManager.tagList.pTags[i].uid);
             strcat( tagMessage, tagLine );
         }
 
@@ -530,26 +524,26 @@ tagListCheck(
         {
             found = FALSE;
             /* Look for it in the new list */
-            for (j = 0; (j < currentTagList.numTags); j++)
+            for (j = 0; (j < readerManager.tagList.numTags); j++)
                  if ( strcmp(previousTagList.pTags[i].uid,
-                      currentTagList.pTags[j].uid) == 0 )
+                      readerManager.tagList.pTags[j].uid) == 0 )
                     found = TRUE;
 
             if (!found)
-                rulesTableEventDispatch( TAG_OUT, previousTagList.pTags[i].uid, readers );
+                rulesTableEventDispatch( TAG_OUT, previousTagList.pTags[i].uid, readerManager.readers );
         }
 
         /* check for tags that are here now */
-        for (i = 0; i < currentTagList.numTags; i++)
+        for (i = 0; i < readerManager.tagList.numTags; i++)
         {
             found = FALSE;
             /* Look for it in the old list */
             for (j = 0; ((j < previousTagList.numTags) && (!found)); j++)
                 if ( strcmp(previousTagList.pTags[j].uid,
-                            currentTagList.pTags[i].uid) == 0 )
+                            readerManager.tagList.pTags[i].uid) == 0 )
                     found = TRUE;
             if (!found)
-                rulesTableEventDispatch(TAG_IN, currentTagList.pTags[i].uid, readers );
+                rulesTableEventDispatch(TAG_IN, readerManager.tagList.pTags[i].uid, readerManager.readers );
         }
     } /* if readerGetTagList() was successful */
 
@@ -578,16 +572,22 @@ int main(
     tRunOptions	runOptions;
     int          i;
 
+    readerManager.nbReaders = 0;
+    readerManager.mszReaders = NULL;
+    readerManager.hContext = NULL;
+    readerManager.tagList.numTags = 0;
+    readerManager.tagList.pTags = NULL;
+
     /* some help to make sure we close whatś needed, not more */
     for ( i = 0; i < MAX_NUM_READERS; i++ )
     {
-        readers[i].hCard = NULL;
-        readers[i].name = NULL;
-        readers[i].pDriver = NULL;
-        readers[i].driverDescriptor = NULL;
-        readers[i].SAM = FALSE;
-        readers[i].SAM_serial[0] = '\0';
-        readers[i].SAM_id[0] = '\0';
+        readerManager.readers[i].hCard = NULL;
+        readerManager.readers[i].name = NULL;
+        readerManager.readers[i].pDriver = NULL;
+        readerManager.readers[i].driverDescriptor = NULL;
+        readerManager.readers[i].SAM = FALSE;
+        readerManager.readers[i].SAM_serial[0] = '\0';
+        readerManager.readers[i].SAM_id[0] = '\0';
     }
 
     parseCommandLine(argc, argv, &runOptions );
@@ -626,14 +626,14 @@ int main(
         case SYSTEM_TRAY:
 #ifdef BUILD_SYSTEM_TRAY
             /* build the status icon in the system tray area */
-            startSystemTray( &argc, &argv, &tagListCheck, appPollDelayms, readers );
+            startSystemTray( &argc, &argv, &tagListCheck, appPollDelayms, readerManager.readers );
 #endif
             break;
         default:
             break;
     }
 
-    readersDisconnect( &readerManager, readers );
+    readersDisconnect( &readerManager );
 
     /* clean up the connection to PCSCD */
     readersManagerDisconnect( &readerManager );
