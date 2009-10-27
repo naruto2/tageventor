@@ -29,7 +29,7 @@ ifeq ($(os),Darwin)
 	architecture = $(shell arch)
 	archiver = /usr/bin/libtool
 	archiver_flags = -arch_only $(architecture) -o
-	os_cc_flags =
+	os_cc_flags = -framework -F/System/Library/Frameworks/
 #	os_cc_flags = -arch $(architecture)
 else
 	archiver = ar
