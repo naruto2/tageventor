@@ -29,6 +29,14 @@
 #include "tagSpecs.h"
 #include "readerDriver.h"
 
+/********************** HACKS   !!!! *****************************/
+/* It seems this error code is returned on versions of pcsclite.h*/
+/* that ship with Linux, but not the (older?) versions on Mac OS */
+/* but if it depends on versions then it could also happen on    */
+/* on other OS, not just Mac OS X, so I don't use a Mac flag     */
+#ifndef SCARD_E_NO_READERS_AVAILABLE
+#define SCARD_E_NO_READERS_AVAILABLE 0x8010002E
+#endif 
 
 /*******************   MACROS ************************************/
 #define sPrintBufferHex(string, num, array)\
