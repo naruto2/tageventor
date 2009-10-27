@@ -1,4 +1,5 @@
 #!/bin/bash
+set -x
 
 ################## check_root() ##########################
 function check_root {
@@ -25,7 +26,7 @@ case $OS in
    Linux)
       echo Linux operating system detected
       cl_version_scripts_dir=/etc/$cl_version_name
-      tageventor_bin_dir=/usr/sbin/
+      cl_version_bin_dir=/usr/sbin/
       daemon_script_dir=/etc/init.d/
       gtk_version_scripts_dir=/etc/$gtk_version_name
       gtk_version_bin_dir=/usr/sbin
@@ -37,10 +38,10 @@ case $OS in
 
    Darwin)
       echo Mac OS X operating system detected
-      cl_version_scripts_dir=/Library/Application Support/$cl_version_name
-      tageventor_bin_dir=/usr/sbin/
-      daemon_script_dir=/etc/init.d/
-      gtk_version_scripts_dir=/Library/Application Support/$gtk_version_name
+      cl_version_scripts_dir=\"/Library/Application\ Support/$cl_version_name\"
+      cl_version_bin_dir=/usr/sbin/
+      daemon_script_dir=
+      gtk_version_scripts_dir=\"/Library/Application\ Support/$gtk_version_name\"
       gtk_version_bin_dir=/usr/sbin
       gtk_startup_entry_dir=/etc/xdg/autostart/
       default_icon_theme_name=hicolor
@@ -63,15 +64,15 @@ function install_command_line_version {
 echo Installing command_line_version
 # Copy the generic script that is used when no specific script is found for the tag ID
 echo "Installing event scripts"
-mkdir -p $cl_version_scripts_dir
-cp -f scripts/generic $cl_version_scripts_dir
-echo Script \"./scripts/generic\" copied to $cl_version_scripts_dir/
+mkdir -pv $cl_version_scripts_dir
+cp -f ./scripts/generic $cl_version_scripts_dir/
+echo Script ./scripts/generic copied to $cl_version_scripts_dir/
 echo ""
 
-# copy the tageventor binary to the system directory
+# copy the cl_version binary to the system directory
 echo "Installing the program binary"
-cp -f bin/Release/$cl_version_name $tageventor_bin_dir
-echo Executable \"./bin/Release/$cl_version\" copied to $tageventor_bin_dir
+cp -f bin/Release/$cl_version_name $cl_version_bin_dir/
+echo Executable ./bin/Release/$cl_version_name copied to $cl_version_bin_dir
 echo ""
 
 }
@@ -82,7 +83,7 @@ echo Installing daemon
 # copy the init script to the system directory to start tagEventor as a daemon
 echo Installing $daemon_name daemon script
 cp -f $daemon_name $daemon_script_dir 
-echo Init script $daemon_name copied to $daemon_script_dir
+echo Init script ./$daemon_name copied to $daemon_script_dir
 echo ""
 
 # to run the init script at start-up you need these links in the system directories
@@ -98,15 +99,15 @@ function install_gtk_version {
 echo Installing gtk_version
 # Copy the generic script that is used when no specific script is found for the tag ID
 echo Installing $gtk_version_name tag event scripts
-mkdir -p $gtk_version_scripts_dir
-cp -f scripts/generic $gtk_version_scripts_dir
-echo Script \"./scripts/generic\" copied to $gtk_version_scripts_dir
+mkdir -pv $gtk_version_scripts_dir
+cp -f ./scripts/generic $gtk_version_scripts_dir/
+echo Script ./scripts/generic copied to $gtk_version_scripts_dir/
 echo ""
 
 # copy the gtagEventor binary to the system directory
 echo Installing the $gtk_version_name program binary
 cp -f bin/Release/$gtk_version_name $gtk_version_bin_dir
-echo Executable \"./bin/Release/$gtk_version_name\" copied to $gtk_version_bin_dir
+echo Executable ./bin/Release/$gtk_version_name copied to $gtk_version_bin_dir
 echo ""
 
 # copy the required icons to a place where GNOME can find them without .svn directories!
@@ -124,7 +125,7 @@ do
    cp -R ./icons/$default_icon_theme_name/$size/*.png $gtk_version_icon_dir/$default_icon_theme_name/$size/
 done
 
-echo Copied ./icons/ into "/usr/share/gtagEventor"
+echo Copied ./icons/ into $gtk_version_icon_dir
 echo ""
 }
 
@@ -133,6 +134,7 @@ function install_gtk_autostart {
 echo Installing gtk_autostart
 # put a desktop link in the right place and it will start executable with each GNOME session
 echo Installing Gnome start-up entries for $gtk_version_name
+mkdir -p $gtk_startup_entry_dir
 cp $gtk_version_name.desktop $gtk_startup_entry_dir
 echo ./$gtk_version_name.desktop copied into $gtk_startup_entry_dir so it is started with each GNOME session
 echo ""

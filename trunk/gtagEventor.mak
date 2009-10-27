@@ -1,14 +1,13 @@
-all:Debug Release
-	@echo ""
-
-# Clean up all stray editor back-up files, any .o or .a left around in this directory
-# Remove all built object files (.o and .a) and compiled and linked binaries
-clean: cleanDebug cleanRelease
+all: Debug Release
 	@echo ""
 
 debug_binaries = bin/Debug/gtagEventor
 release_binaries = bin/Release/gtagEventor
 binaries = $(debug_binaries) $(release_binaries)
+
+debug_archive = lib/Debug/libtagReader.a
+
+release_archive = lib/Release/libtagReader.a
 
 debug_objects = obj/Debug/gtagEventor.o \
                 obj/Debug/rulesTable.o  \
@@ -51,7 +50,8 @@ icon_flags = -DICON_INSTALL_DIR='"/usr/share/gtagEventor/icons/"' \
              -DICON_NAME_CONNECTED='"gtagEventor"' \
              -DICON_NAME_NOT_CONNECTED='"gtagEventorNoReader"'
 
-os = $( shell uname )
+# NOTE: do not put spaces inside the '(' and ')' on this next line or Mac build fails
+os = $(shell uname)
 ifeq ($(os),Darwin)
 	architecture = $(shell arch)
 	linker = /usr/bin/gcc
@@ -59,7 +59,7 @@ ifeq ($(os),Darwin)
                      -L/Library/Frameworks/GLib.framework/Libraries -lglib-2.0.0 -lgobject-2.0.0 \
                      -L/Library/Frameworks/Cairo.framework/Libraries -lcairo.2 \
                      -L/Library/Frameworks/Gtk.framework/Libraries -lgtk-quartz-2.0.0 \
-                     -arch $(architecture) -lc  $(common_link_flags)
+                     -arch $(architecture) -lc -ltagReader
 	os_cc_flags = -I /Library/Frameworks/GLib.framework/Headers/ \
                       -I /Library/Frameworks/Cairo.framework/Headers/ \
                       -I /Library/Frameworks/Gtk.framework/Headers/ \
@@ -87,19 +87,26 @@ debug_cc_flags = $(cc_flags) -DDEBUG -g \
 release_cc_flags = $(cc_flags) \
                  -DVERSION_STRING='$(version_string) $(rev_string) " Release"'
 
+################################## Targets #################################
+# Clean up all stray editor back-up files, any .o or .a left around in this directory
+# Remove all built object files (.o and .a) and compiled and linked binaries
+clean: cleanDebug cleanRelease
+	@echo ""
+
+########################## Debug TARGETS ###############################
 cleanDebug:
-	@rm -f $(debug_binaries) $(debug_objects) $(debug_dependencies)rm
+	@rm -f $(debug_binaries) $(debug_objects) $(debug_dependencies)
 	@echo "gtagEventor Debug files cleaned"
 
-Debug: bin/Debug/gtagEventor
+Debug: $(debug_binaries)
 
 ###### Debug version LINK
-bin/Debug/gtagEventor: lib/Debug/libtagReader.a $(debug_objects)
+bin/Debug/gtagEventor: $(debug_archive) $(debug_objects)
 	@$(linker)  $(debug_objects) -Llib/Debug $(link_flags) -o $@
 	@echo gtagEventor Debug version BUILT $@
 	@echo ""
 
-lib/Debug/libtagReader.a:
+$(debug_archive):
 
 ########## Debug version DEPENDENCIES
 obj/Debug/%.d: %.c
@@ -123,19 +130,20 @@ obj/Debug/%.o : %.c
 	@gcc -c $< $(debug_cc_flags) -o $@
 	@echo "Compiling " $<
 
+########################## Release TARGETS ###############################
 cleanRelease:
 	@rm -f $(release_binaries) $(release_objects) $(release_dependencies)
 	@echo "gtagEventor Release files cleaned"
 
-Release: bin/Release/gtagEventor
+Release: $(release_binaries)
 
 ########## Release version LINK
-bin/Release/gtagEventor: lib/Release/libtagReader.a $(release_objects)
+bin/Release/gtagEventor: $(release_archive) $(release_objects)
 	@$(linker)  $(release_objects) -Llib/Release $(link_flags) -o $@
 	@echo gtagEventor Release version BUILT $@
 	@echo ""
 
-lib/Release/libtagReader.a:
+$(release_archive):
 
 ########## Release version COMPILE
 obj/Release/gtagEventor.o : tagEventor.c
@@ -144,7 +152,7 @@ obj/Release/gtagEventor.o : tagEventor.c
 
 obj/Release/gtagEventor.d: tagEventor.c
 	@set -e; rm -f $@; \
-	gcc -M $(debug_cc_flags) $< > $@.$$$$; \
+	gcc -M $(release_cc_flags) $< > $@.$$$$; \
 	sed 's,tagEventor.o[ :]*,$(@D)/gtagEventor.o $@ : ,g' < $@.$$$$ > $@; \
 	rm -f $@.$$$$
 
