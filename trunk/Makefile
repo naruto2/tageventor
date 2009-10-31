@@ -2,6 +2,10 @@ all: Debug Release
 	@echo "All Done."
 	@echo ""
 
+binary: Release
+	tar -cpz --exclude .svn scripts/generic bin/Release \
+                 tagEventord gtagEventor.desktop icons \
+                 install-sh > tagEventor.tar.gz 
 Debug:
 	@make -s -C lib/source/ -f Makefile Debug
 	@make -s -f tagEventor.mak Debug
