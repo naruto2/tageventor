@@ -36,7 +36,7 @@
 /* on other OS, not just Mac OS X, so I don't use a Mac flag     */
 #ifndef SCARD_E_NO_READERS_AVAILABLE
 #define SCARD_E_NO_READERS_AVAILABLE 0x8010002E
-#endif 
+#endif
 
 /*******************   MACROS ************************************/
 #ifdef DEBUG
@@ -683,10 +683,13 @@ readersGetTagList(
         /* copy all the individual lists across into the unique list */
         for( i = 0; i < pManager->nbReaders; i++)
         {
+            /* make the pointer in the per-reader structure point to it's parts of the overall list */
+            pManager->readers[i].tagList.pTags = &((pTags[i])[0]);
+
             /* for each of the tags detected in this reader */
             for ( j = 0; j < pManager->readers[i].tagList.numTags; j++ )
             {
-                                /* copy the tag from the tempory list to the unique one */
+                /* copy the tag from the tempory list to the unique one */
                 pManager->tagList.pTags[uniqueListIndex] = (pTags[i])[j];
 
                 switch( pManager->tagList.pTags[uniqueListIndex].tagType )
