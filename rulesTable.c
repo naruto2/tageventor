@@ -235,7 +235,7 @@ execScript(
 void
 rulesTableEventDispatch(
                 int	  	        eventType,
-                tUID       	    tagUID,
+                const tTag      *pTag,
                 const tReader	*preader
                 )
 {
@@ -243,7 +243,7 @@ rulesTableEventDispatch(
     int             ruleIndex;
     char            scriptName[PATH_MAX];
 
-    sprintf(messageString, "Event: Tag %s - UID: %s", tagString[eventType], tagUID);
+    sprintf(messageString, "Event: Tag %s - UID: %s", tagString[eventType], pTag->uid);
     readersLogMessage( &readerManager, LOG_INFO, 1, messageString);
 
     /* run through the list of rules:
@@ -263,7 +263,7 @@ rulesTableEventDispatch(
             switch ( tagEntryArray[ruleIndex].scriptMatchType )
             {
                 case TAG_ID_MATCH:
-                    strcpy( scriptName, tagUID );
+                    strcpy( scriptName, pTag->uid );
                 break;
                 case GENERIC_MATCH:
                     sprintf( scriptName, "generic" );
@@ -280,7 +280,13 @@ rulesTableEventDispatch(
                 break;
             }
 
-            if (execScript( tagEntryArray[ruleIndex].folder, scriptName, tagUID, preader->SAM_serial, tagUID, tagString[eventType],
+
+/* ADM HERE */
+#ifdef DEBUG
+printf( "Tag Contents %2X\n", (unsigned int) pTag->pContents );
+#endif
+
+            if (execScript( tagEntryArray[ruleIndex].folder, scriptName, pTag->uid, preader->SAM_serial, pTag->uid, tagString[eventType],
                             tagEntryArray[ruleIndex].description) == 0)
                 return;
         }

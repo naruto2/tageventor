@@ -83,6 +83,7 @@
 		<Unit filename="rulesTable.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="rulesTable.h" />
 		<Unit filename="settingsDialog.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -96,9 +97,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="tagEventor.h" />
-		<Unit filename="tagReader.h">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
 		<Extensions>
 			<code_completion />
 			<debugger>

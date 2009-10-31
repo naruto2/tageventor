@@ -530,7 +530,7 @@ tagListCheck(
             if (!found)
             {
                 listChanged = TRUE;
-                rulesTableEventDispatch( TAG_OUT, previousTagList.pTags[i].uid, readerManager.readers );
+                rulesTableEventDispatch( TAG_OUT, &(previousTagList.pTags[i]), readerManager.readers );
             }
         }
 
@@ -547,7 +547,7 @@ tagListCheck(
             if (!found)
             {
                 listChanged = TRUE;
-                rulesTableEventDispatch(TAG_IN, readerManager.tagList.pTags[i].uid, readerManager.readers );
+                rulesTableEventDispatch(TAG_IN, &(readerManager.tagList.pTags[i]), readerManager.readers );
             }
         }
 

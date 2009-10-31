@@ -126,8 +126,7 @@ obj/Debug/gtagEventor.d: tagEventor.c
 	rm -f $@.$$$$
 
 obj/Debug/%.o : %.c
-	echo $(rev_string) #HERE
-	gcc -c $< $(debug_cc_flags) -o $@
+	@gcc -c $< $(debug_cc_flags) -o $@
 	@echo "Compiling " $<
 
 ########################## Release TARGETS ###############################

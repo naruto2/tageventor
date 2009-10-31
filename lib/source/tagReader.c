@@ -26,7 +26,6 @@
 #include <PCSC/winscard.h>
 
 #include "tagReader.h"
-#include "tagSpecs.h"
 #include "readerDriver.h"
 
 /********************** HACKS   !!!! *****************************/
@@ -71,8 +70,6 @@ extern tReaderDriver    acr122UDriver;
 /* This is a NULL terminated list of pointers to driver structures */
 /* one for each driver we know about                               */
 static tReaderDriver   *readerDriverTable[] = { &acr122UDriver, NULL };
-
-
 
 static inline void sPrintBufferHex( char *asciiDest, int num, unsigned char *byteSource)
 {
