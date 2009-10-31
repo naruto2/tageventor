@@ -1,4 +1,3 @@
-#labels Featured
 == Misc short-term stuff ==
   * Clean up the concepts of tags, tag events, and actions in all of program.
 
