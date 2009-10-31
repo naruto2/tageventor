@@ -12,15 +12,12 @@
 
   * Write some text for the rules Editor Help Dialog and have it display it neatly, maybe with links to the wiki help pages or other sources.
 
-== Build ==
-Avoid use of pkg-config (use correct flags directly) and fix problem with -lpcsclite so that the Mac version can also be built from the command line with "make".
-
 == Mac Scripts ==
 Modify the example scripts somehow so that they also run on Mac OS X, where for example Xmessage (used by the "generic" script) is not present. Maybe have different sample scripts in a sub directory for Mac.
 Look into having and executing AppleScript scripts or the like.
 
 == Mac OS X GUI ==
-Investigate Gtk+ on Mac OS X (seems to only work with dependencies that require Leopard or Snow Leopard), or other ways to have the UI version also work.
+Investigate Gtk+ on Mac OS X, or other ways to have the UI version also work. - OnGoing -
 
 == Man page ==
 Write something useful in the man page, and then modify the install script to copy it to the appropriate location.
@@ -69,5 +66,8 @@ One of the common issues for inexpert or infrequent computer users (and hence a 
 == Tag read / write ==
     * Read the entire contents of the tag memory (see spec document in download section)
     * Write the bytes that can be written, and read them back to verify
+
+= NFC =
+Parse NFC NDEF messages and the RTD's and act upon the standardized content types as as URL directly in the application, without the need for a script.
 
 Send other suggestions to mailto:info@autelic.org
