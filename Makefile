@@ -2,10 +2,19 @@ all: Debug Release
 	@echo "All Done."
 	@echo ""
 
+##### Get rev_string and version_string
+include version.mak
+
+##### Which OS are we building on? Linux? Darwin? other?
+os = $(shell uname)
+tar_file_name = tagEventor-$(os)-$(version_string).tar.gz
+
 binary: Release
-	tar -cpz --exclude .svn scripts/generic bin/Release \
+	@tar -cpz --exclude .svn scripts/generic bin/Release \
                  tagEventord gtagEventor.desktop icons \
-                 install-sh > tagEventor.tar.gz 
+                 install-sh > $(tar_file_name)
+	@echo Binary install package for OS=$(os) created as $(tar_file_name)
+  
 Debug:
 	@make -s -C lib/source/ -f Makefile Debug
 	@make -s -f tagEventor.mak Debug
