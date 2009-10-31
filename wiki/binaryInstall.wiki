@@ -1,3 +1,4 @@
+#labels Featured
 If you don't want to have to install the development pre-requisites and then build from source, then this page is for you.
 
 The binary package can be downloaded (goto Downloads section of wiki) and installed, without having to use sources and build from scratch
