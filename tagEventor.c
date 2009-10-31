@@ -55,8 +55,8 @@ static  unsigned char	runningAsDaemon = FALSE;
 /* strings used for tag events, for text output and name of scipts */
 static int		    appPollDelayms;
 static int			appVerbosityLevel;
+static tTagList	    previousTagList = { NULL, 0 };
 
-static tTagList		previousTagList = { NULL, 0 };
 
 /************** GLOBALS *******************************************/
 /* these are only needed globally as a horrible workaround for
@@ -154,7 +154,7 @@ parseCommandLine(
         /* the program logic will take notice of Auto, but GUI will also reflect the others */
          case 'n':
             if ( strcmp( optarg, "AUTO" ) == strlen( "AUTO" ) )
-                readersSettingBitmapBitSet( READER_BIT_AUTO );
+                readersSettingBitmapBitSet( &readerManager, READER_BIT_AUTO );
             else
             {
                 number = atoi(optarg);
@@ -164,7 +164,7 @@ parseCommandLine(
                     fprintf(stderr, TAGEVENTOR_STRING_COMMAND_LINE_READER_NUM_ERROR_2, optarg);
                 }
                 else
-                    readersSettingBitmapNumberSet( number );
+                    readersSettingBitmapNumberSet( &readerManager, number );
             }
             break;
 
@@ -224,8 +224,8 @@ parseCommandLine(
    }
 
     /* if no reader numbers were specified and AUTO neither, then set default */
-    if ( readersSettingBitmapGet() == READER_BIT_NONE )
-        readersSettingBitmapSet( READER_BIT_DEFAULT );
+    if ( readersSettingBitmapGet( &readerManager ) == READER_BIT_NONE )
+        readersSettingBitmapSet( &readerManager, READER_BIT_DEFAULT );
 
 }
 /************************ PARSE COMMAND LINE OPTIONS ********/
@@ -247,16 +247,16 @@ handleSignal(
       case SIGHUP: /* restart the server using  "kill -1" at the command shell */
          readersDisconnect( &readerManager );
          readersConnect( &readerManager );
-         readersLogMessage(LOG_INFO, 1, "Hangup signal received - disconnected and reconnected");
+         readersLogMessage( &readerManager, LOG_INFO, 1, "Hangup signal received - disconnected and reconnected");
       break;
 
       case SIGINT: /* kill -2 or Control-C */
       case SIGTERM:/* "kill -15" or "kill" */
          readersDisconnect( &readerManager );
-         readersLogMessage( LOG_INFO, 1, "SIGTERM or SIGINT received, exiting gracefully");
+         readersLogMessage( &readerManager, LOG_INFO, 1, "SIGTERM or SIGINT received, exiting gracefully");
          if ( runningAsDaemon )
          {
-            readersLogMessage( LOG_INFO, 1, "Closing and removing lockfile, closing log. Bye.");
+            readersLogMessage( &readerManager, LOG_INFO, 1, "Closing and removing lockfile, closing log. Bye.");
             close( lockFile );
             remove( lockFilename );
             closelog();
@@ -283,9 +283,9 @@ stopDaemon( void )
    if (lockFile == -1)
    {
       sprintf(messageString, "Could not open lock file %s, exiting", lockFilename);
-      readersLogMessage(LOG_ERR, 0, messageString);
+      readersLogMessage( &readerManager, LOG_ERR, 0, messageString);
       sprintf(messageString, "Check you have the necessary permission for it");
-      readersLogMessage(LOG_ERR, 0, messageString);
+      readersLogMessage( &readerManager, LOG_ERR, 0, messageString);
       exit( EXIT_FAILURE );
    }
 
@@ -293,7 +293,7 @@ stopDaemon( void )
    if (read(lockFile, pidString, 19) == -1)
    {
       sprintf(messageString, "Could not read PID from lock file %s, exiting", lockFilename);
-      readersLogMessage(LOG_ERR, 0, messageString);
+      readersLogMessage( &readerManager, LOG_ERR, 0, messageString);
       exit( EXIT_FAILURE );
    }
 
@@ -302,12 +302,12 @@ stopDaemon( void )
    if (sscanf( pidString, "%d\n", &pid ) != 1)
    {
       sprintf(messageString, "Could not read PID from lock file %s, exiting", lockFilename);
-      readersLogMessage(LOG_ERR, 0, messageString);
+      readersLogMessage( &readerManager, LOG_ERR, 0, messageString);
       exit( EXIT_FAILURE );
    }
 
    sprintf(messageString, "Stopping daemon with PID = %d", pid );
-   readersLogMessage(LOG_INFO, 1, messageString);
+   readersLogMessage( &readerManager, LOG_INFO, 1, messageString);
 
    /* might need to be root for this to work ?  - try and kill nicely*/
    kill (pid, SIGTERM);
@@ -336,7 +336,7 @@ getLockOrDie( void )
    {
       sprintf(messageString,
               "Could not open lock file %s, check permissions or run as root, exiting", lockFilename);
-      readersLogMessage(LOG_ERR, 0, messageString);
+      readersLogMessage( &readerManager, LOG_ERR, 0, messageString);
       exit( EXIT_FAILURE );
    }
 
@@ -348,12 +348,12 @@ getLockOrDie( void )
    if ( fcntl(lockFile, F_SETLK, &lock) == -1 )
    {
       sprintf(messageString, "Could not lock file %s", lockFilename);
-      readersLogMessage(LOG_ERR, 0, messageString);
+      readersLogMessage( &readerManager, LOG_ERR, 0, messageString);
       sprintf(messageString, "Probably indicates a previous copy is still running or crashed");
-      readersLogMessage(LOG_ERR, 0, messageString);
+      readersLogMessage( &readerManager, LOG_ERR, 0, messageString);
       sprintf(messageString, "Find PID using \"cat %s\" or \"ps -ef | grep %s\". Exiting.",
              lockFilename, DAEMON_NAME);
-      readersLogMessage(LOG_ERR, 0, messageString);
+      readersLogMessage( &readerManager, LOG_ERR, 0, messageString);
       exit( EXIT_FAILURE );
    }
 
@@ -362,7 +362,7 @@ getLockOrDie( void )
    if (write(lockFile, pidString, strlen(pidString)) != strlen(pidString) )
    {
       sprintf(messageString, "Could not write PID to lock file %s", lockFilename);
-      readersLogMessage(LOG_ERR, 0, messageString);
+      readersLogMessage( &readerManager, LOG_ERR, 0, messageString);
       exit( EXIT_FAILURE );
    }
 }
@@ -382,7 +382,7 @@ daemonize (
    if ( pid < 0 )
    { /* fork error */
       sprintf(messageString, "Error forking daemon %s, exiting", DAEMON_NAME);
-      readersLogMessage(LOG_ERR, 0, messageString);
+      readersLogMessage( &readerManager, LOG_ERR, 0, messageString);
       exit( EXIT_FAILURE );
    }
 
@@ -390,7 +390,7 @@ daemonize (
    { /* fork worked, this is the parent process so exit */
       sprintf(messageString, "Started daemon %s with PID=%d, see /var/log/syslog",
               DAEMON_NAME, pid );
-      readersLogMessage(LOG_INFO, 1, messageString);
+      readersLogMessage( &readerManager, LOG_INFO, 1, messageString);
       exit( EXIT_FAILURE );
    }
 
@@ -398,7 +398,7 @@ daemonize (
    runningAsDaemon = TRUE;
 
    /* tell the library we are now going to be calling it from a daemon */
-   readersSetOptions( IGNORE_OPTION, runningAsDaemon );
+   readersSetOptions(  &readerManager, IGNORE_OPTION, runningAsDaemon );
 
    /* set umask for creating files */
    umask(0);
@@ -410,7 +410,7 @@ daemonize (
    if ( setsid() < 0 )
    {
       sprintf(messageString, "Error creating new SID for daemon process %s with PID=%d, see in /var/log/syslog", DAEMON_NAME, pid );
-      readersLogMessage(LOG_ERR, 0, messageString);
+      readersLogMessage( &readerManager, LOG_ERR, 0, messageString);
       exit( EXIT_FAILURE );
    }
 
@@ -441,7 +441,7 @@ daemonize (
    signal( SIGTTIN, SIG_IGN );
 
    sprintf(messageString, "Daemon Started" );
-   readersLogMessage(LOG_INFO, 1, messageString);
+   readersLogMessage( &readerManager, LOG_INFO, 1, messageString);
 }
 /*********************  DAEMONIZE ****************************/
 
@@ -456,9 +456,10 @@ tagListCheck(
     unsigned char	found;
     int			    i, j;
     char			messageString[MAX_LOG_MESSAGE],
-                    tagLine[MAX_TAG_UID_SIZE + strlen(TAGEVENTOR_STRING_TAG_LINE)],
+                    tagLine[MAX_TAG_UID_SIZE + strlen(TAGEVENTOR_STRING_TAG_LINE) + 10],
                     tagMessage[MAX_LOG_MESSAGE];
     void            (*callBack)( char, const char  *, const char * ) = data;
+    unsigned char   listChanged = FALSE;
 
     /*** All this work about connecting to readers is done inside the poll */
     /* function to enable disconnect and reconnect of readers in operation */
@@ -467,7 +468,7 @@ tagListCheck(
     /* should be recovered from by tagEventor, connecting to it when avail.*/
 
     /* make sure messages are always valid */
-    messageString[0] = tagLine[0] = tagMessage[0] = '\0';
+    messageString[0] = '\0';
 
     /* If not connected to PCSCD, then try and connect */
     if ( readerManager.hContext == NULL )
@@ -491,13 +492,21 @@ tagListCheck(
         }
     }
 
-    /*      - free the memory of the 'previous' tag array, i.e. 2 iterations ago
+    /*      - free the memory of the 'previous' tag array, This is equivalent to
+              the currentTagList from 2 iterations ago
             - make 'previous' be 'current' from the previous iteration */
     if ( previousTagList.pTags != NULL )
         free ( previousTagList.pTags );
-    previousTagList = readerManager.tagList;  /* this will be freed next time around */
 
-    /* get the new list of tags into currentTagList */
+    /* make the previousTagList equal to the one we saved from last time around */
+    /* this will be freed next time around */
+    previousTagList = readerManager.tagList;
+
+    /* reset pointers to avoid confusion, as the memory is now "owned" by previousTagList */
+    readerManager.tagList.numTags = 0;
+    readerManager.tagList.pTags = NULL;
+
+    /* get the new list of tags into readerManager.tagList, allocated by readerGetTagList */
     rv = readersGetTagList( &readerManager );
     if (rv != SCARD_S_SUCCESS)
     {
@@ -508,17 +517,6 @@ tagListCheck(
     }
     else
     {
-        /* create a string with some status text and a list of the UIDs of the tags found */
-        sprintf( messageString, TAGEVENTOR_STRING_CONNECTED_READER, readerManager.nbReaders, (int)(readerManager.tagList.numTags));
-        for ( i = 0; i < readerManager.tagList.numTags; i++ )
-        {
-            sprintf( tagLine, TAGEVENTOR_STRING_TAG_LINE, readerManager.tagList.pTags[i].uid);
-            strcat( tagMessage, tagLine );
-        }
-
-        if ( callBack )
-            (*callBack)( TRUE, messageString, tagMessage );
-
         /* for each tags that was here before see if it is now missing */
         for (i = 0; i < previousTagList.numTags; i++)
         {
@@ -530,7 +528,10 @@ tagListCheck(
                     found = TRUE;
 
             if (!found)
+            {
+                listChanged = TRUE;
                 rulesTableEventDispatch( TAG_OUT, previousTagList.pTags[i].uid, readerManager.readers );
+            }
         }
 
         /* check for tags that are here now */
@@ -542,8 +543,27 @@ tagListCheck(
                 if ( strcmp(previousTagList.pTags[j].uid,
                             readerManager.tagList.pTags[i].uid) == 0 )
                     found = TRUE;
+
             if (!found)
+            {
+                listChanged = TRUE;
                 rulesTableEventDispatch(TAG_IN, readerManager.tagList.pTags[i].uid, readerManager.readers );
+            }
+        }
+
+        if ( listChanged )
+        {
+            /* create a string with some status text and a list of the UIDs of the tags found */
+            sprintf( messageString, TAGEVENTOR_STRING_CONNECTED_READER, readerManager.nbReaders, (int)(readerManager.tagList.numTags));
+            sprintf( tagMessage, " " );
+            for ( i = 0; i < readerManager.tagList.numTags; i++ )
+            {
+                sprintf( tagLine, TAGEVENTOR_STRING_TAG_LINE, readerManager.tagList.pTags[i].uid );
+                strcat( tagMessage, tagLine );
+            }
+
+            if ( callBack )
+                (*callBack)( TRUE, messageString, tagMessage );
         }
     } /* if readerGetTagList() was successful */
 
@@ -559,8 +579,8 @@ pollCallback(
              const char  *tagsMessage
              )
 {
-    readersLogMessage( LOG_INFO, 2, generalMessage );
-    readersLogMessage( LOG_INFO, 2, tagsMessage );
+    readersLogMessage(  &readerManager, LOG_INFO, 2, generalMessage );
+    readersLogMessage(  &readerManager, LOG_INFO, 2, tagsMessage );
 }
 
 /************************ MAIN ******************************/
@@ -570,25 +590,8 @@ int main(
         )
 {
     tRunOptions	runOptions;
-    int          i;
 
-    readerManager.nbReaders = 0;
-    readerManager.mszReaders = NULL;
-    readerManager.hContext = NULL;
-    readerManager.tagList.numTags = 0;
-    readerManager.tagList.pTags = NULL;
-
-    /* some help to make sure we close whatś needed, not more */
-    for ( i = 0; i < MAX_NUM_READERS; i++ )
-    {
-        readerManager.readers[i].hCard = NULL;
-        readerManager.readers[i].name = NULL;
-        readerManager.readers[i].pDriver = NULL;
-        readerManager.readers[i].driverDescriptor = NULL;
-        readerManager.readers[i].SAM = FALSE;
-        readerManager.readers[i].SAM_serial[0] = '\0';
-        readerManager.readers[i].SAM_id[0] = '\0';
-    }
+    readersInit( &readerManager );
 
     parseCommandLine(argc, argv, &runOptions );
 
@@ -598,9 +601,9 @@ int main(
     signal(SIGINT,   handleSignal); /* Interrupt or Control-C signal from terminal*/
     signal(SIGCHLD,  handleSignal); /* death of a child process */
 
-    /* set reader library options other than defaults (i.e. verbosity) from command line */
+    /* set reader library verbosity to the same as that we use at the application level */
     /* here we are always foreground, not a daemon, it maybe recalled from the daemon */
-    readersSetOptions( appVerbosityLevel, FALSE );
+    readersSetOptions(  &readerManager, appVerbosityLevel, FALSE );
 
 	/* load the table of rules */
     rulesTableRead();

@@ -17,7 +17,9 @@
   limitations under the License.
 */
 
-#include "tagReader.h"
+#include "tagReaderTypes.h"
+
+#include <PCSC/winscard.h>
 
 /**************************    TYPEDEFS    **************************/
 typedef LONG   (*tReaderCheckFunction)(
@@ -32,9 +34,8 @@ typedef LONG   (*tGetContactlessStatusFunction)(
                                         );
 
 typedef LONG   (*tGetTagListFunction)(
-                                    const tReader	*pReader,
-                                    int             *pNumTags,
-                                    tTag	        *pTags
+                                    tReader	        *pReader,
+                                    tTag	        pTags[]
                                     );
 
 typedef const char    * tDriverDescriptor;
