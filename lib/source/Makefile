@@ -24,12 +24,14 @@ release_objects = ../obj/Release/tagReader.o ../obj/Release/acr122UDriver.o
 include $(debug_objects:.o=.d)
 include $(release_objects:.o=.d)
 
-os = $( shell uname )
+
+# NOTE: do not put spaces inside the '(' and ')' on this next line or Mac build fails
+os = $(shell uname)
 ifeq ($(os),Darwin)
 	architecture = $(shell arch)
 	archiver = /usr/bin/libtool
 	archiver_flags = -arch_only $(architecture) -o
-	os_cc_flags = -framework -F/System/Library/Frameworks/
+	os_cc_flags = -F/System/Library/Frameworks/
 #	os_cc_flags = -arch $(architecture)
 else
 	archiver = ar
