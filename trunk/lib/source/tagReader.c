@@ -39,23 +39,15 @@
 #endif 
 
 /*******************   MACROS ************************************/
-#define sPrintBufferHex(string, num, array)\
-        {\
-        LONG j;\
-	for (j=0; j<num; j++)\
-	   sprintf((string + (j*2)), "%02X", array[j]);\
-        string[num*2] = '\0';\
-        }
-
 #ifdef DEBUG
-#define PCSC_ERROR(rv, text) \
+#define PCSC_ERROR( pMgr, rv, text) \
 if (rv != SCARD_S_SUCCESS) \
 { \
    sprintf(messageString, "%s: %s (0x%lX)", text, pcsc_stringify_error(rv), rv); \
-   readersLogMessage( LOG_ERR, 0, messageString);\
+   readersLogMessage( pMgr, LOG_ERR, 0, messageString);\
 }
 #else
-#define PCSC_ERROR(rv, text)
+#define PCSC_ERROR(pMgr, rv, text)
 #endif
 
 
@@ -67,12 +59,12 @@ if (rv != SCARD_S_SUCCESS) \
                                 (read).SAM = FALSE; \
                                 (read).SAM_serial[0] = '\0'; \
                                 (read).SAM_id[0] = '\0'; \
+                                (read).scanning = FALSE; \
+                                (read).tagList.numTags = 0; \
+                                (read).tagList.pTags = NULL; \
 }
 
 /**********    STATIC VARIABLES TO THIS FILE     ***************/
-static  int     readerSetting = 0; /* no readers, not even AUTO to start with */
-static  int     libVerbosityLevel = 0;
-static  BOOL    runningInBackground = FALSE;
 static char		messageString[MAX_LOG_MESSAGE];
 
 extern tReaderDriver    acr122UDriver;
@@ -80,77 +72,126 @@ extern tReaderDriver    acr122UDriver;
 /* one for each driver we know about                               */
 static tReaderDriver   *readerDriverTable[] = { &acr122UDriver, NULL };
 
+
+
+static inline void sPrintBufferHex( char *asciiDest, int num, unsigned char *byteSource)
+{
+    LONG j;
+
+	for ( j = 0; j < num; j++ )
+	{
+        sprintf( asciiDest, "%02X", (int)(*byteSource));
+        asciiDest+=2;
+        byteSource++;
+	}
+
+    /* don't forget to null terminate the string */
+    *asciiDest = '\0';
+}
+
+
 /* utility function for other modules that returns the current setting for the reader number bitmap */
 unsigned int
-readersSettingBitmapGet(
-                void
-                )
+readersSettingBitmapGet( tReaderManager *pManager )
 {
-    return ( readerSetting );
+    return ( pManager->readerSetting );
 }
 
 /* utility function for settings modules that sets the state of current setting for the reader number bitmap */
 unsigned int
 readersSettingBitmapSet(
-                unsigned int             readerSettingBitmap
+                        tReaderManager *pManager ,
+                        unsigned int   readerSettingBitmap
                 )
 {
 
-    readerSetting = readerSettingBitmap;
+    pManager->readerSetting = readerSettingBitmap;
 
-    return ( readerSetting );
+    return ( pManager->readerSetting );
 
 }
 
 /* Utility function to set one specific reader number in the bitmap */
 void
-readersSettingBitmapBitSet( unsigned int bitmap )
+readersSettingBitmapBitSet(
+                            tReaderManager *pManager,
+                            unsigned int bitmap
+                            )
 {
     /* bit 0 of the bitmap is reserved for AUTO */
     /* so OR in the bit shifted an extra 1   number 0 = bit 1 etc */
-    readerSetting |= bitmap;
+    pManager->readerSetting |= bitmap;
 
 }
 
 /* Utility function to unset one specific reader number in the bitmap */
 void
-readersSettingBitmapBitUnset( unsigned int bitmap )
+readersSettingBitmapBitUnset(   tReaderManager *pManager,
+                                unsigned int bitmap
+                                )
 {
     /* bit 0 of the bitmap is reserved for AUTO */
     /* so OR in the bit shifted an extra 1   number 0 = bit 1 etc */
-    readerSetting &= (~bitmap);
+    pManager->readerSetting &= (~bitmap);
 
 }
 
 unsigned int
 readersSettingBitmapNumberSet(
+                            tReaderManager *pManager,
                             unsigned int     numberOfTheBitToSet
                             )
 {
     /* bit 0 of the bitmap is reserved for AUTO */
     /* so test  number 0 = bit 1 etc */
-    readerSetting |= (1 << ( numberOfTheBitToSet +1 ) );
+    pManager->readerSetting |= (1 << ( numberOfTheBitToSet +1 ) );
 
-    return (readerSetting);
+    return ( pManager->readerSetting );
 }
 
 /* Utility function to add one specific reader number to the bitmap */
 unsigned int
-readersSettingBitmapBitTest( unsigned int bitmap )
+readersSettingBitmapBitTest(
+                            tReaderManager *pManager,
+                            unsigned int bitmap
+                            )
 {
     /* bit 0 of the bitmap is reserved for AUTO */
     /* so test  number 0 = bit 0 etc */
-    return( readerSetting & bitmap );
+    return( pManager->readerSetting & bitmap );
 
 }
 
 /* Utility function to add one specific reader number to the bitmap */
 unsigned int
-readersSettingBitmapNumberTest( unsigned int bitNumber )
+readersSettingBitmapNumberTest(
+                                tReaderManager *pManager,
+                                unsigned int bitNumber
+                                )
 {
     /* bit 0 of the bitmap is reserved for AUTO */
     /* so test  number 0 = bit 1 etc */
-    return( readerSetting & ( 1 << ( bitNumber +1 )) );
+    return( pManager->readerSetting & ( 1 << ( bitNumber +1 )) );
+
+}
+
+void
+readersInit( tReaderManager *pManager)
+{
+    int i;
+
+    pManager->nbReaders = 0;
+    pManager->mszReaders = NULL;
+    pManager->hContext = NULL;
+    pManager->tagList.numTags = 0;
+    pManager->tagList.pTags = NULL;
+    pManager->readerSetting = 0; /* no readers, not even AUTO to start with */
+    pManager->libVerbosityLevel = 0; /* silent */
+    pManager->runningInBackground = FALSE;
+
+    /* some help to make sure we close whatś needed, not more */
+    for ( i = 0; i < MAX_NUM_READERS; i++ )
+        RESET_READER( pManager->readers[i] );
 
 }
 
@@ -160,6 +201,7 @@ readersSettingBitmapNumberTest( unsigned int bitNumber )
 /* type = LOG_INFO (just info */
 void
 readersLogMessage(
+                 tReaderManager *pManager,
                  int		    type,
                  int		    messageLevel,
                  const char 	*message
@@ -169,23 +211,23 @@ readersLogMessage(
    switch (type)
    {
       case LOG_WARNING:
-         if (runningInBackground)
+         if ( pManager->runningInBackground )
             syslog( type , "WARNING: %s", message );
          else
             fprintf(stderr, "WARNING: %s\n", message);
       break;
 
       case LOG_ERR:
-         if (runningInBackground)
+         if (pManager->runningInBackground )
             syslog( type , "ERROR: %s", message );
          else
             fprintf(stderr, "ERROR: %s\n", message);
       break;
 
       case LOG_INFO:
-         if ( libVerbosityLevel >= messageLevel )
+         if ( pManager->libVerbosityLevel >= messageLevel )
          {
-            if (runningInBackground)
+            if ( pManager->runningInBackground )
                syslog( type, "INFO [%d]: %s", messageLevel, message);
             else
                fprintf( stdout,  "INFO [%d]: %s\n", messageLevel, message);
@@ -199,18 +241,19 @@ readersLogMessage(
 
 /**************************** READER SET OPTIONS *********/
 int readersSetOptions (
-		int		        verbosity,
-		unsigned char   background
+                        tReaderManager  *pManager,
+                        int		        verbosity,
+                        unsigned char   background
 		 )
 
 {
 
    /* set the verbosity level for all our output, if requested to */
    if ( verbosity != IGNORE_OPTION )
-      libVerbosityLevel = verbosity;
+      pManager->libVerbosityLevel = verbosity;
 
    /* set flag for running in foreground, or background as daemon */
-   runningInBackground = background;
+   pManager->runningInBackground = background;
 
    return ( SCARD_S_SUCCESS );
 
@@ -245,10 +288,10 @@ readersEnumerate(
                 free( pManager->mszReaders );
             pManager->mszReaders = NULL;
 
-            readersLogMessage(LOG_INFO, 2, "Found 0 Readers, ");
+            readersLogMessage( pManager, LOG_INFO, 2, "Found 0 Readers" );
         }
         else
-            PCSC_ERROR(rv, "SCardListReaders");
+            PCSC_ERROR( pManager, rv, "SCardListReaders");
 
         return ( rv );
     }
@@ -266,7 +309,7 @@ readersEnumerate(
     {
         /* Avoid reporting an error just because no reader is connected */
         if ( rv != SCARD_E_NO_READERS_AVAILABLE )
-            PCSC_ERROR(rv, "SCardListReaders");
+            PCSC_ERROR( pManager, rv, "SCardListReaders");
         return (rv);
     }
 
@@ -280,8 +323,8 @@ readersEnumerate(
         (pManager->nbReaders)++;
     }
 
-    sprintf(messageString, "Found %d Readers, ", pManager->nbReaders);
-    readersLogMessage(LOG_INFO, 2, messageString);
+    sprintf(messageString, "Found %d Readers", pManager->nbReaders);
+    readersLogMessage( pManager, LOG_INFO, 2, messageString);
 
     /* fill the array of readers with pointers to the appropriate point */
     /* in the long mszReaders multi-string */
@@ -290,7 +333,7 @@ readersEnumerate(
     while (*ptr != '\0')
     {
         sprintf(messageString, "Reader [%d]: %s", pManager->nbReaders, ptr);
-        readersLogMessage(LOG_INFO, 3, messageString);
+        readersLogMessage( pManager, LOG_INFO, 3, messageString);
         pManager->readers[pManager->nbReaders].name = ptr;
         ptr += strlen(ptr)+1;
         (pManager->nbReaders)++;
@@ -327,13 +370,13 @@ readersManagerConnect(
     rv = SCardEstablishContext(SCARD_SCOPE_SYSTEM, NULL, NULL, (LPSCARDCONTEXT)&(pManager->hContext) );
     if (rv != SCARD_S_SUCCESS)
     {
-        PCSC_ERROR(rv, "SCardEstablishContext");
-        readersLogMessage( LOG_ERR, 1, LIBTAGREADER_STRING_PCSCD_NO );
+        PCSC_ERROR( pManager, rv, "SCardEstablishContext");
+        readersLogMessage( pManager, LOG_ERR, 1, LIBTAGREADER_STRING_PCSCD_NO );
         pManager->hContext = NULL;
         return( rv );
     }
 
-    readersLogMessage( LOG_INFO, 2, LIBTAGREADER_STRING_PCSCD_OK );
+    readersLogMessage( pManager, LOG_INFO, 2, LIBTAGREADER_STRING_PCSCD_OK );
 
     /* Find all the readers and fill the readerManager data structure */
     rv = readersEnumerate( pManager );
@@ -354,11 +397,11 @@ readersManagerDisconnect( tReaderManager *pManager )
 
     if ( pManager->hContext )
     {
-        readersLogMessage(LOG_INFO, 2, "Disconnecting from pcscd server");
+        readersLogMessage( pManager, LOG_INFO, 2, "Disconnecting from pcscd server");
 
         rv = SCardReleaseContext( (SCARDCONTEXT) (pManager->hContext) );
         if ( rv != SCARD_S_SUCCESS )
-            PCSC_ERROR(rv, "SCardReleaseContext");
+            PCSC_ERROR( pManager, rv, "SCardReleaseContext");
 
         /* libreate memory that was allocated when we connected to manager */
         if (pManager->mszReaders)
@@ -393,7 +436,7 @@ int readersConnect (
     if ( pManager == NULL )
         return( SCARD_E_INVALID_PARAMETER );
 
-    automatic = ( readersSettingBitmapBitTest( READER_BIT_AUTO ) != 0 );
+    automatic = ( readersSettingBitmapBitTest( pManager, READER_BIT_AUTO ) != 0 );
 
     if ( automatic )
     {
@@ -411,7 +454,7 @@ int readersConnect (
     {
         /* if we are not already connected and should be trying then do so */
         if ( ( pManager->readers[num].hCard == NULL) &&
-             ( automatic || readersSettingBitmapNumberTest( num ) ) )
+             ( automatic || readersSettingBitmapNumberTest( pManager, num ) ) )
         {
             dwActiveProtocol = -1;
             rv = SCardConnect( (SCARDCONTEXT)(pManager->hContext),
@@ -422,7 +465,7 @@ int readersConnect (
             if (rv == SCARD_S_SUCCESS)
             {
                 sprintf(messageString, "Connected to reader: %d, %s", num, pManager->readers[num].name );
-                readersLogMessage(LOG_INFO, 2, messageString);
+                readersLogMessage( pManager, LOG_INFO, 2, messageString);
 
                 /* Query the drivers in our list until one of them can handle the reader */
                 i = 0;
@@ -431,12 +474,19 @@ int readersConnect (
                 while ( (readerDriverTable[i] != NULL) && (readerSupported == FALSE) )
                     rv = readerDriverTable[i++]->readerCheck( &(pManager->readers[num]), &readerSupported );
 
+                if ( rv != SCARD_S_SUCCESS )
+                {
+                    RESET_READER( pManager->readers[num] );
+                    PCSC_ERROR( pManager, rv, "readerCheck:" );
+                    return( rv );
+                }
+
                 /* we couldn't find a driver that knows how to handle this reader... */
                 if ( ( readerSupported == FALSE) )
                 {
                     pManager->readers[num].pDriver = NULL;
                     sprintf(messageString, "Reader (%s) not supported by any known driver", pManager->readers[num].name );
-                    readersLogMessage(LOG_ERR, 0, messageString);
+                    readersLogMessage( pManager, LOG_ERR, 0, messageString);
                     return (SCARD_E_UNKNOWN_READER);
                 }
                 else
@@ -444,6 +494,8 @@ int readersConnect (
                     /* if we got this far then a driver was successfully found, remember it! */
                     pManager->readers[num].pDriver = readerDriverTable[i -1];
                     pManager->readers[num].driverDescriptor = readerDriverTable[i -1]->driverDescriptor;
+                    sprintf(messageString, "Reader: %s, assigned driver='%s'", pManager->readers[num].name, pManager->readers[num].driverDescriptor );
+                    readersLogMessage( pManager, LOG_INFO, 3, messageString);
                 }
             }
             else
@@ -469,7 +521,7 @@ readersDisconnect(
     if ( ( pManager == NULL ) || ( pManager->hContext == NULL ) )
        return;
 
-    if ( readersSettingBitmapBitTest( READER_BIT_AUTO ) )
+    if ( readersSettingBitmapBitTest( pManager, READER_BIT_AUTO ) )
     {
         /* re-enumerate the readers in the system as it may have changed */
         rv = readersEnumerate( pManager );
@@ -483,13 +535,13 @@ readersDisconnect(
         if ( pManager->readers[i].hCard != NULL )
         {
             sprintf(messageString, "Disconnecting from reader %d", i );
-            readersLogMessage(LOG_INFO, 2, messageString);
+            readersLogMessage( pManager, LOG_INFO, 2, messageString);
 
             rv = SCardDisconnect( (SCARDHANDLE) (pManager->readers[i].hCard), SCARD_UNPOWER_CARD);
             RESET_READER( pManager->readers[i] );
 
             if ( rv != SCARD_S_SUCCESS )
-                PCSC_ERROR(rv, "SCardDisconnect");
+                PCSC_ERROR( pManager, rv, "SCardDisconnect");
         }
     }
 }
@@ -513,7 +565,7 @@ readerGetContactlessStatus(
     if ( ( pManager == NULL ) || ( pManager->hContext == NULL ) )
        return( SCARD_E_INVALID_PARAMETER );
 
-    automatic = readersSettingBitmapBitTest( READER_BIT_AUTO );
+    automatic = readersSettingBitmapBitTest( pManager, READER_BIT_AUTO );
 
     if ( automatic )
     {
@@ -524,30 +576,32 @@ readerGetContactlessStatus(
     }
 
     sprintf(messageString, "Requesting contactles status");
-    readersLogMessage(LOG_INFO, 2, messageString);
+    readersLogMessage( pManager, LOG_INFO, 2, messageString);
 
     /* then check all readers we were ABLE to connect to */
     for ( i = 0; i < pManager->nbReaders; i++ )
     {
         /* check we have connected and have a driver for this reader */
         if ( ( pReader[i].hCard != NULL ) && ( pReader[i].pDriver != NULL ) &&
-             ( automatic || readersSettingBitmapNumberTest( i ) ) )
+             ( automatic || readersSettingBitmapNumberTest( pManager, i ) ) )
         {
             dwRecvLength = sizeof(pbRecvBuffer);
             rv = ((tReaderDriver *)(pReader[i].pDriver))->getContactlessStatus(pReader, pbRecvBuffer, &dwRecvLength);
 
             if ( rv == SCARD_S_SUCCESS )
             {
-                if (libVerbosityLevel)
+                if (pManager->libVerbosityLevel)
                 {
                     sprintf(messageString, "Reader %d Status: ", i);
                     sPrintBufferHex( (messageString + strlen("Reader %d Status: ") ), dwRecvLength, pbRecvBuffer);
-                    readersLogMessage(LOG_INFO, 2, messageString);
+                    readersLogMessage( pManager, LOG_INFO, 2, messageString);
 
                     sprintf(messageString, "Number of Tags = %d", pbRecvBuffer[4]);
-                    readersLogMessage(LOG_INFO, 2, messageString);
+                    readersLogMessage( pManager, LOG_INFO, 2, messageString);
                 }
             }
+            else
+                PCSC_ERROR( pManager, rv, "driver->getConnectlessStatus:");
         }
     }
 
@@ -566,21 +620,16 @@ readersGetTagList(
                 )
 {
     LONG		rv = SCARD_S_SUCCESS;
-    tTag        *pTags[MAX_NUM_READERS];
+    tTag        *pTags[MAX_NUM_READERS]; /* an array of pointers to tags (that act like arrays) ! */
     int         i, j;
-    int         uniqueListIndex = 0;
-    int         numTags[MAX_NUM_READERS];
+    int         uniqueListIndex;
     BOOL        automatic;
-
-    /* reset everthing before we attempt to get the new list */
-    pManager->tagList.pTags = NULL;
-    pManager->tagList.numTags = 0;
 
     /* Duh. If you pass me a NULL pointer then I'm out of here */
     if ( ( pManager == NULL ) || ( pManager->hContext == NULL ) )
        return( SCARD_E_INVALID_PARAMETER );
 
-    automatic = readersSettingBitmapBitTest( READER_BIT_AUTO );
+    automatic = readersSettingBitmapBitTest( pManager, READER_BIT_AUTO );
 
     if ( automatic )
     {
@@ -590,61 +639,95 @@ readersGetTagList(
             return( rv );
     }
 
-    /* before we start, reset the count to 0 */
+    /* before we start, reset the total count to 0 */
     pManager->tagList.numTags = 0;
 
-    /* for all readers we were connected to PREVIOUSLY or are now after AUTMATIC reconnect s*/
+    /* for all readers we were connected to PREVIOUSLY or are now after AUTMATIC reconnect */
     for ( i = 0; i < pManager->nbReaders; i++ )
     {
         /* make sure it's initialized, as depending on reader settings we may skip over */
         /* one of these pointers in the array and later try to free an invalid pointer */
         pTags[i] = NULL;
-        numTags[i] = 0;
+        pManager->readers[i].tagList.numTags = 0;
 
         /* check we are connected, have a driver and should be reading it */
         if ( ( pManager->readers[i].hCard != NULL ) && ( pManager->readers[i].pDriver != NULL ) &&
-             ( automatic || readersSettingBitmapNumberTest( i ) ) )
+             ( automatic || readersSettingBitmapNumberTest( pManager, i ) ) )
         {
             /* allocate the structure for this reader to read tag list into upto max size */
             pTags[i] = (tTag *)malloc( ( ((tReaderDriver *)(pManager->readers[i].pDriver))->maxTags ) * sizeof(tTag) );
 
-            /* call the reader's associated driver function to read the tag list */
-            rv = ((tReaderDriver *)(pManager->readers[i].pDriver))->getTagList( &(pManager->readers[i]), &(numTags[i]), pTags[i] );
+            /* call the reader's associated driver's function to read the tag list */
+            rv = ((tReaderDriver *)(pManager->readers[i].pDriver))->getTagList( &(pManager->readers[i]), pTags[i] );
             if ( rv != SCARD_S_SUCCESS )
             {
+                PCSC_ERROR( pManager, rv, "driver->getTagList():");
                 RESET_READER( pManager->readers[i] );
-                numTags[i] = 0;
                 if ( pTags[i] != NULL )
                     free( pTags[i] );
                 pTags[i] = NULL;
             }
             /* accumulate the total number of tags found */
-            pManager->tagList.numTags += numTags[i];
+            pManager->tagList.numTags += pManager->readers[i].tagList.numTags;
         }
     }
 
-    /* mash them all up into one list */
+    /* now mash them all up into one big list */
+    pManager->tagList.pTags = NULL; /* for the zero tag case */
+    uniqueListIndex = 0;
+
     if ( pManager->tagList.numTags > 0 )
     {
-        pManager->tagList.pTags = malloc( (pManager->tagList.numTags) * sizeof( tTag ) );
+        pManager->tagList.pTags = (tTag *)malloc( (pManager->tagList.numTags) * sizeof( tTag ) );
 
         /* copy all the individual lists across into the unique list */
         for( i = 0; i < pManager->nbReaders; i++)
         {
-            for ( j = 0; j < numTags[i]; j++ )
-                pManager->tagList.pTags[uniqueListIndex++] = (pTags[i])[j];
+            /* for each of the tags detected in this reader */
+            for ( j = 0; j < pManager->readers[i].tagList.numTags; j++ )
+            {
+                                /* copy the tag from the tempory list to the unique one */
+                pManager->tagList.pTags[uniqueListIndex] = (pTags[i])[j];
 
-            /* free the individual list */
+                switch( pManager->tagList.pTags[uniqueListIndex].tagType )
+                {
+                    case SEL_RES_MIFARE_ULTRA:
+                        sprintf(messageString, "Tag ID:   %s\tType: MIFARE_ULTRA", pManager->tagList.pTags[uniqueListIndex].uid);
+                        break;
+                    case SEL_RES_MIFARE_1K:
+                        sprintf(messageString, "Tag ID:   %s\t\tType: MIFARE_1K", pManager->tagList.pTags[uniqueListIndex].uid);
+                        break;
+                    case SEL_RES_MIFARE_MINI:
+                        sprintf(messageString, "Tag ID:   %s\t\tType: MIFARE_MINI", pManager->tagList.pTags[uniqueListIndex].uid);
+                        break;
+                    case SEL_RES_MIFARE_4K:
+                        sprintf(messageString, "Tag ID:   %s\t\tType: MIFARE_4K", pManager->tagList.pTags[uniqueListIndex].uid);
+                        break;
+                    case SEL_RES_MIFARE_DESFIRE:
+                        sprintf(messageString, "Tag ID:   %s\t\tType: MIFARE_DESFIRE", pManager->tagList.pTags[uniqueListIndex].uid);
+                        break;
+                    case SEL_RES_JCOP30:
+                        sprintf(messageString, "Tag ID:   %s\t\tType: JCOP30", pManager->tagList.pTags[uniqueListIndex].uid);
+                        break;
+                    case SEL_RES_GEMPLUS_MPCOS:
+                        sprintf(messageString, "Tag ID:   %s\t\tType: GEMPLUS_MPCOS", pManager->tagList.pTags[uniqueListIndex].uid);
+                        break;
+                    default:
+                        sprintf(messageString, "Tag ID:   %s\t\tType: Unknown", pManager->tagList.pTags[uniqueListIndex].uid);
+                        break;
+                }
+                readersLogMessage( pManager, LOG_INFO, 2, messageString);
+                uniqueListIndex++;
+            }
+
+            /* free the space allocated for that list, even if it was never filled with anything */
             if ( pTags[i] )
                 free( pTags[i] );
         }
     }
-    else
-        pManager->tagList.pTags = NULL;
 
-    sprintf( messageString, "Number of tags: %d", (int)pManager->tagList.numTags );
-    readersLogMessage( LOG_INFO, 2, messageString );
-    readersLogMessage( LOG_INFO, 2, messageString );
+    sprintf( messageString, "Total Number of tags: %d", (int)(pManager->tagList.numTags) );
+    readersLogMessage( pManager, LOG_INFO, 2, messageString );
 
    return (rv);
 }

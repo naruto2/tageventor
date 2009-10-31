@@ -168,9 +168,9 @@ applyChanges( void )
     {
         /* if the GUI toggle is set */
         if ( gtk_toggle_button_get_active( (GtkToggleButton *)readerNumToggle[i].toggle ) )
-            readersSettingBitmapBitSet( readerNumToggle[i].bit );
+            readersSettingBitmapBitSet(  &readerManager, readerNumToggle[i].bit );
         else
-            readersSettingBitmapBitUnset( readerNumToggle[i].bit );
+            readersSettingBitmapBitUnset(  &readerManager, readerNumToggle[i].bit );
     }
 
     /* save the setting for poll delay */
@@ -275,7 +275,7 @@ buildSettingsDialog ( void  )
     for ( i = 0; i < (MAX_NUM_READERS +1); i++ )
     {
         readerNumToggle[i].toggle = gtk_check_button_new_with_label( readerNumToggle[i].label);
-        gtk_toggle_button_set_active( (GtkToggleButton *)readerNumToggle[i].toggle, readersSettingBitmapBitTest( 1 << i) );
+        gtk_toggle_button_set_active( (GtkToggleButton *)readerNumToggle[i].toggle, readersSettingBitmapBitTest(  &readerManager, 1 << i) );
 
         /* attach a new widget into the table, row 0, for the 6 columns */
         gtk_table_attach( (GtkTable *)table, readerNumToggle[i].toggle, i+1, i+2, 0, 1, GTK_FILL, GTK_FILL, 5, 0 );

@@ -47,6 +47,7 @@
 		<Unit filename="acr122UDriver.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="readerDriver.h" />
 		<Unit filename="systemTray.h">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
