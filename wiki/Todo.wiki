@@ -16,7 +16,7 @@ Modify the example scripts somehow so that they also run on Mac OS X, where for 
 Look into having and executing AppleScript scripts or the like.
 
 == Mac OS X GUI ==
-Investigate Gtk+ on Mac OS X, or other ways to have the UI version also work. - OnGoing -
+Investigate Gtk+ on Mac OS X, or other ways to have the UI version also work. - this work is !OnGoing -
 
 == Man page ==
 Write something useful in the man page, and then modify the install script to copy it to the appropriate location.
@@ -47,6 +47,18 @@ Think about if it's useful to define "states" as well as events, so that somethi
 == Integration ==
 Consider a better way of generating system events than scripts. Maybe one that's more tightly integrated with each OS it runs on.
 
+= Read / Write tag contents =
+When a new tag is detected (for the session?) then read it's entire contents and make available to the user. 
+Possibly add the ability to edit it and then write it back to the same tag.
+
+= Tree View of readers and tags =
+Make it possible to see what tag(s) is in which readers, and to see what contents are in each tag, all in a hierarchical tree view.
+
+= NFC =
+Parse NFC NDEF messages and the RTD's and act upon the standardized content types as as URL directly in the application, without the need for a script.
+
+Send other suggestions to mailto:info@autelic.org
+
 == Security / authentication ==
   * It seems there is some mechanism with the embedded SAM card in the tag reader to do some authentication to the reader. Not sure how it applies, works or how to implement it. Investigation required.
   * I'd like to have the program also get the local PC MAC address being used, and the processor ID and maybe use them as additional security or to authenticate a client device.
@@ -65,8 +77,3 @@ One of the common issues for inexpert or infrequent computer users (and hence a 
 == Tag read / write ==
     * Read the entire contents of the tag memory (see spec document in download section)
     * Write the bytes that can be written, and read them back to verify
-
-= NFC =
-Parse NFC NDEF messages and the RTD's and act upon the standardized content types as as URL directly in the application, without the need for a script.
-
-Send other suggestions to mailto:info@autelic.org
