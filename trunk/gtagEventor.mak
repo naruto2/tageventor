@@ -73,9 +73,8 @@ else
                       -DDEFAULT_COMMAND_DIR='"/etc/gtagEventor"'
 endif
 
-##### Get revision number of the version we're compiling
-rev_string = $(shell, svnversion)
-version_string = "0.0.0"
+##### Get rev_string and version_string
+include version.mak
 
 ##### Compile flags
 cc_flags = $(build_flags) $(icon_flags) -I . -I lib/source -Wall \
@@ -127,7 +126,8 @@ obj/Debug/gtagEventor.d: tagEventor.c
 	rm -f $@.$$$$
 
 obj/Debug/%.o : %.c
-	@gcc -c $< $(debug_cc_flags) -o $@
+	echo $(rev_string) #HERE
+	gcc -c $< $(debug_cc_flags) -o $@
 	@echo "Compiling " $<
 
 ########################## Release TARGETS ###############################

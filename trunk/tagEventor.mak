@@ -28,9 +28,8 @@ cleanDebug:
 include $(debug_dependencies)
 include $(release_dependencies)
 
-##### Get revision number of the version we're compiling
-rev_string = $(shell, svnversion)
-version_string = "0.0.0"
+##### Get rev_string and version_string
+include version.mak
 
 ##### Compile Flags
 cc_flags = -Wall -I . -I /usr/include/PCSC -I lib/source \
