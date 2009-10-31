@@ -1,5 +1,4 @@
 #!/bin/bash
-set -x
 
 ################## check_root() ##########################
 function check_root {
