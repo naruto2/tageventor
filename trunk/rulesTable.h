@@ -49,7 +49,7 @@ extern void  rulesTableEntryEnable( int index, char enable );
 extern const tRulesTableEntry *rulesTableEntryGet( int index );
 extern void  rulesTableEventDispatch(
                 int	  	        eventType,
-                tUID       	    tagUID,
+                const tTag      *pTag,
                 const tReader	*pReader
                 );
 

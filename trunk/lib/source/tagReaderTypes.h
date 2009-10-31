@@ -19,6 +19,13 @@
 #ifndef TAG_READER_TYPES_INCLUDED
 #define TAG_READER_TYPES_INCLUDED
 
+#include "tagMifareUltra.h"
+
+#ifndef TRUE
+#define TRUE 1
+#define FALSE 0
+#endif
+
 #define MAX_SAM_SERIAL_SIZE (30)    /* TODO what is max size? */
 #define MAX_SAM_ID_SIZE     (30)    /* TODO what is max size? */
 
@@ -26,28 +33,40 @@
 #define MAX_TAG_UID_SIZE (20)
 
 #define MAX_NUM_READERS     (6)
-/* NOTE that the first bit is used for AUTO, so we use MAX_NUM_READERS +1 bits */
-/* reader setting is a bitmap so that multiple can be set and remember at same time */
+
+#define SEL_RES_MIFARE_ULTRA                    (0x00)
+#define SEL_RES_MIFARE_1K                       (0x08)
+#define SEL_RES_MIFARE_MINI                     (0x09)
+#define SEL_RES_MIFARE_4K                       (0x18)
+#define SEL_RES_MIFARE_DESFIRE                  (0x20)
+#define SEL_RES_JCOP30                          (0x28)  /* TYPE A */
+#define SEL_RES_GEMPLUS_MPCOS                   (0x98)
+
 
 /**************************    TYPEDEFS    **************************/
+typedef union		{
+			    tTagContents_MIFARE_ULTRA   mifareUltra;
+			} tTagContents;
+
 typedef char	tUID[MAX_TAG_UID_SIZE];
 
-typedef enum {  MIFARE_ULTRALIGHT   =0x00,
-                MIFARE_1K           =0x08,
-                MIFARE_MINI         =0x09,
-                MIFARE_4K           =0x18,
-                MIFARE_DESFIRE      =0x20,
-                JCOP                =0x28,
-                GEMPLUS_MPCOS       =0x98,
+typedef enum {  MIFARE_ULTRALIGHT   = SEL_RES_MIFARE_ULTRA,
+                MIFARE_1K           = SEL_RES_MIFARE_1K,
+                MIFARE_MINI         = SEL_RES_MIFARE_MINI,
+                MIFARE_4K           = SEL_RES_MIFARE_4K,
+                MIFARE_DESFIRE      = SEL_RES_MIFARE_DESFIRE,
+                JCOP                = SEL_RES_JCOP30,
+                GEMPLUS_MPCOS       = SEL_RES_GEMPLUS_MPCOS,
                 UNKNOWN_TYPE        =0xFF } tTagType;
 
 typedef struct {
-                tTagType    tagType;
-                tUID        uid;
+                tTagContents    *pContents;
+                tTagType        tagType;
+                tUID            uid;
                 } tTag;
 
 typedef struct {
-		tTag        *pTags;    /* really a pointer to an array of tags */
+		tTag        *pTags;
     	int	        numTags;
 		} tTagList;
 

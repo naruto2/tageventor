@@ -48,12 +48,7 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="readerDriver.h" />
-		<Unit filename="systemTray.h">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="tagEventor.h">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
+		<Unit filename="tagMifareUltra.h" />
 		<Unit filename="tagReader.c">
 			<Option compilerVar="CC" />
 		</Unit>

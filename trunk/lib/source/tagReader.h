@@ -25,11 +25,6 @@
 #include "tagReaderTypes.h"
 
 /**************************** CONSTANTS ******************************/
-#ifndef TRUE
-#define TRUE 1
-#define FALSE 0
-#endif
-
 #define	MAX_LOG_MESSAGE	(200)
 
 /* use this to have readerSetOptions() not touch a given option value */

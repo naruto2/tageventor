@@ -21,7 +21,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "tagSpecs.h"
 #include "readerDriver.h"
 
 /***************************** LED CONTROL *********************/
@@ -339,6 +338,9 @@ LONG   acr122UGetTagList(
     /* loop until we have read possible number of unique tags on the reader */
     for (i = 0; i < ACR122U_MAX_NUM_TAGS; i++)
     {
+        /* we are not going to read ANY tag's contents and so it's a NULL pointer */
+        pTags[i].pContents = NULL;
+
         dwRecvLength = sizeof(pbRecvBuffer);
         rv = apduSend(pReader->hCard, APDU_POLL_MIFARE, sizeof(APDU_POLL_MIFARE),
                      pbRecvBuffer, &dwRecvLength);
