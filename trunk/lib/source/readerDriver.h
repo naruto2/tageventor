@@ -19,6 +19,9 @@
 
 #include "tagReaderTypes.h"
 
+/* wintypes.h is NOT included by winscard.h on Mac and so needed    */
+/* explicitly for the Mac build to work                             */
+#include <PCSC/wintypes.h>
 #include <PCSC/winscard.h>
 
 /**************************    TYPEDEFS    **************************/
