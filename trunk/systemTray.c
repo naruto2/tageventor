@@ -30,6 +30,8 @@
 #include "settingsDialog.h"
 #include "explorer.h"
 
+#include <libnotify/notify.h>
+
 #define SYSTEM_TRAY_TOOL_TIP_TEXT_MAX    (260)
 
 static GtkStatusIcon    *systemTrayIcon = NULL;
@@ -52,6 +54,26 @@ void systemTraySetPollDelay(
 
 }
 
+void
+systemTrayNotify(
+                const char * message,
+                const char * body,
+                const char * iconName
+                )
+{
+
+    NotifyNotification *notification;
+    GError              *pError = NULL;
+
+    /* create the notification and attach it to the status icon */
+    notification = notify_notification_new_with_status_icon( message, body, iconName, systemTrayIcon );
+    notify_notification_set_timeout( notification, NOTIFY_EXPIRES_DEFAULT );
+    notify_notification_set_urgency( notification, NOTIFY_URGENCY_NORMAL );
+
+    /* request that the notification be shown on the screen */
+    notify_notification_show( notification, &pError);
+
+}
 
 void
 systemTraySetStatus(
@@ -87,6 +109,9 @@ static void
 iconQuit( void )
 {
     /* this is a request to exit tageventor altogether */
+
+    /* let libnotify know we're about to exit */
+    notify_uninit();
 
 #ifdef BUILD_RULES_EDITOR
     /* pass the request onto the rulse editor, and only exit if it says so */
@@ -156,6 +181,9 @@ startSystemTray(
 
     /* Init GTK+ it might modify significantly the command line options */
     gtk_init( argc, argv );
+
+    /* init the notifications library */
+    notify_init( PROGRAM_NAME );
 
 #ifdef DEBUG
     /* this might be useful for use during development of new icons */

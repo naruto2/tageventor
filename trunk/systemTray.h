@@ -23,5 +23,6 @@
 extern void startSystemTray( int     *argc, char    ***argv, int (*pollFunction)( void  *data ), int pollDelay, void *readerArray );
 extern void systemTraySetStatus( char connected, const char *generalMessage, const char * tagsMessage );
 extern void systemTraySetPollDelay( int validPollDelay );
+extern void systemTrayNotify( const char * message, const char * body, const char * icon );
 
 #endif
