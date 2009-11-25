@@ -29,11 +29,13 @@
 #include "systemTray.h"
 #include "explorer.h"
 
-
-#define NUM_READER_TABLE_COLUMNS  (5)
-static const gchar      *columnHeader[NUM_READER_TABLE_COLUMNS] = { "Number", "Name", "Driver Descriptor", "SAM ID", "SAM Serial" };
-
 static GtkWidget        *explorer = NULL;
+
+enum {
+    OBJECT_COLUMN,
+    DESCRIPTION_COLUMN,
+    N_COLUMNS };
+
 
 static void
 hideExplorer( void )
@@ -84,74 +86,125 @@ destroy(
 
 static void
 tableAddReader(
-                GtkTable                *pTable,
+                GtkTreeStore            *pStore,
+                GtkTreeIter             *pRoot,
                 const tReaderManager    *pManager,
                 int                     i
                 )
 {
-    GtkWidget           *number, *name, *driverDescriptor, *SAM_id, *SAM_serial;
     char                numberString[5];
+    GtkTreeIter         readerIter, nameIter, driverIter, SAMIter, SAMIDIter, SAMSerialIter;
 
-    sprintf( numberString, "%d", i );
-    number = gtk_label_new( numberString );
-    gtk_table_attach(pTable, number,  0, 1, i+1, i+2, GTK_FILL, GTK_FILL, 10, 3 );
-    gtk_widget_show( number );
+    sprintf( numberString, "Reader %d", i );
+
+    gtk_tree_store_append( pStore, &readerIter, pRoot );  /* Acquire a child iterator */
 
     /* if the reader has been connected to we can fill in mode info */
     if ( pManager->readers[i].hCard != NULL )
     {
-        name = gtk_label_new( pManager->readers[i].name );
-        gtk_table_attach(pTable, name,  1, 2, i+1, i+2, GTK_FILL, GTK_FILL, 10, 3 );
-        gtk_widget_show( name );
+        gtk_tree_store_set( pStore, &readerIter,
+                            OBJECT_COLUMN, numberString,
+                            DESCRIPTION_COLUMN, "Connected", -1);
 
-        driverDescriptor = gtk_label_new( pManager->readers[i].driverDescriptor );
-        gtk_table_attach(pTable, driverDescriptor,  2, 3, i+1, i+2, GTK_FILL, GTK_FILL, 10, 3 );
-        gtk_widget_show( driverDescriptor );
+        /***************** NAME **********************/
+        gtk_tree_store_append( pStore, &nameIter, &readerIter );
+        gtk_tree_store_set( pStore, &nameIter,
+                        OBJECT_COLUMN, "Name/Firmware",
+                        DESCRIPTION_COLUMN, pManager->readers[i].name, -1);
 
+        /***************** DRIVER **********************/
+        gtk_tree_store_append( pStore, &driverIter, &readerIter );
+        gtk_tree_store_set( pStore, &driverIter,
+                            OBJECT_COLUMN, "Driver",
+                            DESCRIPTION_COLUMN, pManager->readers[i].driverDescriptor, -1);
+
+        /******************** SAM **********************/
+        gtk_tree_store_append( pStore, &SAMIter, &readerIter );
         /* if there is a SAM present then show it's details */
         if ( pManager->readers[i].SAM )
         {
-            SAM_id = gtk_label_new( pManager->readers[i].SAM_id );
-            gtk_table_attach(pTable, SAM_id,  3, 4, i+1, i+2, GTK_FILL, GTK_FILL, 10, 3 );
-            gtk_widget_show( SAM_id );
+            gtk_tree_store_set( pStore, &SAMIter,
+                                OBJECT_COLUMN, "SAM",
+                                DESCRIPTION_COLUMN, "Present", -1);
 
-            SAM_serial = gtk_label_new( pManager->readers[i].SAM_serial );
-            gtk_table_attach(pTable, SAM_serial,  4, 5, i+1, i+2, GTK_FILL, GTK_FILL, 10, 3 );
-            gtk_widget_show( SAM_serial );
+            gtk_tree_store_append( pStore, &SAMIDIter, &SAMIter );
+            gtk_tree_store_set( pStore, &SAMIDIter,
+                                OBJECT_COLUMN, "ID",
+                                DESCRIPTION_COLUMN, pManager->readers[i].SAM_id, -1);
+
+            gtk_tree_store_append( pStore, &SAMSerialIter, &SAMIter );
+            gtk_tree_store_set( pStore, &SAMSerialIter,
+                                OBJECT_COLUMN, "Serial",
+                                DESCRIPTION_COLUMN, pManager->readers[i].SAM_serial, -1);
         }
+        else
+            gtk_tree_store_set( pStore, &SAMIter,
+                                OBJECT_COLUMN, "SAM",
+                                DESCRIPTION_COLUMN, "No SAM present", -1);
     }
     else
-    {   /* we have not connected to this reader, see if it exists */
+    {
+        /* we have not connected to this reader, see if it exists */
         if ( i >= pManager->nbReaders )
         {
-            /* No such reader, put that in as text */
-            name = gtk_label_new( "No reader detected" );
-            gtk_table_attach(pTable, name,  1, 5, i+1, i+2, GTK_FILL, GTK_FILL, 10, 3 );
-            gtk_widget_show( name );
+            gtk_tree_store_set( pStore, &readerIter,
+                            OBJECT_COLUMN, numberString,
+                            DESCRIPTION_COLUMN, "Not detected", -1);
         }
         else
         {   /* there is such a reader in the system, although we're not connect */
+            gtk_tree_store_set( pStore, &readerIter,
+                                OBJECT_COLUMN, numberString,
+                                DESCRIPTION_COLUMN, "Not connected", -1);
+
             if ( pManager->readers[i].name != NULL )
             {
-                name = gtk_label_new( pManager->readers[i].name );
-                gtk_table_attach(pTable, name,  1, 2, i+1, i+2, GTK_FILL, GTK_FILL, 10, 3 );
-                gtk_widget_show( name );
+                /***************** NAME **********************/
+                gtk_tree_store_append( pStore, &nameIter, &readerIter );
+                gtk_tree_store_set( pStore, &nameIter,
+                                OBJECT_COLUMN, "Name/Firmware",
+                                DESCRIPTION_COLUMN, pManager->readers[i].name, -1);
 
-                driverDescriptor = gtk_label_new( "Information not availabe, Not connected to this reader" );
-                gtk_table_attach(pTable, driverDescriptor,  2, 5, i+1, i+2, GTK_FILL, GTK_FILL, 10, 3 );
-                gtk_widget_show( driverDescriptor );
+                /***************** DRIVER **********************/
+                gtk_tree_store_append( pStore, &driverIter, &readerIter );
+                gtk_tree_store_set( pStore, &driverIter,
+                                    OBJECT_COLUMN, "Driver",
+                                    DESCRIPTION_COLUMN, "Information not available", -1);
             }
         }
     }
+}
+
+static void
+explorerFillTreeModel( GtkTreeStore *pStore )
+{
+
+    int         i;
+    GtkTreeIter iter1;  /* Parent iter */
+
+    gtk_tree_store_append( pStore, &iter1, NULL);  /* Acquire a top-level iterator */
+    gtk_tree_store_set( pStore, &iter1,
+                    OBJECT_COLUMN, "PCSCD",
+                    DESCRIPTION_COLUMN, "PC/SC Lite daemon"
+                    -1);
+
+    /* add rows for each reader */
+    for ( i = 0; i < MAX_NUM_READERS; i++ )
+        tableAddReader( pStore, &iter1, &readerManager, i );
+
 }
 
 static GtkWidget *
 buildExplorer ( void *pData )
 {
     GtkWidget   *dialog;
-    GtkWidget   *vbox, *buttonBox, *pTable, *label, *closeButton, *statusBar;
-    int         i;
+    GtkWidget   *vbox, *buttonBox, *closeButton, *statusBar;
     char        windowTitle[strlen(PROGRAM_NAME) + strlen(TAG_EVENTOR_EXPLORER_WINDOW_TITLE) + 10];
+    GtkTreeStore    *store;
+    GtkWidget       *tree;
+    GtkTreeViewColumn *column;
+    GtkCellRenderer *renderer;
+
 
     dialog = gtk_window_new( GTK_WINDOW_TOPLEVEL );
     sprintf(windowTitle, "%s%s", PROGRAM_NAME, TAG_EVENTOR_EXPLORER_WINDOW_TITLE );
@@ -179,32 +232,41 @@ buildExplorer ( void *pData )
     /* This packs the vbox into the window (a gtk container). */
     gtk_container_add (GTK_CONTAINER (dialog), vbox);
 
-    /******************************* Table ******************************************/
-    /* create the table for tag IDs, 7 rows, 5 columns */
-    pTable = gtk_table_new( ( MAX_NUM_READERS +1 ), 5, FALSE);
+    /****************************** Tree View ***************************************/
+    /* Create a model for the tree view. with two text columns */
+    store = gtk_tree_store_new ( N_COLUMNS, G_TYPE_STRING, G_TYPE_STRING);
 
+    /* custom function to fill the model with data */
+    explorerFillTreeModel( store );
+
+    /* Create a view */
+    tree = gtk_tree_view_new_with_model (GTK_TREE_MODEL (store));
+
+    /* The view now holds a reference.  We can get rid of our own reference */
+    g_object_unref (G_OBJECT (store));
+
+    /* Create a columnfor the object name */
+    renderer = gtk_cell_renderer_text_new ();
+    column = gtk_tree_view_column_new_with_attributes ("Object", renderer,
+                                                   "text", OBJECT_COLUMN,
+                                                   NULL);
+    gtk_tree_view_append_column (GTK_TREE_VIEW (tree), column);
+
+    /* Second column.. description of object */
+    renderer = gtk_cell_renderer_text_new ();
+    column = gtk_tree_view_column_new_with_attributes ("Description", renderer,
+                                                      "text", DESCRIPTION_COLUMN,
+                                                      NULL);
+    gtk_tree_view_append_column( GTK_TREE_VIEW (tree), column);
+
+    gtk_tree_view_set_enable_tree_lines( GTK_TREE_VIEW(tree), TRUE );
+
+    gtk_tree_view_expand_all( GTK_TREE_VIEW( tree ) );
+
+    /************** Pack in Tree View *********************************/
     /* This packs the scrolled window into the vbox (a gtk container). */
-    gtk_box_pack_start( GTK_BOX(vbox), pTable, TRUE, TRUE, 3);
+    gtk_box_pack_start( GTK_BOX(vbox), tree, TRUE, TRUE, 3);
 
-    /* add the column labels in the table*/
-    for (i = 0; i < NUM_READER_TABLE_COLUMNS; i++)
-    {
-        label = gtk_label_new( columnHeader[i] );
-
-        /* attach a new widget into the table in column 'i', row 0 */
-        gtk_table_attach((GtkTable *)pTable, label, i, i+1, 0, 1, GTK_FILL, GTK_FILL, 5, 3 );
-
-        gtk_widget_show( label );
-    }
-
-    /* the data passed in via the callback is a pointer to a reader Array */
-/* ADM TODO I can't figure out why passing the pointer via the callback doesn't work,
-   so a hack for now
-   pManager = pData; */
-
-    /* add rows for each reader */
-    for ( i = 0; i < MAX_NUM_READERS; i++ )
-        tableAddReader( (GtkTable *)pTable, &readerManager, i );
 
     /******************************* Button Box ***************************************/
     /* create the box for the buttons */
