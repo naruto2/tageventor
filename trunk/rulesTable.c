@@ -182,7 +182,6 @@ execScript(
 	const char * folderName,   /* without a trailing '/' */
 	const char * fileName,
 	const char * argv0,
-	const char * SAM_serial,
 	const char * tagUID,
 	const char * eventTypeString,
 	const char * ruleDescription
@@ -221,7 +220,7 @@ execScript(
    sprintf(messageString, "Attempting to execl() tag event script %s in child process with pid=%d",
            scriptPath, getpid());
    readersLogMessage( &readerManager, LOG_INFO, 2, messageString);
-   ret = execl( scriptPath, argv0, SAM_serial, tagUID, eventTypeString, NULL );
+   ret = execl( scriptPath, argv0, tagUID, eventTypeString, NULL );
    /* If any of the exec() functions returns, an error will have occurred. The return value is -1,
       and the global variable errno will be set to indicate the error. */
    sprintf(messageString, "Return value from execl() of script was = %d, errno=%d", ret, errno);
@@ -234,9 +233,8 @@ execScript(
 
 void
 rulesTableEventDispatch(
-                int	  	        eventType,
-                const tTag      *pTag,
-                const tReader	*preader
+                tEventType	  	eventType,
+                const tTag      *pTag
                 )
 {
     char	        messageString[MAX_LOG_MESSAGE];
@@ -268,19 +266,13 @@ rulesTableEventDispatch(
                 case GENERIC_MATCH:
                     sprintf( scriptName, "generic" );
                 break;
-                case SAM_ID_MATCH:
-                    strcpy( scriptName, preader->SAM_id );
-                break;
-                case SAM_SERIAL_MATCH:
-                    strcpy( scriptName, preader->SAM_serial );
-                break;
                 default:
                     readersLogMessage( &readerManager, LOG_ERR, 0, "Invalid 'scriptMatchType' no script execution attempted" );
                     return;
                 break;
             }
 
-            if (execScript( tagEntryArray[ruleIndex].folder, scriptName, pTag->uid, preader->SAM_serial, pTag->uid, tagString[eventType],
+            if (execScript( tagEntryArray[ruleIndex].folder, scriptName, pTag->uid, pTag->uid, tagString[eventType],
                             tagEntryArray[ruleIndex].description) == 0)
                 return;
         }

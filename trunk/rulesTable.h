@@ -28,8 +28,8 @@
 /* different options for matching script names */
 #define TAG_ID_MATCH	    (1)
 #define GENERIC_MATCH	    (2)
-#define SAM_ID_MATCH	    (3)
-#define SAM_SERIAL_MATCH    (4)
+
+typedef enum { TAG_IN = 0, TAG_OUT = 1, READER_ADDED = 2, READER_REMOVED = 3, PCSCD_CONNECT = 4, PCSCD_DISCONNECT = 5 } tEventType;
 
 /* where to save this type of config stuff???? via GConf or something */
 typedef struct {
@@ -47,9 +47,5 @@ extern int   rulesTableNumber( void );
 extern int   rulesTableRead( void );
 extern void  rulesTableEntryEnable( int index, char enable );
 extern const tRulesTableEntry *rulesTableEntryGet( int index );
-extern void  rulesTableEventDispatch(
-                int	  	        eventType,
-                const tTag      *pTag,
-                const tReader	*pReader
-                );
+extern void  rulesTableEventDispatch( tEventType eventType, const tTag *pTag );
 
