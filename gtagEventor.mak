@@ -15,7 +15,7 @@ debug_objects = obj/Debug/gtagEventor.o \
                 obj/Debug/rulesEditor.o \
                 obj/Debug/rulesEditorHelp.o \
                 obj/Debug/settingsDialog.o \
-                obj/Debug/readersDialog.o \
+                obj/Debug/explorer.o \
                 obj/Debug/systemTray.o
 
 release_objects = obj/Release/gtagEventor.o \
@@ -24,7 +24,7 @@ release_objects = obj/Release/gtagEventor.o \
                   obj/Release/rulesEditor.o \
                   obj/Release/rulesEditorHelp.o \
                   obj/Release/settingsDialog.o \
-                  obj/Release/readersDialog.o \
+                  obj/Release/explorer.o \
                   obj/Release/systemTray.o
 
 debug_dependencies = $(debug_objects:.o=.d)
@@ -42,7 +42,7 @@ build_flags = -DBUILD_SYSTEM_TRAY \
               -DBUILD_SETTINGS_DIALOG \
               -DBUILD_RULES_EDITOR \
               -DBUILD_RULES_EDITOR_HELP \
-              -DBUILD_READERS_DIALOG \
+              -DBUILD_EXPLORER \
               -DDEFAULT_LOCK_FILE_DIR='"/var/run/tagEventor"' \
               -DDAEMON_NAME='"tagEventord"'
 
