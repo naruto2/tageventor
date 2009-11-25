@@ -32,5 +32,5 @@
 
 #define RULES_EDITOR_WINDOW_TITLE   " - Rules Editor"
 #define SETTINGS_DIALOG_WINDOW_TITLE " - Settings"
-#define READERS_DIALOG_WINDOW_TITLE " - Readers"
+#define TAG_EVENTOR_EXPLORER_WINDOW_TITLE " - Explorer"
 

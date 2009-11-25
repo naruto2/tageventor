@@ -1,6 +1,5 @@
 /*
-  readersDialog.c - C source code for gtagEventor Gtk/GNOME readers
-                    dialog window
+  explorer.c - C source code for gtagEventor Gtk/GNOME explorer
 
   Copyright 2009 Autelic Association (http://www.autelic.org)
 
@@ -17,7 +16,7 @@
   limitations under the License.
 */
 
-#ifdef BUILD_READERS_DIALOG
+#ifdef BUILD_EXPLORER
 #include <stdlib.h>
 #include <unistd.h>
 #include <gtk/gtk.h>
@@ -28,19 +27,19 @@
 #include "stringConstants.h"
 #include "tagEventor.h"
 #include "systemTray.h"
-#include "readersDialog.h"
+#include "explorer.h"
 
 
 #define NUM_READER_TABLE_COLUMNS  (5)
 static const gchar      *columnHeader[NUM_READER_TABLE_COLUMNS] = { "Number", "Name", "Driver Descriptor", "SAM ID", "SAM Serial" };
 
-static GtkWidget   *readersDialog = NULL;
+static GtkWidget        *explorer = NULL;
 
 static void
-hideReadersDialog( void )
+hideExplorer( void )
 {
 
-    gtk_widget_hide( readersDialog );
+    gtk_widget_hide( explorer );
 
 }
 
@@ -52,7 +51,7 @@ closeSignalHandler(
                    gpointer     user_data
                    )
 {
-    hideReadersDialog();
+    hideExplorer();
 }
 
 /* This get's called when the user closes the window using the Window Manager 'X' box */
@@ -74,17 +73,21 @@ destroy(
         )
 {
 
-    /* hide the main cpanel window */
-    hideReadersDialog();
+    /* hide the explorer window */
+    hideExplorer();
 
     /* it seems that when this get's called the widget actually get's destroyed */
     /* so, show it's not existant and on next activate it will get re-built */
-    readersDialog = NULL;
+    explorer = NULL;
 
 }
 
 static void
-tableAddReader( GtkTable *pTable, const tReaderManager *pManager, int i )
+tableAddReader(
+                GtkTable                *pTable,
+                const tReaderManager    *pManager,
+                int                     i
+                )
 {
     GtkWidget           *number, *name, *driverDescriptor, *SAM_id, *SAM_serial;
     char                numberString[5];
@@ -143,15 +146,15 @@ tableAddReader( GtkTable *pTable, const tReaderManager *pManager, int i )
 }
 
 static GtkWidget *
-buildReadersDialog ( void *pData )
+buildExplorer ( void *pData )
 {
     GtkWidget   *dialog;
     GtkWidget   *vbox, *buttonBox, *pTable, *label, *closeButton, *statusBar;
     int         i;
-    char        windowTitle[strlen(PROGRAM_NAME) + strlen(READERS_DIALOG_WINDOW_TITLE) + 10];
+    char        windowTitle[strlen(PROGRAM_NAME) + strlen(TAG_EVENTOR_EXPLORER_WINDOW_TITLE) + 10];
 
     dialog = gtk_window_new( GTK_WINDOW_TOPLEVEL );
-    sprintf(windowTitle, "%s%s", PROGRAM_NAME, READERS_DIALOG_WINDOW_TITLE);
+    sprintf(windowTitle, "%s%s", PROGRAM_NAME, TAG_EVENTOR_EXPLORER_WINDOW_TITLE );
     gtk_window_set_title( (GtkWindow *)dialog, windowTitle );
 
     /* set the icon for the window */
@@ -234,18 +237,18 @@ buildReadersDialog ( void *pData )
 }
 
 void
-readersDialogActivate( void *readersArray )
+explorerActivate( void *readersArray )
 {
 
     /* if it exists delete it as the situation might have changed */
-    if ( readersDialog )
-        gtk_widget_destroy( readersDialog );
+    if ( explorer )
+        gtk_widget_destroy( explorer );
 
     /* build the widget tree for the entire UI */
-    readersDialog = buildReadersDialog( readersArray );
+    explorer = buildExplorer( readersArray );
 
     /* Show window, and recursively all contained widgets */
-    gtk_widget_show_all( readersDialog );
+    gtk_widget_show_all( explorer );
 
 }
 

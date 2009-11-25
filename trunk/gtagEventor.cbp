@@ -24,7 +24,7 @@
 					<Add option="-DBUILD_SETTINGS_DIALOG" />
 					<Add option="-DBUILD_RULES_EDITOR" />
 					<Add option="-DBUILD_RULES_EDITOR_HELP" />
-					<Add option="-DBUILD_READERS_DIALOG" />
+					<Add option="-DBUILD_EXPLORER" />
 				</Compiler>
 				<Linker>
 					<Add library="/home/andrew/tageventor/trunk/lib/Debug/libtagReader.a" />
@@ -45,7 +45,7 @@
 					<Add option="-DBUILD_SETTINGS_DIALOG" />
 					<Add option="-DBUILD_RULES_EDITOR" />
 					<Add option="-DBUILD_RULES_EDITOR_HELP" />
-					<Add option="-DBUILD_READERS_DIALOG" />
+					<Add option="-DBUILD_EXPLORER" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -68,10 +68,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="aboutDialog.h" />
-		<Unit filename="readersDialog.c">
+		<Unit filename="explorer.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="readersDialog.h" />
+		<Unit filename="explorer.h" />
 		<Unit filename="rulesEditor.c">
 			<Option compilerVar="CC" />
 		</Unit>

@@ -28,7 +28,7 @@
 #include "aboutDialog.h"
 #include "systemTray.h"
 #include "settingsDialog.h"
-#include "readersDialog.h"
+#include "explorer.h"
 
 #define SYSTEM_TRAY_TOOL_TIP_TEXT_MAX    (260)
 
@@ -150,8 +150,8 @@ startSystemTray(
     GtkWidget       *settingsDialogMenuItem;
 #endif
 
-#ifdef BUILD_READERS_DIALOG
-    GtkWidget       *readersDialogMenuItem;
+#ifdef BUILD_EXPLORER
+    GtkWidget       *explorerMenuItem;
 #endif
 
     /* Init GTK+ it might modify significantly the command line options */
@@ -204,14 +204,14 @@ startSystemTray(
     gtk_widget_show( settingsDialogMenuItem );
 #endif
 
-#ifdef BUILD_READERS_DIALOG
-    readersDialogMenuItem = gtk_menu_item_new_with_label( "Readers" );
-    gtk_menu_shell_append( GTK_MENU_SHELL( popupMenu ), readersDialogMenuItem );
-    g_signal_connect (G_OBJECT (readersDialogMenuItem), "activate", G_CALLBACK (readersDialogActivate), readerArray );
-    gtk_widget_show( readersDialogMenuItem );
+#ifdef BUILD_EXPLORER
+    explorerMenuItem = gtk_menu_item_new_with_label( "Explore" );
+    gtk_menu_shell_append( GTK_MENU_SHELL( popupMenu ), explorerMenuItem );
+    g_signal_connect (G_OBJECT (explorerMenuItem), "activate", G_CALLBACK (explorerActivate), readerArray );
+    gtk_widget_show( explorerMenuItem );
 #endif
 
-#if defined ( BUILD_SETTINGS_DIALOG ) || defined ( BUILD_READERS_DIALOG )
+#if defined ( BUILD_SETTINGS_DIALOG ) || defined ( BUILD_EXPLORER )
     /* put in a separator */
     separator = gtk_separator_menu_item_new();
     gtk_menu_shell_append( GTK_MENU_SHELL( popupMenu ), separator );
