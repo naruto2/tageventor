@@ -1,5 +1,7 @@
-
 Send other suggestions to mailto:info@autelic.org
+
+== Tags Types ==
+  * Each time we poll for tags, also poll for NFC Type 1 (Innovision Topaz, Jewel) and NFC Type 3 (Sony FeliCa) types. This will involve me getting some of those tags to test with first!
 
 == Misc short-term stuff ==
   * Clean up the concepts of tags, tag events, and actions in all of program.
@@ -10,7 +12,7 @@ Send other suggestions to mailto:info@autelic.org
 
   * Add the regexp matching of the tagID inside tagEventDispatch()
 
-  * detect and decode NFC NDEF messages and the defined RTDs and act on them directly, byt showing test, opening URL or whatever...
+  * detect and decode NFC NDEF messages and the defined RTDs and act on them directly, by showing text, opening URL or whatever...
 
   * Write some text for the rules Editor Help Dialog and have it display it neatly, maybe with links to the wiki help pages or other sources.
 
