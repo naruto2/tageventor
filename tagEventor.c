@@ -450,6 +450,13 @@ eventDispatch(
                 )
 {
 
+#ifdef BUILD_SYSTEM_TRAY
+    if ( eventType == TAG_IN )
+    {
+        systemTrayNotify( "Tag IN", pTag->uid, NULL );
+    }
+#endif
+
     /* If it was a tag event then search for and execute associated events using rules */
     if ( ( eventType == TAG_IN ) || ( eventType == TAG_OUT ) )
         rulesTableEventDispatch( eventType, pTag );

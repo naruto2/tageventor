@@ -53,6 +53,7 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="tagReader.h" />
+		<Unit filename="tagReaderTypes.h" />
 		<Extensions>
 			<code_completion />
 			<debugger />

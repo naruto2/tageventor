@@ -67,7 +67,7 @@ ifeq ($(os),Darwin)
 else
 	linker = gcc
 	link_flags =  `pkg-config --cflags --libs gtk+-2.0 gmodule-2.0` \
-                      -l tagReader -l pcsclite
+                      -l tagReader -l pcsclite -l notify
 	os_cc_flags = `pkg-config --cflags --libs gtk+-2.0 gmodule-2.0` \
                       -I /usr/include/PCSC \
                       -DDEFAULT_COMMAND_DIR='"/etc/gtagEventor"'
