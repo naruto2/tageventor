@@ -38,13 +38,9 @@
 #include "stringConstants.h"
 
 /*************************** MACROS ************************/
-/* Tag event types */
-#define TAG_IN  (0)
-#define TAG_OUT (1)
 
 /*************    TYPEDEFS TO THIS FILE     **********************/
 typedef enum { FOREGROUND, START_DAEMON, STOP_DAEMON, SYSTEM_TRAY } tRunOptions;
-
 
 /************* VARIABLES STATIC TO THIS FILE  ********************/
 static  int		        lockFile = -1;
@@ -320,6 +316,7 @@ stopDaemon( void )
 }
 /************************ STOP DAEMON **************/
 
+
 /********************** GET LOCK OR DIE *********************/
 /* This runs in the forked daemon process */
 /* make sure we are the only running copy for this reader number */
@@ -445,7 +442,19 @@ daemonize (
 }
 /*********************  DAEMONIZE ****************************/
 
+static void
+eventDispatch(
+                tEventType      eventType,
+                const tTag      *pTag,
+                const tReader   *pReader
+                )
+{
 
+    /* If it was a tag event then search for and execute associated events using rules */
+    if ( ( eventType == TAG_IN ) || ( eventType == TAG_OUT ) )
+        rulesTableEventDispatch( eventType, pTag );
+
+}
 
 static int
 tagListCheck(
@@ -530,7 +539,7 @@ tagListCheck(
             if (!found)
             {
                 listChanged = TRUE;
-                rulesTableEventDispatch( TAG_OUT, &(previousTagList.pTags[i]), readerManager.readers );
+                eventDispatch( TAG_OUT, &(previousTagList.pTags[i]), NULL );
             }
         }
 
@@ -547,7 +556,7 @@ tagListCheck(
             if (!found)
             {
                 listChanged = TRUE;
-                rulesTableEventDispatch(TAG_IN, &(readerManager.tagList.pTags[i]), readerManager.readers );
+                eventDispatch( TAG_IN, &(readerManager.tagList.pTags[i]), NULL );
             }
         }
 

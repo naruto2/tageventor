@@ -4,15 +4,14 @@
 # See http://www.autelic.org for more on autelic
 # See http://code.google.com/p/tc-squared for more on tagEventor
 # parameters passed are:
-# $1 = SAM (unique ID of the SAM chip in the smart card reader if exists, "NoSAM" otherwise
-# $2 = UID (unique ID of the tag, as later we may use wildcard naming)
-# $3 = Event Type (IN for new tag placed on reader, OUT for tag removed from reader)
+# $1 = UID (unique ID of the tag, as later we may use wildcard naming)
+# $2 = Event Type (IN for new tag placed on reader, OUT for tag removed from reader)
 
 # show a message in a dialog on the screen
-if [[ $3 = "IN" ]]
+if [[ $2 = "IN" ]]
 then
    export DISPLAY=:0.0
-   /usr/bin/X11/xmessage -center -timeout 5 "Generic event script - Event $3, SAM=$1, UID=$2"&
+   /usr/bin/X11/xmessage -center -timeout 5 "Generic event script - Event $2, UID=$1"&
 else
    # exit 0 = SUCCESS to show no problem was found
    exit 0

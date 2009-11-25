@@ -318,16 +318,6 @@ gchar*              g_filename_to_utf8                  (const gchar *opsysstrin
     g_signal_connect (G_OBJECT (matchMenuItem), "toggled", G_CALLBACK (matchChosen), (gpointer)GENERIC_MATCH );
     gtk_widget_show( matchMenuItem );
 
-    matchMenuItem = gtk_radio_menu_item_new_with_label( NULL, "SAM ID" );
-    gtk_menu_shell_append( GTK_MENU_SHELL( matchMenu ), matchMenuItem );
-    g_signal_connect (G_OBJECT (matchMenuItem), "toggled", G_CALLBACK (matchChosen), (gpointer)SAM_ID_MATCH );
-    gtk_widget_show( matchMenuItem );
-
-    matchMenuItem = gtk_radio_menu_item_new_with_label( NULL, "SAM Serial Number" );
-    gtk_menu_shell_append( GTK_MENU_SHELL( matchMenu ), matchMenuItem );
-    g_signal_connect (G_OBJECT (matchMenuItem), "toggled", G_CALLBACK (matchChosen), (gpointer)SAM_SERIAL_MATCH );
-    gtk_widget_show( matchMenuItem );
-
     gtk_widget_show( matchMenu );
 
     gtk_table_attach(pTable, matchMenu, 3, 4, i+1, i+2, GTK_FILL, GTK_FILL, 0, 0 );
