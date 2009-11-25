@@ -651,6 +651,11 @@ readersGetTagList(
         if ( ( pManager->readers[i].hCard != NULL ) && ( pManager->readers[i].pDriver != NULL ) &&
              ( automatic || readersSettingBitmapNumberTest( pManager, i ) ) )
         {
+            /* I'd normally check if a tag is present using readerGetContactlessStatus() before    */
+            /* querying the tag list, but all my testing to date has failed to get the contactless */
+            /* status APDU to work, it always returns D5 05 00 00 00 80 90 00 to indicate no tag   */
+            /* is present. I have reported this issue to ACS by e-mail - Andrew                    */
+
             /* allocate the structure for this reader to read tag list into upto max size */
             pTags[i] = (tTag *)malloc( ( ((tReaderDriver *)(pManager->readers[i].pDriver))->maxTags ) * sizeof(tTag) );
 

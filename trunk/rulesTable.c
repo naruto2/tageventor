@@ -280,12 +280,6 @@ rulesTableEventDispatch(
                 break;
             }
 
-
-/* ADM HERE */
-#ifdef DEBUG
-printf( "Tag Contents %2X\n", (unsigned int) pTag->pContents );
-#endif
-
             if (execScript( tagEntryArray[ruleIndex].folder, scriptName, pTag->uid, preader->SAM_serial, pTag->uid, tagString[eventType],
                             tagEntryArray[ruleIndex].description) == 0)
                 return;
