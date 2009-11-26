@@ -31,7 +31,7 @@
 #include "aboutDialog.h"
 
 #define DEFAULT_WIDTH_PIX       (620)
-#define DEFAULT_HEIGHT_PIX      (250)
+#define DEFAULT_HEIGHT_PIX      (270)
 
 #define NUM_COLUMNS             (5)
 static const gchar      *columnHeader[NUM_COLUMNS] = { "Rule Description", "Tag ID Match", "Folder", "Match", "Enabled" };
@@ -422,7 +422,7 @@ static GtkWidget *
 buildrulesEditor ( void  )
 {
     GtkWidget   *mainWindow;
-    GtkWidget   *vbox, *scroll, *buttonBox, *table;
+    GtkWidget   *vbox, *scroll, *buttonBox, *table, *helpText;
     GtkWidget   *helpButton, *aboutButton, *addButton, *cancelButton;
     int         numEntries;
     char        windowTitle[strlen(PROGRAM_NAME) + strlen(RULES_EDITOR_WINDOW_TITLE) + 10];
@@ -458,6 +458,12 @@ buildrulesEditor ( void  )
     gtk_container_add (GTK_CONTAINER (mainWindow), vbox);
 
     numEntries = rulesTableNumber( );
+
+    /******************************* Help Box ***************************************/
+    helpText = gtk_label_new( "When a tag is detected, rules will be tested in the order shown (from top to bottom) until one fits and can be executed." );
+
+    /* This packs the labelinto the vbox (a gtk container). */
+    gtk_box_pack_start( GTK_BOX(vbox), helpText, FALSE, FALSE, 6);
 
     /******************************* Table ******************************************/
     /* create the scolled window that will hold the viewport and table */
