@@ -17,6 +17,7 @@
 */
 
 #include <tagReader.h>
+#include "tagEventor.h"
 
 #ifndef TRUE
 #define TRUE 1
@@ -29,8 +30,6 @@
 #define TAG_ID_MATCH	    (1)
 #define GENERIC_MATCH	    (2)
 
-typedef enum { TAG_IN = 0, TAG_OUT = 1, READER_ADDED = 2, READER_REMOVED = 3, PCSCD_CONNECT = 4, PCSCD_DISCONNECT = 5 } tEventType;
-
 /* where to save this type of config stuff???? via GConf or something */
 typedef struct {
    	char		*IDRegex;         /* specific ID or a regular expression - Max size = sizeof(uid) */
@@ -41,11 +40,11 @@ typedef struct {
 } tRulesTableEntry;
 
 /*************** RULES TABLE *************/
-extern int   rulesTableAddEntry( void );
-extern void  rulesTableSave( void );
-extern int   rulesTableNumber( void );
-extern int   rulesTableRead( void );
-extern void  rulesTableEntryEnable( int index, char enable );
-extern const tRulesTableEntry *rulesTableEntryGet( int index );
-extern void  rulesTableEventDispatch( tEventType eventType, const tTag *pTag );
+extern int                      rulesTableAddEntry( void );
+extern void                     rulesTableSave( void );
+extern int                      rulesTableNumber( void );
+extern int                      rulesTableRead( void );
+extern void                     rulesTableEntryEnable( int index, char enable );
+extern const tRulesTableEntry   *rulesTableEntryGet( int index );
+extern unsigned char            rulesTableEventDispatch( tEventType eventType, const tTag *pTag );
 

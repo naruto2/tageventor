@@ -16,6 +16,9 @@
   limitations under the License.
 */
 
+#ifndef TAG_EVENTOR_INCLUDED
+#define TAG_EVENTOR_INCLUDED
+
 #include <tagReader.h>
 
 #ifndef TRUE
@@ -31,6 +34,11 @@
 #define VERBOSITY_DEFAULT   (0)
 #define VERBOSITY_MAX       (3)
 
+/************** TYPES *******************************************/
+typedef enum { TAG_IN = 0, TAG_OUT = 1,
+            READER_ADDED = 2, READER_LOST = 3, READER_DISCONNECT = 4,
+            PCSCD_CONNECT = 5, PCSCD_FAIL = 6, PCSCD_DISCONNECT = 7
+            } tEventType;
 
 /************** GLOBALS *******************************************/
 /* these are only needed globally as a horrible workaround for
@@ -44,3 +52,14 @@ extern int  appPollDelayGet( void );
 
 extern int  appVerbosityLevelSet( int     newLevel );
 extern int  appVerbosityLevelGet( void );
+
+extern void daemonize( tReaderManager    *pManager );
+extern void stopDaemon( const tReaderManager    *pManager );
+extern void daemonTerminate( const tReaderManager    *pManager );
+
+extern void eventDispatch(  tEventType              eventType,
+                            const tTag              *pTag,
+                            const tReader           *pReader,
+                            const tReaderManager    *pManager );
+
+#endif

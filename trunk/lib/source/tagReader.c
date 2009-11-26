@@ -198,10 +198,10 @@ readersInit( tReaderManager *pManager)
 /* type = LOG_INFO (just info */
 void
 readersLogMessage(
-                 tReaderManager *pManager,
-                 int		    type,
-                 int		    messageLevel,
-                 const char 	*message
+                 const tReaderManager   *pManager,
+                 int		            type,
+                 int		            messageLevel,
+                 const char 	        *message
                     )
 {
 
@@ -368,12 +368,9 @@ readersManagerConnect(
     if (rv != SCARD_S_SUCCESS)
     {
         PCSC_ERROR( pManager, rv, "SCardEstablishContext");
-        readersLogMessage( pManager, LOG_ERR, 1, LIBTAGREADER_STRING_PCSCD_NO );
         pManager->hContext = NULL;
         return( rv );
     }
-
-    readersLogMessage( pManager, LOG_INFO, 2, LIBTAGREADER_STRING_PCSCD_OK );
 
     /* Find all the readers and fill the readerManager data structure */
     rv = readersEnumerate( pManager );

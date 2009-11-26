@@ -18,7 +18,7 @@
 
 #define TAGEVENTOR_STRING_PCSCD_OK_READER_NOT   "Connected to pcscd, %d readers found.\nCould not connect to reader(s)"
 #define TAGEVENTOR_STRING_PCSCD_PROBLEM         "Problems connecting to pcscd daemon, check it is running using 'ps -ef' command"
-#define TAGEVENTOR_STRING_CONNECTED_READER      "Connected to pcscd, %d readers found. %d Tags found."
+#define TAGEVENTOR_STRING_CONNECTED_READER      "Connected to pcscd, %d readers, %d tags"
 #define TAGEVENTOR_STRING_TAG_LINE              "Tag UID: %s  "
 
 #define TAGEVENTOR_STRING_COMMAND_LINE_READER_NUM_ERROR_1 "Reader number must be AUTO or a valid number between 0 and %d\n"

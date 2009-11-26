@@ -11,6 +11,7 @@ release_archive = lib/Release/libtagReader.a
 
 debug_objects = obj/Debug/gtagEventor.o \
                 obj/Debug/rulesTable.o  \
+                obj/Debug/daemonControl.o  \
                 obj/Debug/aboutDialog.o \
                 obj/Debug/rulesEditor.o \
                 obj/Debug/rulesEditorHelp.o \
@@ -20,6 +21,7 @@ debug_objects = obj/Debug/gtagEventor.o \
 
 release_objects = obj/Release/gtagEventor.o \
                   obj/Release/rulesTable.o \
+                  obj/Release/daemonControl.o \
                   obj/Release/aboutDialog.o \
                   obj/Release/rulesEditor.o \
                   obj/Release/rulesEditorHelp.o \

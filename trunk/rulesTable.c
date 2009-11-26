@@ -44,8 +44,6 @@ static    tRulesTableEntry defaultCommands[NUM_DEFAULT_COMMANDS] = {
 
 static  int             numTagEntries = 0;
 static  tRulesTableEntry     *tagEntryArray;
-static const char * const tagString[]  = { "IN", "OUT" };
-
 
 int
 rulesTableAddEntry( void )
@@ -231,18 +229,14 @@ execScript(
 }
 /*********************  EXEC SCRIPT **************************/
 
-void
+unsigned char
 rulesTableEventDispatch(
                 tEventType	  	eventType,
                 const tTag      *pTag
                 )
 {
-    char	        messageString[MAX_LOG_MESSAGE];
     int             ruleIndex;
     char            scriptName[PATH_MAX];
-
-    sprintf(messageString, "Event: Tag %s - UID: %s", tagString[eventType], pTag->uid);
-    readersLogMessage( &readerManager, LOG_INFO, 1, messageString);
 
     /* run through the list of rules:
            - try to match tags detected tag with regex in rule for tagID
@@ -267,17 +261,32 @@ rulesTableEventDispatch(
                     sprintf( scriptName, "generic" );
                 break;
                 default:
-                    readersLogMessage( &readerManager, LOG_ERR, 0, "Invalid 'scriptMatchType' no script execution attempted" );
-                    return;
+                    return( FALSE );
                 break;
             }
 
-            if (execScript( tagEntryArray[ruleIndex].folder, scriptName, pTag->uid, pTag->uid, tagString[eventType],
-                            tagEntryArray[ruleIndex].description) == 0)
-                return;
+            switch ( eventType )
+            {
+                case TAG_IN:
+                    /* return TRUE if we were able to execute script */
+                    return( execScript( tagEntryArray[ruleIndex].folder, scriptName, pTag->uid, pTag->uid, "IN",
+                                    tagEntryArray[ruleIndex].description) );
+                    break;
+
+                case TAG_OUT:
+                    /* return TRUE if we were able to execute script */
+                    return (execScript( tagEntryArray[ruleIndex].folder, scriptName, pTag->uid, pTag->uid, "OUT",
+                                    tagEntryArray[ruleIndex].description) );
+                    break;
+
+                default:
+                    return( FALSE );
+                    break;
+            }
         }
     }
 
-   /* if we got this far, then nothing worked */
-   readersLogMessage( &readerManager, LOG_ERR, 0, "Failed to execute a script for tag event" );
+    /* catchall in case my logic fails above */
+    return( FALSE );
+
 }
