@@ -85,22 +85,52 @@ destroy(
 }
 
 static void
-tableAddReader(
+tagAdd(
+        GtkTreeStore            *pStore,
+        const tReaderManager    *pManager,
+        GtkTreeIter             *pTagListIter,
+        int                     readerNumber,
+        int                     number
+    )
+{
+    char                numberString[20];
+    const char          *tagTypeName;
+    GtkTreeIter         tagIter, tagTypeIter;
+
+    sprintf( numberString, "Tag %d", number );
+
+    gtk_tree_store_insert_before( pStore, &tagIter, pTagListIter, NULL );
+    gtk_tree_store_set( pStore, &tagIter,
+                        OBJECT_COLUMN, numberString,
+                        DESCRIPTION_COLUMN, pManager->readers[readerNumber].tagList.pTags[number].uid, -1);
+
+    TAG_TYPE_NAME_FROM_ENUM( pManager->readers[readerNumber].tagList.pTags[number].tagType, tagTypeName );
+    gtk_tree_store_append( pStore, &tagTypeIter, &tagIter );
+    gtk_tree_store_set( pStore, &tagTypeIter,
+                        OBJECT_COLUMN, "TagType",
+                        DESCRIPTION_COLUMN, tagTypeName, -1);
+
+}
+
+
+static void
+explorerAddReader(
                 GtkTreeStore            *pStore,
                 GtkTreeIter             *pRoot,
                 const tReaderManager    *pManager,
-                int                     i
+                int                     readerNumber
                 )
 {
-    char                numberString[5];
-    GtkTreeIter         readerIter, nameIter, driverIter, SAMIter, SAMIDIter, SAMSerialIter;
+    char                numberString[20];
+    int                 tagNum;
+    GtkTreeIter         readerIter, nameIter, driverIter, SAMIter, SAMIDIter, SAMSerialIter, tagListIter;
 
-    sprintf( numberString, "Reader %d", i );
+    sprintf( numberString, "Reader %d", readerNumber );
 
     gtk_tree_store_append( pStore, &readerIter, pRoot );  /* Acquire a child iterator */
 
     /* if we are currently connected to this reader then we can show info */
-    if ( pManager->readers[i].hCard != NULL )
+    if ( pManager->readers[readerNumber].hCard != NULL )
     {
         gtk_tree_store_set( pStore, &readerIter,
                             OBJECT_COLUMN, numberString,
@@ -110,18 +140,18 @@ tableAddReader(
         gtk_tree_store_append( pStore, &nameIter, &readerIter );
         gtk_tree_store_set( pStore, &nameIter,
                         OBJECT_COLUMN, "Name/Firmware",
-                        DESCRIPTION_COLUMN, pManager->readers[i].name, -1);
+                        DESCRIPTION_COLUMN, pManager->readers[readerNumber].name, -1);
 
         /***************** DRIVER **********************/
         gtk_tree_store_append( pStore, &driverIter, &readerIter );
         gtk_tree_store_set( pStore, &driverIter,
                             OBJECT_COLUMN, "Driver",
-                            DESCRIPTION_COLUMN, pManager->readers[i].driverDescriptor, -1);
+                            DESCRIPTION_COLUMN, pManager->readers[readerNumber].driverDescriptor, -1);
 
         /******************** SAM **********************/
         gtk_tree_store_append( pStore, &SAMIter, &readerIter );
         /* if there is a SAM present then show it's details */
-        if ( pManager->readers[i].SAM )
+        if ( pManager->readers[readerNumber].SAM )
         {
             gtk_tree_store_set( pStore, &SAMIter,
                                 OBJECT_COLUMN, "SAM",
@@ -130,22 +160,35 @@ tableAddReader(
             gtk_tree_store_append( pStore, &SAMIDIter, &SAMIter );
             gtk_tree_store_set( pStore, &SAMIDIter,
                                 OBJECT_COLUMN, "ID",
-                                DESCRIPTION_COLUMN, pManager->readers[i].SAM_id, -1);
+                                DESCRIPTION_COLUMN, pManager->readers[readerNumber].SAM_id, -1);
 
             gtk_tree_store_append( pStore, &SAMSerialIter, &SAMIter );
             gtk_tree_store_set( pStore, &SAMSerialIter,
                                 OBJECT_COLUMN, "Serial",
-                                DESCRIPTION_COLUMN, pManager->readers[i].SAM_serial, -1);
+                                DESCRIPTION_COLUMN, pManager->readers[readerNumber].SAM_serial, -1);
         }
         else
             gtk_tree_store_set( pStore, &SAMIter,
                                 OBJECT_COLUMN, "SAM",
                                 DESCRIPTION_COLUMN, "No SAM present", -1);
+
+        /******************** TAGS **********************/
+        if ( pManager->readers[readerNumber].tagList.numTags > 0 )
+        {
+            sprintf( numberString, "%d tags", pManager->readers[readerNumber].tagList.numTags);
+            gtk_tree_store_append( pStore, &tagListIter, &readerIter );
+            gtk_tree_store_set( pStore, &tagListIter,
+                                OBJECT_COLUMN, "Tags",
+                                DESCRIPTION_COLUMN, numberString, -1);
+
+            for ( tagNum = 0; tagNum < pManager->readers[readerNumber].tagList.numTags; tagNum++ )
+                tagAdd( pStore, pManager, &tagListIter, readerNumber, tagNum );
+        }
     }
     else
     {
         /* we have not connected to this reader, see if it exists */
-        if ( i >= pManager->nbReaders )
+        if ( readerNumber >= pManager->nbReaders )
         {
             gtk_tree_store_set( pStore, &readerIter,
                             OBJECT_COLUMN, numberString,
@@ -157,13 +200,13 @@ tableAddReader(
                                 OBJECT_COLUMN, numberString,
                                 DESCRIPTION_COLUMN, "Not connected", -1);
 
-            if ( pManager->readers[i].name != NULL )
+            if ( pManager->readers[readerNumber].name != NULL )
             {
                 /***************** NAME **********************/
                 gtk_tree_store_append( pStore, &nameIter, &readerIter );
                 gtk_tree_store_set( pStore, &nameIter,
                                 OBJECT_COLUMN, "Name/Firmware",
-                                DESCRIPTION_COLUMN, pManager->readers[i].name, -1);
+                                DESCRIPTION_COLUMN, pManager->readers[readerNumber].name, -1);
 
                 /***************** DRIVER **********************/
                 gtk_tree_store_append( pStore, &driverIter, &readerIter );
@@ -197,7 +240,7 @@ explorerFillTreeModel( GtkTreeStore *pStore )
 
     /* add branch for each reader that exists in the system */
     for ( i = 0; i < readerManager.nbReaders; i++ )
-        tableAddReader( pStore, &rootIter, &readerManager, i );
+        explorerAddReader( pStore, &rootIter, &readerManager, i );
 
 }
 
