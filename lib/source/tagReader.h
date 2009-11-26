@@ -65,9 +65,9 @@ extern int              readersConnect(  tReaderManager  *pManager );
 extern void             readersDisconnect( tReaderManager *pManager );
 extern int              readersGetTagList( tReaderManager *pManager );
 extern int              readersGetContactlessStatus( tReaderManager *pManager );
-extern void             readersLogMessage(  tReaderManager *pManager,
-                                            int		        messageType,
-                                            int	    	    messageLevel,
-                                            const char 	    *message);
+extern void             readersLogMessage(  const tReaderManager    *pManager,
+                                            int		                messageType,
+                                            int	    	            messageLevel,
+                                            const char 	            *message);
 
 #endif

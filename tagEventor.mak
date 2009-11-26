@@ -6,8 +6,12 @@ debug_binary = bin/Debug/tagEventor
 debug_library = lib/Debug/libtagReader.a
 release_library = lib/Release/libtagReader.a
 
-debug_objects = obj/Debug/tagEventor.o obj/Debug/rulesTable.o
-release_objects = obj/Release/tagEventor.o obj/Release/rulesTable.o
+debug_objects = obj/Debug/tagEventor.o \
+                obj/Debug/rulesTable.o \
+                obj/Debug/daemonControl.o
+release_objects = obj/Release/tagEventor.o \
+                  obj/Release/rulesTable.o \
+                  obj/Release/daemonControl.o
 
 debug_dependencies = $(debug_objects:.o=.d)
 release_dependencies = $(release_objects:.o=.d)

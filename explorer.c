@@ -99,7 +99,7 @@ tableAddReader(
 
     gtk_tree_store_append( pStore, &readerIter, pRoot );  /* Acquire a child iterator */
 
-    /* if the reader has been connected to we can fill in mode info */
+    /* if we are currently connected to this reader then we can show info */
     if ( pManager->readers[i].hCard != NULL )
     {
         gtk_tree_store_set( pStore, &readerIter,
@@ -152,7 +152,7 @@ tableAddReader(
                             DESCRIPTION_COLUMN, "Not detected", -1);
         }
         else
-        {   /* there is such a reader in the system, although we're not connect */
+        {   /* there is such a reader in the system, although we're not connected to it */
             gtk_tree_store_set( pStore, &readerIter,
                                 OBJECT_COLUMN, numberString,
                                 DESCRIPTION_COLUMN, "Not connected", -1);
@@ -180,17 +180,24 @@ explorerFillTreeModel( GtkTreeStore *pStore )
 {
 
     int         i;
-    GtkTreeIter iter1;  /* Parent iter */
+    GtkTreeIter rootIter;  /* Parent iter */
+    char        descriptionText[40];
 
-    gtk_tree_store_append( pStore, &iter1, NULL);  /* Acquire a top-level iterator */
-    gtk_tree_store_set( pStore, &iter1,
-                    OBJECT_COLUMN, "PCSCD",
-                    DESCRIPTION_COLUMN, "PC/SC Lite daemon"
-                    -1);
+    gtk_tree_store_append( pStore, &rootIter, NULL);  /* Acquire a top-level iterator */
 
-    /* add rows for each reader */
-    for ( i = 0; i < MAX_NUM_READERS; i++ )
-        tableAddReader( pStore, &iter1, &readerManager, i );
+    /* check if we were able to connect to PCSD */
+    if ( readerManager.hContext == NULL )
+        sprintf( descriptionText, "Not Connected to PCSD, check syslog and that 'pcscd' is running" );
+    else
+        sprintf( descriptionText, "Connected, %d readers detected", readerManager.nbReaders );
+
+    gtk_tree_store_set( pStore, &rootIter,
+                        OBJECT_COLUMN, "PCSCD",
+                        DESCRIPTION_COLUMN, descriptionText, -1);
+
+    /* add branch for each reader that exists in the system */
+    for ( i = 0; i < readerManager.nbReaders; i++ )
+        tableAddReader( pStore, &rootIter, &readerManager, i );
 
 }
 
@@ -311,6 +318,13 @@ explorerActivate( void *readersArray )
 
     /* Show window, and recursively all contained widgets */
     gtk_widget_show_all( explorer );
+
+}
+
+
+void
+explorerUpdate( void )
+{
 
 }
 
