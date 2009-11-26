@@ -618,6 +618,7 @@ readersGetTagList(
     int         i, j;
     int         uniqueListIndex;
     BOOL        automatic;
+    char        *namePointer;
 
     /* Duh. If you pass me a NULL pointer then I'm out of here */
     if ( ( pManager == NULL ) || ( pManager->hContext == NULL ) )
@@ -683,7 +684,7 @@ readersGetTagList(
         for( i = 0; i < pManager->nbReaders; i++)
         {
             /* make the pointer in the per-reader structure point to it's parts of the overall list */
-            pManager->readers[i].tagList.pTags = &((pTags[i])[0]);
+            pManager->readers[i].tagList.pTags = &(pManager->tagList.pTags[uniqueListIndex]);
 
             /* for each of the tags detected in this reader */
             for ( j = 0; j < pManager->readers[i].tagList.numTags; j++ )
@@ -691,33 +692,10 @@ readersGetTagList(
                 /* copy the tag from the tempory list to the unique one */
                 pManager->tagList.pTags[uniqueListIndex] = (pTags[i])[j];
 
-                switch( pManager->tagList.pTags[uniqueListIndex].tagType )
-                {
-                    case SEL_RES_MIFARE_ULTRA:
-                        sprintf(messageString, "Tag ID:   %s\tType: MIFARE_ULTRA", pManager->tagList.pTags[uniqueListIndex].uid);
-                        break;
-                    case SEL_RES_MIFARE_1K:
-                        sprintf(messageString, "Tag ID:   %s\t\tType: MIFARE_1K", pManager->tagList.pTags[uniqueListIndex].uid);
-                        break;
-                    case SEL_RES_MIFARE_MINI:
-                        sprintf(messageString, "Tag ID:   %s\t\tType: MIFARE_MINI", pManager->tagList.pTags[uniqueListIndex].uid);
-                        break;
-                    case SEL_RES_MIFARE_4K:
-                        sprintf(messageString, "Tag ID:   %s\t\tType: MIFARE_4K", pManager->tagList.pTags[uniqueListIndex].uid);
-                        break;
-                    case SEL_RES_MIFARE_DESFIRE:
-                        sprintf(messageString, "Tag ID:   %s\t\tType: MIFARE_DESFIRE", pManager->tagList.pTags[uniqueListIndex].uid);
-                        break;
-                    case SEL_RES_JCOP30:
-                        sprintf(messageString, "Tag ID:   %s\t\tType: JCOP30", pManager->tagList.pTags[uniqueListIndex].uid);
-                        break;
-                    case SEL_RES_GEMPLUS_MPCOS:
-                        sprintf(messageString, "Tag ID:   %s\t\tType: GEMPLUS_MPCOS", pManager->tagList.pTags[uniqueListIndex].uid);
-                        break;
-                    default:
-                        sprintf(messageString, "Tag ID:   %s\t\tType: Unknown", pManager->tagList.pTags[uniqueListIndex].uid);
-                        break;
-                }
+                TAG_TYPE_NAME_FROM_ENUM( pManager->tagList.pTags[uniqueListIndex].tagType, namePointer );
+
+                sprintf(messageString, "Tag ID:   %s\tType: %s", pManager->tagList.pTags[uniqueListIndex].uid, namePointer);
+
                 readersLogMessage( pManager, LOG_INFO, 2, messageString);
                 uniqueListIndex++;
             }

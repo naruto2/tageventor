@@ -50,14 +50,43 @@ typedef union		{
 
 typedef char	tUID[MAX_TAG_UID_SIZE];
 
-typedef enum {  MIFARE_ULTRALIGHT   = SEL_RES_MIFARE_ULTRA,
+typedef enum {  MIFARE_ULTRA        = SEL_RES_MIFARE_ULTRA,
                 MIFARE_1K           = SEL_RES_MIFARE_1K,
                 MIFARE_MINI         = SEL_RES_MIFARE_MINI,
                 MIFARE_4K           = SEL_RES_MIFARE_4K,
                 MIFARE_DESFIRE      = SEL_RES_MIFARE_DESFIRE,
-                JCOP                = SEL_RES_JCOP30,
+                JCOP30              = SEL_RES_JCOP30,
                 GEMPLUS_MPCOS       = SEL_RES_GEMPLUS_MPCOS,
                 UNKNOWN_TYPE        =0xFF } tTagType;
+
+#define TAG_TYPE_NAME_FROM_ENUM( type, name ) \
+    switch( type ) \
+    { \
+        case MIFARE_ULTRA: \
+            name = "MIFARE_ULTRA"; \
+            break; \
+        case MIFARE_1K: \
+            name = "MIFARE_1K"; \
+            break; \
+        case MIFARE_MINI: \
+            name = "MIFARE_MINI"; \
+            break; \
+        case MIFARE_4K: \
+            name = "MIFARE_4K"; \
+            break; \
+        case MIFARE_DESFIRE: \
+            name = "MIFARE_DESFIRE"; \
+            break; \
+        case JCOP30: \
+            name = "JCOP30"; \
+            break; \
+        case GEMPLUS_MPCOS: \
+            name = "GEMPLUS_MPCOS"; \
+            break; \
+        default: \
+            name = "Unknown"; \
+            break; \
+    }
 
 typedef struct {
                 tTagContents    *pContents;
