@@ -51,12 +51,29 @@ static tTagList	    previousTagList = { NULL, 0 };
 
 
 /************** GLOBALS *******************************************/
-
-
-
-/* these are only needed globally as a horrible workaround for
-   readersTable */
 tReaderManager  readerManager;
+
+
+static inline void
+sPrintBufferHex(
+                char *asciiDest,
+                int num,
+                char *byteSource
+                )
+{
+    LONG j;
+
+	for ( j = 0; j < num; j++ )
+	{
+        sprintf( asciiDest, "0x%02X ", (int)(*byteSource));
+        asciiDest+=5;
+        byteSource++;
+	}
+
+    /* don't forget to null terminate the string */
+    *asciiDest = '\0';
+}
+
 
 int
 appPollDelaySet(
@@ -256,12 +273,46 @@ handleSignal(
    }
 }
 
+static void
+tagDetachData(
+            tTag            *pTag
+            )
+{
+
+    if ( pTag->contents.pData )
+       free( pTag->contents.pData );
+
+    pTag->contents.pData = NULL;
+    pTag->contents.dataSize = 0;
+    pTag->contents.extensionHook = NULL;
+
+}
+
+const tTagContents testTag = { "Test Data", 9, NULL };
+
+static void
+tagAttachData(
+           tTag              *pTag,
+           tReaderManager    *pManager
+          )
+{
+
+    pTag->contents = testTag;
+
+    /* Add interpreted data into the extensionHook */
+    /* need 5 characters to show each byte in HEX '0x00 ' */
+    pTag->contents.extensionHook = malloc( 5 * pTag->contents.dataSize );
+    sPrintBufferHex( pTag->contents.extensionHook, pTag->contents.dataSize, pTag->contents.pData );
+
+}
+
+
 void
 eventDispatch(
-                tEventType              eventType,
-                const tTag              *pTag,
-                const tReader           *pReader,
-                const tReaderManager    *pManager
+                tEventType         eventType,
+                tTag              *pTag,
+                int                readerNumber,
+                tReaderManager    *pManager
                 )
 {
     char	        messageString[MAX_LOG_MESSAGE];
@@ -275,6 +326,9 @@ eventDispatch(
             sprintf( messageString, "Event: Tag %s - UID: %s", "IN", pTag->uid);
             readersLogMessage( pManager, LOG_INFO, 1, messageString);
 
+            /* find out what's inside the tag, as we might process based on that */
+            tagAttachData( pTag, pManager );
+
             /* try to process event and notify if fails */
             if ( ! rulesTableEventDispatch( eventType, pTag ) )
             {
@@ -285,7 +339,7 @@ eventDispatch(
 #endif
             }
 #ifdef BUILD_EXPLORER
-            explorerUpdate();
+            explorerViewUpdate();
 #endif
             break;
 
@@ -303,25 +357,50 @@ eventDispatch(
 #endif
             }
 #ifdef BUILD_EXPLORER
-            explorerUpdate();
+            explorerViewUpdate();
+#endif
+            /* we can now free the data that was allocated and attached to this tag */
+            tagDetachData( pTag );
+            break;
+
+        case READER_DETECTED:
+            sprintf(messageString, "Reader detected: %d, %s", readerNumber, pManager->readers[readerNumber].name );
+            readersLogMessage( pManager, LOG_INFO, 2, messageString);
+#ifdef BUILD_SYSTEM_TRAY
+            systemTrayNotify( "Reader detected", pManager->readers[readerNumber].name, NULL );
+#endif
+#ifdef BUILD_EXPLORER
+            explorerAddReader( readerNumber );
+
+            explorerViewUpdate();
 #endif
             break;
 
-        case READER_ADDED:
+        case READER_CONNECTED_TO:
+            sprintf(messageString, "Reader: %s, assigned driver='%s'", pManager->readers[readerNumber].name,
+                    pManager->readers[readerNumber].driverDescriptor );
+            readersLogMessage( pManager, LOG_INFO, 3, messageString);
+#ifdef BUILD_SYSTEM_TRAY
+            systemTrayNotify( "Reader connected to", pManager->readers[readerNumber].name, NULL );
+#endif
 #ifdef BUILD_EXPLORER
-            explorerUpdate();
+            explorerAddReader( readerNumber );
+
+            explorerViewUpdate();
 #endif
             break;
 
         case READER_LOST:
 #ifdef BUILD_EXPLORER
-            explorerUpdate();
+            explorerRemoveReader( readerNumber );
+
+            explorerViewUpdate();
 #endif
             break;
 
         case READER_DISCONNECT:
 #ifdef BUILD_EXPLORER
-            explorerUpdate();
+            explorerViewUpdate();
 #endif
             break;
 
@@ -331,20 +410,20 @@ eventDispatch(
             systemTrayNotify( "Connected to 'pcscd' daemon", NULL, NULL );
 #endif
 #ifdef BUILD_EXPLORER
-            explorerUpdate();
+            explorerViewUpdate();
 #endif
             break;
 
         case PCSCD_FAIL:
             readersLogMessage( pManager, LOG_ERR, 1, LIBTAGREADER_STRING_PCSCD_NO );
 #ifdef BUILD_EXPLORER
-            explorerUpdate();
+            explorerViewUpdate();
 #endif
             break;
 
         case PCSCD_DISCONNECT:
 #ifdef BUILD_EXPLORER
-            explorerUpdate();
+            explorerViewUpdate();
 #endif
             break;
 
@@ -370,33 +449,38 @@ processTagLists(
     for (i = 0; i < previousTagList.numTags; i++)
     {
         found = FALSE;
-        /* Look for it in the new list */
-        for (j = 0; (j < readerManager.tagList.numTags); j++)
+        /* Look for it in the current list */
+        for ( j = 0; (j < readerManager.tagList.numTags); j++ )
              if ( strcmp(previousTagList.pTags[i].uid,
-                  readerManager.tagList.pTags[j].uid) == 0 )
+                         readerManager.tagList.pTags[j].uid) == 0 )
+             {
                 found = TRUE;
 
-        if (!found)
+                /* copy over the attached data (via pointers to the malloc-ed data */
+                readerManager.tagList.pTags[j].contents = previousTagList.pTags[i].contents;
+             }
+
+        if ( !found )
         {
             listChanged = TRUE;
-            eventDispatch( TAG_OUT, &(previousTagList.pTags[i]), NULL, &readerManager );
+            eventDispatch( TAG_OUT, &(previousTagList.pTags[i]), 0, &readerManager );
         }
     }
 
-    /* check for tags that are here now */
-    for (i = 0; i < readerManager.tagList.numTags; i++)
+    /* check for tags that are here now in the current list */
+    for ( i = 0; i < readerManager.tagList.numTags; i++ )
     {
         found = FALSE;
-        /* Look for it in the old list */
+        /* Look for it in the previous list from last time around */
         for (j = 0; ((j < previousTagList.numTags) && (!found)); j++)
             if ( strcmp(previousTagList.pTags[j].uid,
                         readerManager.tagList.pTags[i].uid) == 0 )
                 found = TRUE;
 
-        if (!found)
+        if ( !found )
         {
             listChanged = TRUE;
-            eventDispatch( TAG_IN, &(readerManager.tagList.pTags[i]), NULL, &readerManager );
+            eventDispatch( TAG_IN, &(readerManager.tagList.pTags[i]), 0, &readerManager );
         }
     }
 
@@ -440,8 +524,6 @@ tagListCheck(
     {
         if ( readersManagerConnect( &readerManager ) != SCARD_S_SUCCESS )
         {
-            eventDispatch( PCSCD_FAIL, NULL, NULL, &readerManager );
-
             sprintf( messageString, TAGEVENTOR_STRING_PCSCD_PROBLEM );
             if ( callBack )
                 (*callBack)( FALSE, messageString, "" );
@@ -451,9 +533,6 @@ tagListCheck(
         }
         else
         {
-            /* successfully connected to PCSCD */
-            eventDispatch( PCSCD_CONNECT, NULL, NULL, &readerManager );
-
             /* try and connect to the specified readers on first connect */
             if ( readersConnect( &readerManager ) != SCARD_S_SUCCESS )
             {
@@ -566,10 +645,8 @@ int main(
     }
 
     readersDisconnect( &readerManager );
-    eventDispatch( READER_DISCONNECT, NULL, NULL, &readerManager );
 
     readersManagerDisconnect( &readerManager );
-    eventDispatch( PCSCD_DISCONNECT, NULL, NULL, &readerManager );
 
    return ( 0 );
 

@@ -44,6 +44,11 @@
 #define LIBTAGREADER_STRING_PCSCD_OK              "libTagReader: Successfully connected to pcscd server"
 #define LIBTAGREADER_STRING_PCSCD_NO              "libTagReader: Failed to connect to pcscd server"
 
+typedef enum { TAG_IN = 0, TAG_OUT = 1,
+            READER_DETECTED = 2, READER_CONNECTED_TO = 3, READER_LOST = 4, READER_DISCONNECT =5,
+            PCSCD_CONNECT = 6, PCSCD_FAIL = 7, PCSCD_DISCONNECT = 8
+             } tEventType;
+
 /************************ EXTERNAL FUNCTIONS **********************/
 extern void             readersInit( tReaderManager *pManager );
 extern unsigned int     readersSettingBitmapGet( tReaderManager *pManager  );
@@ -69,5 +74,10 @@ extern void             readersLogMessage(  const tReaderManager    *pManager,
                                             int		                messageType,
                                             int	    	            messageLevel,
                                             const char 	            *message);
+
+extern void eventDispatch(tEventType         eventType,
+                            tTag              *pTag,
+                            int                readerNumber,
+                            tReaderManager    *pManager );
 
 #endif

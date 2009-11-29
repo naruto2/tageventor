@@ -339,7 +339,9 @@ LONG   acr122UGetTagList(
     for (i = 0; i < ACR122U_MAX_NUM_TAGS; i++)
     {
         /* we are not going to read ANY tag's contents and so it's a NULL pointer */
-        pTags[i].pContents = NULL;
+        pTags[i].contents.pData = NULL;
+        pTags[i].contents.dataSize = 0;
+        pTags[i].contents.extensionHook = NULL;
 
         dwRecvLength = sizeof(pbRecvBuffer);
         rv = apduSend(pReader->hCard, APDU_POLL_MIFARE, sizeof(APDU_POLL_MIFARE),

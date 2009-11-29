@@ -71,7 +71,12 @@ extern tReaderDriver    acr122UDriver;
 /* one for each driver we know about                               */
 static tReaderDriver   *readerDriverTable[] = { &acr122UDriver, NULL };
 
-static inline void sPrintBufferHex( char *asciiDest, int num, unsigned char *byteSource)
+static inline void
+sPrintBufferHex(
+                char *asciiDest,
+                int num,
+                unsigned char *byteSource
+                )
 {
     LONG j;
 
@@ -89,7 +94,9 @@ static inline void sPrintBufferHex( char *asciiDest, int num, unsigned char *byt
 
 /* utility function for other modules that returns the current setting for the reader number bitmap */
 unsigned int
-readersSettingBitmapGet( tReaderManager *pManager )
+readersSettingBitmapGet(
+                        tReaderManager *pManager
+                        )
 {
     return ( pManager->readerSetting );
 }
@@ -123,9 +130,10 @@ readersSettingBitmapBitSet(
 
 /* Utility function to unset one specific reader number in the bitmap */
 void
-readersSettingBitmapBitUnset(   tReaderManager *pManager,
-                                unsigned int bitmap
-                                )
+readersSettingBitmapBitUnset(
+                            tReaderManager *pManager,
+                            unsigned int bitmap
+                            )
 {
     /* bit 0 of the bitmap is reserved for AUTO */
     /* so OR in the bit shifted an extra 1   number 0 = bit 1 etc */
@@ -173,7 +181,9 @@ readersSettingBitmapNumberTest(
 }
 
 void
-readersInit( tReaderManager *pManager)
+readersInit(
+            tReaderManager *pManager
+            )
 {
     int i;
 
@@ -241,7 +251,7 @@ int readersSetOptions (
                         tReaderManager  *pManager,
                         int		        verbosity,
                         unsigned char   background
-		 )
+                        )
 
 {
 
@@ -369,8 +379,13 @@ readersManagerConnect(
     {
         PCSC_ERROR( pManager, rv, "SCardEstablishContext");
         pManager->hContext = NULL;
+
+        eventDispatch( PCSCD_FAIL, NULL, 0, pManager );
+
         return( rv );
     }
+
+    eventDispatch( PCSCD_CONNECT, NULL, 0, pManager );
 
     /* Find all the readers and fill the readerManager data structure */
     rv = readersEnumerate( pManager );
@@ -382,7 +397,9 @@ readersManagerConnect(
 
 /************************* READER MANAGER DISCONNECT ***********/
 int
-readersManagerDisconnect( tReaderManager *pManager )
+readersManagerDisconnect(
+                        tReaderManager *pManager
+                        )
 {
     LONG 		    rv;
 
@@ -409,6 +426,8 @@ readersManagerDisconnect( tReaderManager *pManager )
 
     /* now it should be NULL either way */
     pManager->hContext = NULL;
+
+    eventDispatch( PCSCD_DISCONNECT, NULL, 0, pManager );
 
     return( rv );
 }
@@ -458,10 +477,9 @@ int readersConnect (
                                 &dwActiveProtocol);
             if (rv == SCARD_S_SUCCESS)
             {
-                sprintf(messageString, "Connected to reader: %d, %s", num, pManager->readers[num].name );
-                readersLogMessage( pManager, LOG_INFO, 2, messageString);
+                eventDispatch( READER_DETECTED, NULL, num, pManager );
 
-                /* Query the drivers in our list until one of them can handle the reader */
+                /* Query the drivers in the list until one of them can handle the reader */
                 i = 0;
                 readerSupported = FALSE;
                 /* call the function to check if this driver works with this reader */
@@ -488,8 +506,8 @@ int readersConnect (
                     /* if we got this far then a driver was successfully found, remember it! */
                     pManager->readers[num].pDriver = readerDriverTable[i -1];
                     pManager->readers[num].driverDescriptor = readerDriverTable[i -1]->driverDescriptor;
-                    sprintf(messageString, "Reader: %s, assigned driver='%s'", pManager->readers[num].name, pManager->readers[num].driverDescriptor );
-                    readersLogMessage( pManager, LOG_INFO, 3, messageString);
+                    eventDispatch( READER_DETECTED, NULL, num, pManager );
+
                 }
             }
             else
@@ -533,6 +551,8 @@ readersDisconnect(
 
             rv = SCardDisconnect( (SCARDHANDLE) (pManager->readers[i].hCard), SCARD_UNPOWER_CARD);
             RESET_READER( pManager->readers[i] );
+
+            eventDispatch( READER_DISCONNECT, NULL, i, pManager );
 
             if ( rv != SCARD_S_SUCCESS )
                 PCSC_ERROR( pManager, rv, "SCardDisconnect");

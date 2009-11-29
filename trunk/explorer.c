@@ -29,7 +29,11 @@
 #include "systemTray.h"
 #include "explorer.h"
 
-static GtkWidget        *explorer = NULL;
+static GtkWidget        *explorerWindow = NULL;
+static GtkTreeStore     *store = NULL;
+static GtkWidget        *treeView;
+
+static GtkTreeIter      rootIter;  /* Parent iter */
 
 enum {
     OBJECT_COLUMN,
@@ -38,10 +42,11 @@ enum {
 
 
 static void
-hideExplorer( void )
+explorerWindowDestroy( void )
 {
 
-    gtk_widget_hide( explorer );
+    gtk_widget_destroy( explorerWindow );
+    explorerWindow = NULL;
 
 }
 
@@ -53,7 +58,7 @@ closeSignalHandler(
                    gpointer     user_data
                    )
 {
-    hideExplorer();
+    explorerWindowDestroy();
 }
 
 /* This get's called when the user closes the window using the Window Manager 'X' box */
@@ -75,49 +80,73 @@ destroy(
         )
 {
 
-    /* hide the explorer window */
-    hideExplorer();
-
-    /* it seems that when this get's called the widget actually get's destroyed */
-    /* so, show it's not existant and on next activate it will get re-built */
-    explorer = NULL;
+    /* destroy the explorer window */
+    explorerWindowDestroy();
 
 }
 
 static void
 tagAdd(
-        GtkTreeStore            *pStore,
         const tReaderManager    *pManager,
         GtkTreeIter             *pTagListIter,
         int                     readerNumber,
-        int                     number
+        int                     tagNumber
     )
 {
     char                numberString[20];
     const char          *tagTypeName;
-    GtkTreeIter         tagIter, tagTypeIter;
+    GtkTreeIter         tagIter, tagTypeIter, tagDataIter, dataCharIter, dataHexIter;
 
-    sprintf( numberString, "Tag %d", number );
+    sprintf( numberString, "Tag %d", tagNumber );
 
-    gtk_tree_store_insert_before( pStore, &tagIter, pTagListIter, NULL );
-    gtk_tree_store_set( pStore, &tagIter,
+    gtk_tree_store_insert_before( store, &tagIter, pTagListIter, NULL );
+    gtk_tree_store_set( store, &tagIter,
                         OBJECT_COLUMN, numberString,
-                        DESCRIPTION_COLUMN, pManager->readers[readerNumber].tagList.pTags[number].uid, -1);
+                        DESCRIPTION_COLUMN, pManager->readers[readerNumber].tagList.pTags[tagNumber].uid, -1);
 
-    TAG_TYPE_NAME_FROM_ENUM( pManager->readers[readerNumber].tagList.pTags[number].tagType, tagTypeName );
-    gtk_tree_store_append( pStore, &tagTypeIter, &tagIter );
-    gtk_tree_store_set( pStore, &tagTypeIter,
+    TAG_TYPE_NAME_FROM_ENUM( pManager->readers[readerNumber].tagList.pTags[tagNumber].tagType, tagTypeName );
+    gtk_tree_store_append( store, &tagTypeIter, &tagIter );
+    gtk_tree_store_set( store, &tagTypeIter,
                         OBJECT_COLUMN, "TagType",
                         DESCRIPTION_COLUMN, tagTypeName, -1);
 
+    /* if we have tag contents then show them */
+    if ( pManager->readers[readerNumber].tagList.pTags[tagNumber].contents.dataSize > 0 )
+    {
+        sprintf( numberString, "%d Bytes", pManager->readers[readerNumber].tagList.pTags[tagNumber].contents.dataSize );
+        gtk_tree_store_append( store, &tagDataIter, &tagIter );
+        gtk_tree_store_set( store, &tagDataIter,
+                            OBJECT_COLUMN, "Contents",
+                            DESCRIPTION_COLUMN, numberString, -1);
+
+        gtk_tree_store_append( store, &dataCharIter, &tagDataIter );
+        gtk_tree_store_set( store, &dataCharIter,
+                            OBJECT_COLUMN, "ASCII",
+                            DESCRIPTION_COLUMN, pManager->readers[readerNumber].tagList.pTags[tagNumber].contents.pData, -1);
+
+        gtk_tree_store_append( store, &dataHexIter, &tagDataIter );
+        gtk_tree_store_set( store, &dataHexIter,
+                            OBJECT_COLUMN, "Hex",
+                            DESCRIPTION_COLUMN, pManager->readers[readerNumber].tagList.pTags[tagNumber].contents.extensionHook, -1);
+
+    }
+
 }
 
+void
+explorerRemoveReader(
+                int                     readerNumber
+                )
+{
+    GtkTreeIter  iter;
 
-static void
+    if ( gtk_tree_model_iter_nth_child( GTK_TREE_MODEL( store ), &iter, &rootIter, readerNumber ) )
+        gtk_tree_store_remove( store, &iter );
+
+}
+
+void
 explorerAddReader(
-                GtkTreeStore            *pStore,
-                GtkTreeIter             *pRoot,
-                const tReaderManager    *pManager,
                 int                     readerNumber
                 )
 {
@@ -127,90 +156,87 @@ explorerAddReader(
 
     sprintf( numberString, "Reader %d", readerNumber );
 
-    gtk_tree_store_append( pStore, &readerIter, pRoot );  /* Acquire a child iterator */
+    gtk_tree_store_insert( store, &readerIter, &rootIter, readerNumber );  /* Acquire a child iterator */
 
     /* if we are currently connected to this reader then we can show info */
-    if ( pManager->readers[readerNumber].hCard != NULL )
+    if ( readerManager.readers[readerNumber].hCard != NULL )
     {
-        gtk_tree_store_set( pStore, &readerIter,
+        gtk_tree_store_set( store, &readerIter,
                             OBJECT_COLUMN, numberString,
                             DESCRIPTION_COLUMN, "Connected", -1);
 
         /***************** NAME **********************/
-        gtk_tree_store_append( pStore, &nameIter, &readerIter );
-        gtk_tree_store_set( pStore, &nameIter,
+        gtk_tree_store_append( store, &nameIter, &readerIter );
+        gtk_tree_store_set( store, &nameIter,
                         OBJECT_COLUMN, "Name/Firmware",
-                        DESCRIPTION_COLUMN, pManager->readers[readerNumber].name, -1);
+                        DESCRIPTION_COLUMN, readerManager.readers[readerNumber].name, -1);
 
         /***************** DRIVER **********************/
-        gtk_tree_store_append( pStore, &driverIter, &readerIter );
-        gtk_tree_store_set( pStore, &driverIter,
+        gtk_tree_store_append( store, &driverIter, &readerIter );
+        gtk_tree_store_set( store, &driverIter,
                             OBJECT_COLUMN, "Driver",
-                            DESCRIPTION_COLUMN, pManager->readers[readerNumber].driverDescriptor, -1);
+                            DESCRIPTION_COLUMN, readerManager.readers[readerNumber].driverDescriptor, -1);
 
         /******************** SAM **********************/
-        gtk_tree_store_append( pStore, &SAMIter, &readerIter );
+        gtk_tree_store_append( store, &SAMIter, &readerIter );
         /* if there is a SAM present then show it's details */
-        if ( pManager->readers[readerNumber].SAM )
+        if ( readerManager.readers[readerNumber].SAM )
         {
-            gtk_tree_store_set( pStore, &SAMIter,
+            gtk_tree_store_set( store, &SAMIter,
                                 OBJECT_COLUMN, "SAM",
                                 DESCRIPTION_COLUMN, "Present", -1);
 
-            gtk_tree_store_append( pStore, &SAMIDIter, &SAMIter );
-            gtk_tree_store_set( pStore, &SAMIDIter,
+            gtk_tree_store_append( store, &SAMIDIter, &SAMIter );
+            gtk_tree_store_set( store, &SAMIDIter,
                                 OBJECT_COLUMN, "ID",
-                                DESCRIPTION_COLUMN, pManager->readers[readerNumber].SAM_id, -1);
+                                DESCRIPTION_COLUMN, readerManager.readers[readerNumber].SAM_id, -1);
 
-            gtk_tree_store_append( pStore, &SAMSerialIter, &SAMIter );
-            gtk_tree_store_set( pStore, &SAMSerialIter,
+            gtk_tree_store_append( store, &SAMSerialIter, &SAMIter );
+            gtk_tree_store_set( store, &SAMSerialIter,
                                 OBJECT_COLUMN, "Serial",
-                                DESCRIPTION_COLUMN, pManager->readers[readerNumber].SAM_serial, -1);
+                                DESCRIPTION_COLUMN, readerManager.readers[readerNumber].SAM_serial, -1);
         }
         else
-            gtk_tree_store_set( pStore, &SAMIter,
+            gtk_tree_store_set( store, &SAMIter,
                                 OBJECT_COLUMN, "SAM",
                                 DESCRIPTION_COLUMN, "No SAM present", -1);
 
         /******************** TAGS **********************/
-        if ( pManager->readers[readerNumber].tagList.numTags > 0 )
-        {
-            sprintf( numberString, "%d tags", pManager->readers[readerNumber].tagList.numTags);
-            gtk_tree_store_append( pStore, &tagListIter, &readerIter );
-            gtk_tree_store_set( pStore, &tagListIter,
-                                OBJECT_COLUMN, "Tags",
-                                DESCRIPTION_COLUMN, numberString, -1);
+        sprintf( numberString, "%d tags", readerManager.readers[readerNumber].tagList.numTags);
+        gtk_tree_store_append( store, &tagListIter, &readerIter );
+        gtk_tree_store_set( store, &tagListIter,
+                            OBJECT_COLUMN, "Tags",
+                            DESCRIPTION_COLUMN, numberString, -1);
 
-            for ( tagNum = 0; tagNum < pManager->readers[readerNumber].tagList.numTags; tagNum++ )
-                tagAdd( pStore, pManager, &tagListIter, readerNumber, tagNum );
-        }
+        for ( tagNum = 0; tagNum < readerManager.readers[readerNumber].tagList.numTags; tagNum++ )
+             tagAdd( &readerManager, &tagListIter, readerNumber, tagNum );
     }
     else
     {
         /* we have not connected to this reader, see if it exists */
-        if ( readerNumber >= pManager->nbReaders )
+        if ( readerNumber >= readerManager.nbReaders )
         {
-            gtk_tree_store_set( pStore, &readerIter,
+            gtk_tree_store_set( store, &readerIter,
                             OBJECT_COLUMN, numberString,
                             DESCRIPTION_COLUMN, "Not detected", -1);
         }
         else
         {   /* there is such a reader in the system, although we're not connected to it */
-            gtk_tree_store_set( pStore, &readerIter,
+            gtk_tree_store_set( store, &readerIter,
                                 OBJECT_COLUMN, numberString,
                                 DESCRIPTION_COLUMN, "Not connected", -1);
 
-            if ( pManager->readers[readerNumber].name != NULL )
+            if ( readerManager.readers[readerNumber].name != NULL )
             {
                 /***************** NAME **********************/
-                gtk_tree_store_append( pStore, &nameIter, &readerIter );
-                gtk_tree_store_set( pStore, &nameIter,
+                gtk_tree_store_append( store, &nameIter, &readerIter );
+                gtk_tree_store_set( store, &nameIter,
                                 OBJECT_COLUMN, "Name/Firmware",
-                                DESCRIPTION_COLUMN, pManager->readers[readerNumber].name, -1);
+                                DESCRIPTION_COLUMN, readerManager.readers[readerNumber].name, -1);
 
                 /***************** DRIVER **********************/
-                gtk_tree_store_append( pStore, &driverIter, &readerIter );
-                gtk_tree_store_set( pStore, &driverIter,
+                gtk_tree_store_append( store, &driverIter, &readerIter );
+                gtk_tree_store_set( store, &driverIter,
                                     OBJECT_COLUMN, "Driver",
                                     DESCRIPTION_COLUMN, "Information not available", -1);
             }
@@ -219,28 +245,27 @@ explorerAddReader(
 }
 
 static void
-explorerFillTreeModel( GtkTreeStore *pStore )
+explorerFillTreeModel( void )
 {
 
     int         i;
-    GtkTreeIter rootIter;  /* Parent iter */
     char        descriptionText[40];
 
-    gtk_tree_store_append( pStore, &rootIter, NULL);  /* Acquire a top-level iterator */
+    gtk_tree_store_append( store, &rootIter, NULL);  /* Acquire a top-level iterator */
 
     /* check if we were able to connect to PCSD */
     if ( readerManager.hContext == NULL )
-        sprintf( descriptionText, "Not Connected to PCSD, check syslog and that 'pcscd' is running" );
+        sprintf( descriptionText, "Not Connected to 'pcscd', check syslog and that 'pcscd' is running" );
     else
-        sprintf( descriptionText, "Connected, %d readers detected", readerManager.nbReaders );
+        sprintf( descriptionText, "Connected to 'pcscd', %d readers detected", readerManager.nbReaders );
 
-    gtk_tree_store_set( pStore, &rootIter,
-                        OBJECT_COLUMN, "PCSCD",
+    gtk_tree_store_set( store, &rootIter,
+                        OBJECT_COLUMN, PROGRAM_NAME,
                         DESCRIPTION_COLUMN, descriptionText, -1);
 
     /* add branch for each reader that exists in the system */
     for ( i = 0; i < readerManager.nbReaders; i++ )
-        explorerAddReader( pStore, &rootIter, &readerManager, i );
+        explorerAddReader( i );
 
 }
 
@@ -250,8 +275,6 @@ buildExplorer ( void *pData )
     GtkWidget   *dialog;
     GtkWidget   *vbox, *buttonBox, *closeButton, *statusBar;
     char        windowTitle[strlen(PROGRAM_NAME) + strlen(TAG_EVENTOR_EXPLORER_WINDOW_TITLE) + 10];
-    GtkTreeStore    *store;
-    GtkWidget       *tree;
     GtkTreeViewColumn *column;
     GtkCellRenderer *renderer;
 
@@ -287,10 +310,10 @@ buildExplorer ( void *pData )
     store = gtk_tree_store_new ( N_COLUMNS, G_TYPE_STRING, G_TYPE_STRING);
 
     /* custom function to fill the model with data */
-    explorerFillTreeModel( store );
+    explorerFillTreeModel();
 
     /* Create a view */
-    tree = gtk_tree_view_new_with_model (GTK_TREE_MODEL (store));
+    treeView = gtk_tree_view_new_with_model ( GTK_TREE_MODEL ( store ) );
 
     /* The view now holds a reference.  We can get rid of our own reference */
     g_object_unref (G_OBJECT (store));
@@ -300,22 +323,22 @@ buildExplorer ( void *pData )
     column = gtk_tree_view_column_new_with_attributes ("Object", renderer,
                                                    "text", OBJECT_COLUMN,
                                                    NULL);
-    gtk_tree_view_append_column (GTK_TREE_VIEW (tree), column);
+    gtk_tree_view_append_column (GTK_TREE_VIEW (treeView), column);
 
     /* Second column.. description of object */
     renderer = gtk_cell_renderer_text_new ();
     column = gtk_tree_view_column_new_with_attributes ("Description", renderer,
                                                       "text", DESCRIPTION_COLUMN,
                                                       NULL);
-    gtk_tree_view_append_column( GTK_TREE_VIEW (tree), column);
+    gtk_tree_view_append_column( GTK_TREE_VIEW (treeView), column);
 
-    gtk_tree_view_set_enable_tree_lines( GTK_TREE_VIEW(tree), TRUE );
+    gtk_tree_view_set_enable_tree_lines( GTK_TREE_VIEW(treeView), TRUE );
 
-    gtk_tree_view_expand_all( GTK_TREE_VIEW( tree ) );
+    gtk_tree_view_expand_all( GTK_TREE_VIEW( treeView ) );
 
     /************** Pack in Tree View *********************************/
     /* This packs the scrolled window into the vbox (a gtk container). */
-    gtk_box_pack_start( GTK_BOX(vbox), tree, TRUE, TRUE, 3);
+    gtk_box_pack_start( GTK_BOX(vbox), treeView, TRUE, TRUE, 3);
 
 
     /******************************* Button Box ***************************************/
@@ -353,21 +376,37 @@ explorerActivate( void *readersArray )
 {
 
     /* if it exists delete it as the situation might have changed */
-    if ( explorer )
-        gtk_widget_destroy( explorer );
+    if ( explorerWindow )
+    {
+        /* make sure it's visible */
+        gtk_window_present( (GtkWindow *)explorerWindow );
+    }
+    else
+    {
+        /* build the widget tree for the entire UI */
+        explorerWindow = buildExplorer( readersArray );
 
-    /* build the widget tree for the entire UI */
-    explorer = buildExplorer( readersArray );
-
-    /* Show window, and recursively all contained widgets */
-    gtk_widget_show_all( explorer );
+        /* Show window, and recursively all contained widgets */
+        gtk_widget_show_all( explorerWindow );
+    }
 
 }
 
 
 void
-explorerUpdate( void )
+explorerViewUpdate( void )
 {
+
+/* TODO doesn't seem to work yet! */
+#if 0
+    if ( explorerWindow )
+        gtk_tree_view_set_model( GTK_TREE_VIEW( treeView ), GTK_TREE_MODEL( store ) );
+
+this gives an assertion error and above too
+    gtk_widget_queue_draw(GTK_WIDGET( treeView ));
+#endif
+
+/* IN theory not needed at all !!!*/
 
 }
 

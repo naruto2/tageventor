@@ -44,8 +44,10 @@
 
 
 /**************************    TYPEDEFS    **************************/
-typedef union		{
-			    tTagContents_MIFARE_ULTRA   mifareUltra;
+typedef struct		{
+                    char   *pData;
+                    int     dataSize;
+                    char    *extensionHook; /* to allow to hook other data structures in here */
 			} tTagContents;
 
 typedef char	tUID[MAX_TAG_UID_SIZE];
@@ -89,7 +91,7 @@ typedef enum {  MIFARE_ULTRA        = SEL_RES_MIFARE_ULTRA,
     }
 
 typedef struct {
-                tTagContents    *pContents;
+                tTagContents    contents;
                 tTagType        tagType;
                 tUID            uid;
                 } tTag;
