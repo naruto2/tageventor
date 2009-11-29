@@ -34,6 +34,8 @@
 
 #define SYSTEM_TRAY_TOOL_TIP_TEXT_MAX    (260)
 
+#define NOTIFICATION_TIMEOUT    (1000)
+
 static GtkStatusIcon    *systemTrayIcon = NULL;
 static int              (*readerPollFunction)( void *data ) = NULL;
 static guint            timeoutID = 0;
@@ -67,7 +69,7 @@ systemTrayNotify(
 
     /* create the notification and attach it to the status icon */
     notification = notify_notification_new_with_status_icon( message, body, iconName, systemTrayIcon );
-    notify_notification_set_timeout( notification, NOTIFY_EXPIRES_DEFAULT );
+    notify_notification_set_timeout( notification, NOTIFICATION_TIMEOUT );
     notify_notification_set_urgency( notification, NOTIFY_URGENCY_NORMAL );
 
     /* request that the notification be shown on the screen */

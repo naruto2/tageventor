@@ -23,7 +23,11 @@
 /* dialog box                                                             */
 extern void explorerActivate( void * pReadersArray);
 
-extern void explorerUpdate( void );
+extern void explorerAddReader( int );
+
+extern void explorerRemoveReader( int );
+
+extern void explorerViewUpdate( void );
 
 extern char explorerQuit( void );
 
