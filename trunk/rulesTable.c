@@ -34,12 +34,13 @@
 
 /************* VARIABLES STATIC TO THIS FILE  ********************/
 /* this is the list of built-in commands, in the reverse order of which they will be tried */
-#define NUM_DEFAULT_COMMANDS   (3)
+#define NUM_DEFAULT_COMMANDS   (4)
 
 static    tRulesTableEntry defaultCommands[NUM_DEFAULT_COMMANDS] = {
-   { "*", DEFAULT_COMMAND_DIR, GENERIC_MATCH,    "Match any tag, then run script named 'generic' in command dir",    TRUE },
-   { "*", DEFAULT_COMMAND_DIR, TAG_ID_MATCH,     "Match any tag, then run script with name $tagID in command dir",   TRUE },
-   { "*", "./scripts",         TAG_ID_MATCH,     "Match any tag, then run script with name $tagID in './scripts/'",  TRUE },
+   { "*", DEFAULT_COMMAND_DIR, 	GENERIC_MATCH,    "Match any tag, then run script named 'generic' in application script dir", TRUE },
+   { "*", DEFAULT_COMMAND_DIR,	TAG_ID_MATCH,     "Match any tag, then run script named $tagUID   in application script dir", TRUE },
+   { "*", "./scripts", 		GENERIC_MATCH,    "Match any tag, then run script named 'generic' in './scripts/'",           TRUE },
+   { "*", "./scripts",		TAG_ID_MATCH,     "Match any tag, then run script named $tagUID   in './scripts/'",           TRUE },
         };
 
 static  int             numTagEntries = 0;
@@ -174,9 +175,33 @@ rulesTableRead( void )
 
 }
 
-/*********************  EXEC SCRIPT **************************/
 static int
 execScript(
+	const char * scriptPath,
+	const char * argv0,
+	const char * tagUID,
+	const char * eventTypeString
+        )
+{
+   char		messageString[MAX_LOG_MESSAGE];
+   int		ret;
+
+   sprintf(messageString, "Attempting to execl() tag event script %s from process with pid=%d",
+           scriptPath, getpid());
+   readersLogMessage( &readerManager, LOG_INFO, 2, messageString);
+   ret = execl( scriptPath, argv0, tagUID, eventTypeString, NULL );
+   /* If any of the exec() functions returns, an error will have occurred. The return value is -1,
+      and the global variable errno will be set to indicate the error. */
+   sprintf(messageString, "Return value from execl() of script was = %d, errno=%d", ret, errno);
+   readersLogMessage( &readerManager, LOG_INFO, 2, messageString);
+
+   return ret;
+}
+
+
+/*********************  EXEC SCRIPT IN CHILD **************************/
+static unsigned char
+execScriptInChild(
 	const char * folderName,   /* without a trailing '/' */
 	const char * fileName,
 	const char * argv0,
@@ -194,9 +219,16 @@ execScript(
    /* build a full path */
    sprintf( scriptPath, "%s/%s", folderName, fileName );
 
+   sprintf(messageString, "Looking for matching script with path: %s", scriptPath );
+   readersLogMessage( &readerManager, LOG_INFO, 2, messageString);
+
    /* check if the file exists */
-   if ((stat (scriptPath, &sts)) == -1)
-      return(SCRIPT_DOES_NOT_EXIST);
+   if ((stat (scriptPath, &sts)) == -1) {
+      return( FALSE ); /* no script found that matches */
+   }
+
+   sprintf(messageString, "Matching script found at: %s", scriptPath );
+   readersLogMessage( &readerManager, LOG_INFO, 2, messageString);
 
    /* fork a copy of myself for executing the script in the child process using exec() */
    pid = fork();
@@ -204,27 +236,20 @@ execScript(
    { /* PARENT process - fork error */
       sprintf(messageString, "Error forking for script execution, fork() returned %d", pid);
       readersLogMessage( &readerManager, LOG_ERR, 0, messageString);
-      return ( pid ); /* TODO , not sure returning that is correct...check later */
+      return ( FALSE );
    }
 
    if ( pid > 0 ) /* PARENT process - fork worked */
    {
       sprintf(messageString, "Fork of child process successful with child pid=%d", pid);
-      readersLogMessage( &readerManager, LOG_INFO, 3, messageString);
-      return( 0 );  /* success = 0 */
+      readersLogMessage( &readerManager, LOG_INFO, 2, messageString);
+      return( TRUE ); /* we will have to assume the exec in the child will work */
    }
 
    /* If we got this far, then "pid" = 0 and we are in the child process */
-   sprintf(messageString, "Attempting to execl() tag event script %s in child process with pid=%d",
-           scriptPath, getpid());
-   readersLogMessage( &readerManager, LOG_INFO, 2, messageString);
-   ret = execl( scriptPath, argv0, tagUID, eventTypeString, NULL );
-   /* If any of the exec() functions returns, an error will have occurred. The return value is -1,
-      and the global variable errno will be set to indicate the error. */
-   sprintf(messageString, "Return value from execl() of script was = %d, errno=%d", ret, errno);
-   readersLogMessage( &readerManager, LOG_INFO, 2, messageString);
+   ret = execScript( scriptPath, argv0, tagUID, eventTypeString );
 
-   /* exit the child process and return the return value, parent keeps on going */
+   /* exit the child process and return the return value */
    exit( ret );
 }
 /*********************  EXEC SCRIPT **************************/
@@ -243,7 +268,7 @@ rulesTableEventDispatch(
              IF matches
                  - try to find and execute a script
         done in reverse order, ending with most generic rules */
-    for (ruleIndex = (numTagEntries-1); ruleIndex >= 0; ruleIndex--)
+    for ( ruleIndex = (numTagEntries-1); ruleIndex >= 0; ruleIndex-- )
     {
         if ( tagEntryArray[ruleIndex].enabled )
         {
@@ -269,14 +294,16 @@ rulesTableEventDispatch(
             {
                 case TAG_IN:
                     /* return TRUE if we were able to execute script */
-                    return( execScript( tagEntryArray[ruleIndex].folder, scriptName, pTag->uid, pTag->uid, "IN",
-                                    tagEntryArray[ruleIndex].description) );
+                    if ( execScriptInChild( tagEntryArray[ruleIndex].folder, scriptName, pTag->uid, pTag->uid, "IN",
+                                  tagEntryArray[ruleIndex].description) )
+                       return TRUE;
                     break;
 
                 case TAG_OUT:
                     /* return TRUE if we were able to execute script */
-                    return (execScript( tagEntryArray[ruleIndex].folder, scriptName, pTag->uid, pTag->uid, "OUT",
-                                    tagEntryArray[ruleIndex].description) );
+                    if ( execScriptInChild( tagEntryArray[ruleIndex].folder, scriptName, pTag->uid, pTag->uid, "OUT",
+                                    tagEntryArray[ruleIndex].description) )
+                       return TRUE;
                     break;
 
                 default:
@@ -286,7 +313,7 @@ rulesTableEventDispatch(
         }
     }
 
-    /* catchall in case my logic fails above */
+    /* no matching rule was found or worked */
     return( FALSE );
 
 }

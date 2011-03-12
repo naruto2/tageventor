@@ -61,7 +61,7 @@ sPrintBufferHex(
                 char *byteSource
                 )
 {
-    LONG j;
+    long j;
 
 	for ( j = 0; j < num; j++ )
 	{
@@ -332,8 +332,8 @@ eventDispatch(
             /* try to process event and notify if fails */
             if ( ! rulesTableEventDispatch( eventType, pTag ) )
             {
-                sprintf( messageString, "Failed to execute a script for tag event" );
-                readersLogMessage( pManager, LOG_ERR, 0, messageString );
+                sprintf( messageString, "Failed to find an executable script for the tag event" );
+                readersLogMessage( pManager, LOG_INFO, 1, messageString );
 #ifdef BUILD_SYSTEM_TRAY
                 systemTrayNotify( messageString, pTag->uid, NULL );
 #endif
