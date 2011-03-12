@@ -6,6 +6,12 @@ You can use "make clean" then "make" to ensure you have a clean build.
 
 You should get appropriate output from the make file and be left with tagEventor and gtagEventor (Gtk/GNOME GUI version) executables in the ./bin/Debug and ./bin/Release subdirectories.
 
+=== Build from the command line on Mac OS X ===
+Most people on Mac OS X will not have a Gtk port installed and so for now only building of the command line program is supported directly on Mac OS X.
+
+To avoid errors in the build trying to build the Gtk version, use:
+ * make -f tagEventor.mak
+
 === Build Details ===
 The project has three somewhat independant builds, each with it's own makefile:
   * Entire project (Makefile)        - build all the sub-projects
