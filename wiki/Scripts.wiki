@@ -12,5 +12,5 @@ They are evaluated in this order until a matching script is found, then it is ex
 
  # any tag UID, look for a script with a name matching the tag UID, in the directory "./scripts" (i.e. below the folder where you were in the terminal when you executed tagEventor)
  # any tag UID, look for a script named "generic", in the directory "./scripts" (i.e. below the folder where you were in the terminal when you executed tagEventor)
- # any tag UID, look for a script with a name matching the tag UID, in the system directory where tagEventor is installed (see "InstallationDirectories)
- # any tag, look for a script named "generic", in the system directory where tagEventor is installed (see "InstallationDirectories)
+ # any tag UID, look for a script with a name matching the tag UID, in the system directory where tagEventor is installed (see InstallationDirectories)
+ # any tag, look for a script named "generic", in the system directory where tagEventor is installed (see InstallationDirectories)
