@@ -21,7 +21,16 @@ The *tagEventor* command-line binary will start up in the foreground at the term
 
 The *gtagEventor* binary (for Gtk2.0/Gnome) will start as an icon in the system tray. If started from the command line it won't disconnect from the terminal. You should use "gtagEventor&" for that.
 
-*NOTE: To start the daemon you will need permission for /etc/tagEventor and hence you will probably need to start it as root, or with the "sudo" command!*
+== Install Directories ==
+Linux
+ * /etc/tagEventor for the command line version
+ * /etc/gtagEveentor for the GtK UI version
+
+Mac OS X
+ * /Library/Application Support/tagEventor for the command line version
+ * /Library/Application Support/tagEventor for the GtK UI version (you will need some GtK port to Mac!)
+
+*NOTE: To start the daemon you will need permission for binary (see Install Directories above for where it will be) and hence you will probably need to start it as root, or with the "sudo" command!*
 
   * -n reader number: this is the number of the reader connected to the pcscd that manages the smart card resources. Default of AUTO is chosen. Note that this switch can be used many times to specify a number of readers, as well as AUTO. If AUTO is specified it will take priority over the other readers enabled. But the readers specified are remembered and the Settings GUI (Gtk/GNOME version) can be used to toggle them, and untoggle AUTO.
 
