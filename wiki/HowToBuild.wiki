@@ -12,7 +12,7 @@ There are projects included for the libReader library, tagEventor command-line p
 === Build Details ===
 The project has three somewhat independant builds, each with it's own makefile:
   * Entire project (Makefile)        - build all the sub-projects
-  * libReader      (libReader.mak)   - the library for talking to the reader
+  * libReader      (lib/source/Makefile)   - the library for talking to the reader
   * tagEventor     (tagEventor.mak)  - the command line application or daemon
   * gtagEventor    (gtagEventor.mak) - the Gtk/Gnome GUI version of tagEventor
 
