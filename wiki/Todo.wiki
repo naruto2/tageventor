@@ -1,5 +1,8 @@
 Send other suggestions to mailto:info@autelic.org
 
+= Build =
+Modify make to build a binary package for Mac OS X that only contains tagEventor, as when Gtk is not present gtagEventor cannot be built, and also not many people will have Gtk on Mac and they just want tagEventor
+
 == Tags Types ==
   * Each time we poll for tags, also poll for NFC Type 1 (Innovision Topaz, Jewel) and NFC Type 3 (Sony FeliCa) types. This will involve me getting some of those tags to test with first!
 
@@ -17,7 +20,6 @@ Send other suggestions to mailto:info@autelic.org
   * Write some text for the rules Editor Help Dialog and have it display it neatly, maybe with links to the wiki help pages or other sources.
 
 == Mac Scripts ==
-Modify the example scripts somehow so that they also run on Mac OS X, where for example Xmessage (used by the "generic" script) is not present. Maybe have different sample scripts in a sub directory for Mac.
 Look into having and executing AppleScript scripts or the like.
 
 == Mac OS X GUI ==
