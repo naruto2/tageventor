@@ -1,13 +1,10 @@
 Before trying to build (OK, go ahead and try it and then come back here when it fails....!) you might want to check the SoftwareDependencies page to make sure you have what's needed for Linux and Mac OS X building.
 
-=== How to 'make' - from the command line ===
+=== Build from the command line ===
 Type "make" at the command prompt in the source directory.
 You can use "make clean" then "make" to ensure you have a clean build.
 
 You should get appropriate output from the make file and be left with tagEventor and gtagEventor (Gtk/GNOME GUI version) executables in the ./bin/Debug and ./bin/Release subdirectories.
-
-=== How to build - from an IDE ===
-There are projects included for the libReader library, tagEventor command-line program and gtagEventor Gtk/Gnome GUI version for the [http://www.codeblocks.org/ Code::Blocks] Integrated Development Environment (IDE). Open them in [http://www.codeblocks.org/ Code::Blocks], select the target (Debug or Release) and hit "build" or "fresh build"...
 
 === Build Details ===
 The project has three somewhat independant builds, each with it's own makefile:
@@ -16,26 +13,29 @@ The project has three somewhat independant builds, each with it's own makefile:
   * tagEventor     (tagEventor.mak)  - the command line application or daemon
   * gtagEventor    (gtagEventor.mak) - the Gtk/Gnome GUI version of tagEventor
 
-Using "make" with no options is equivalent to "make all", which is equivalent to "Debug" and "Release" on the three builds.
+=== Targets ===
+The makefiles take the following targets:
+  * "" (default target) or  "all" - equivalent to "Debug" and "Release"
+  * Debug                                  - build the Debug   version
+  * Release                                - build the Release version
+  * cleanDebug                         - only clean out the generated files of Debug   version
+  * cleanRelease                       - only clean out the generated files of Release version
 
-Alternatively, you can use "make -f $makefilename" to build each one independantly.
+The overall project makefile (Makefile) also accepts the "binary" target which builds "Release" then creates a binary "tarball" for binary instalation.
 
-All four makefiles take the following options:
-  * make Debug        - only build the Debug   version
-  * make Release      - only build the Release version
-  * make cleanDebug   - only clean out the generated files of Debug   version
-  * make cleanRelease - only clean out the generated files of Release version
+=== Build from Code::Blocks IDE ===
+There are projects included for the libReader library, tagEventor command-line program and gtagEventor Gtk/Gnome GUI version for the [http://www.codeblocks.org/ Code::Blocks] Integrated Development Environment (IDE). 
 
-and combinations of the above are allowed. e.g. "make cleanRelease Release"
-
-These make files are used directly by the [http://www.codeblocks.org/ Code::Blocks] build system, and they are compatible with it, so if you open the corresponding project in Code::Blocks and hit "build" you are doing "make $target" ($target = Debug | Release).
-
-If you do a fresh build [http://www.codeblocks.org/ Code::Blocks] does "make clean$target" followed by "make
-$target".
-
-Three Code::Blocks projects (.cbp files) now exist, unsurprisingly named:
+Three Code::Blocks projects (.cbp files) exist, unsurprisingly named:
   * libReader    (libReader.cbp)
   * tagEventor   (tagEventor.cbp)
   * gtagEventor  (gtagEventor.cbp)
 
+Open them in [http://www.codeblocks.org/ Code::Blocks], select the target (Debug or Release) and hit "build" or "fresh build"...
+
+The make files are used directly by the [http://www.codeblocks.org/ Code::Blocks] build system, and they are compatible with it, so if you open the corresponding project in Code::Blocks and hit "build" you are doing "make $target" ($target = Debug | Release).
+
+If you do a fresh build [http://www.codeblocks.org/ Code::Blocks] does "make clean$target" followed by "make $target".
+
+=== Where is gtagEventor.c ? ===
 The *gtagEventor* project reuses the tagEventor.c file but recompiles it with different flags to produce *gtagEventor.o* and then links with the rest of the files.
