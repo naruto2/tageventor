@@ -20,7 +20,6 @@ then it will look for a script to execute for that event
   * if no script found above, it will look for a script of the same name in the tagEventor command directory (/etc/tagEventor) and then execute it.
   * if no specific script for that tag is found then it will look for the ´generic´ script (of that exact name) in the /etc/tagEventor directory.
 
-In all cases the script will be passed three parameters:
-  * $1 = SAM (unique ID of the SAM chip in the smart card reader if exists, "NoSAM" otherwise
-  * $2 = UID (unique ID of the tag, as later we may use wildcard naming)
-  * $3 = Event Type (IN for new tag placed on reader, OUT for tag removed from reader)
+In all cases the script will be passed these parameters:
+  * $1 = UID (unique ID of the tag, as later we may use wildcard naming)
+  * $2 = Event Type ("IN" for new tag placed on reader, "OUT" for tag removed from reader)
