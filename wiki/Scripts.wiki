@@ -14,3 +14,8 @@ They are evaluated in this order until a matching script is found, then it is ex
  # any tag UID, look for a script named "generic", in the directory "./scripts" (i.e. below the folder where you were in the terminal when you executed tagEventor)
  # any tag UID, look for a script with a name matching the tag UID, in the system directory where tagEventor is installed (see InstallationDirectories)
  # any tag, look for a script named "generic", in the system directory where tagEventor is installed (see InstallationDirectories)
+
+=== "generic" script ==
+A simple "generic" script is included that puts up a UI message of a tag being detected, with it's UID (on Linux uses x11message, on Mac OS X it uses growlnotify).
+
+Feel free to copy or modify this in your own folders, or create a specific script for a specific action and then name the script matching the tag UID that you want to produce that action.
