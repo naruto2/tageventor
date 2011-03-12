@@ -18,3 +18,12 @@ It will create subdirectories.
 Install it:
 Still need to have root permissions to install, script checks this.
   - sudo ./install-sh
+
+== Install Directories ==
+Linux
+ * /etc/tagEventor for the command line version
+ * /etc/gtagEveentor for the GtK UI version
+
+Mac OS X
+ * /Library/Application Support/tagEventor for the command line version
+ * /Library/Application Support/tagEventor for the GtK UI version (you will need some GtK port to Mac!)
