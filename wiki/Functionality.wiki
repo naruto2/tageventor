@@ -23,3 +23,7 @@ then it will look for a script to execute for that event
 In all cases the script will be passed these parameters:
   * $1 = UID (unique ID of the tag, as later we may use wildcard naming)
   * $2 = Event Type ("IN" for new tag placed on reader, "OUT" for tag removed from reader)
+
+There are a couple of sample scripts in the "scripts" subdirectory when downloaded or installed. 
+The "generic" script is run according to the rules defined, when a specific tag script is not found.
+In it I simply show a message on the screen (using x11message on Linux and growlnotify on Mac OS X)
