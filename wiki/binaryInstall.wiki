@@ -19,11 +19,15 @@ Install it:
 Still need to have root permissions to install, script checks this.
   - sudo ./install-sh
 
-== Install Directories ==
+== Directories ==
 Linux
- * /etc/tagEventor for the command line version
- * /etc/gtagEveentor for the GtK UI version
+ * /usr/sbin/tagEventor for the command line version
+ * /etc/tagEventor for the command line version scripts
+ * /usr/sbin/gtagEventor for the GtK UI version (you will need some GtK port to Mac!)
+ * /etc/gtagEveentor for the GtK UI version scripts
 
 Mac OS X
- * /Library/Application Support/tagEventor for the command line version
- * /Library/Application Support/tagEventor for the GtK UI version (you will need some GtK port to Mac!)
+ * /usr/sbin/tagEventor for the command line version
+ * /Library/Application Support/tagEventor for the command line version scripts
+ * /usr/sbin/gtagEventor for the GtK UI version (you will need some GtK port to Mac!)
+ * /Library/Application Support/gtagEventor for for the GtK UI version scripts
