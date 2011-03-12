@@ -5,7 +5,7 @@ Informational messages (LOG_INFO) are logged to syslog (daemon mode) or output o
 See here for a list of messages output by level:
 
 === Level 0 ===
-None
+None - So with default setting of verbosity 0, no output is generated.
 
 === Level 1 ===
 "Started daemon [command name] with PID=[pid] on reader [reader number], see /var/log/syslog",
