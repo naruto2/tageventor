@@ -177,7 +177,8 @@ sPrintBufferHex(
 
 	for ( j = 0; j < num; j++ )
 	{
-        sprintf( asciiDest, "%02X", (int)(*byteSource));
+		/* always in lower case */
+        sprintf( asciiDest, "%02x", (int)(*byteSource));
         asciiDest+=2;
         byteSource++;
 	}

@@ -1,0 +1,18 @@
+<project name="build-info">
+	<import file="version.xml" />
+
+	<property name="version_info_file" value="res/values/build_info.xml" />
+	<property name="build.resources.dir" value="buildresources" />
+	
+	<target name="build-info" depends="version">
+		<tstamp>
+	    	    <format property="build.time" pattern="dd MMM yyyy HH:mm" locale="en,US"/>
+	  	</tstamp>
+		<echo message="Build time: ${build.time}" />
+		<echo message="versionCode: ${version.code}" />
+		<echo message="versionName: ${version.name}" />
+				
+		<echo file="${version_info_file}" message="&lt;?xml version='1.0' encoding='utf-8'?&gt;&lt;resources&gt;&lt;string name='build_time'&gt;${build.time}&lt;/string&gt;&lt;string name='version_name'&gt;${version.name}&lt;/string&gt;&lt;string name='version_code'&gt;${version.code}&lt;/string&gt;&lt;/resources&gt;" />
+		
+	</target>
+</project>
