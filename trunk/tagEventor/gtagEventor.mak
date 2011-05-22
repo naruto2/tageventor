@@ -1,33 +1,33 @@
 all: Debug Release
 	@echo ""
 
-debug_binaries = bin/Debug/gtagEventor
-release_binaries = bin/Release/gtagEventor
+debug_binaries = Debug/gtagEventor
+release_binaries = Release/gtagEventor
 binaries = $(debug_binaries) $(release_binaries)
 
-debug_archive = lib/Debug/libtagReader.a
+debug_archive = ../tagReader/Debug/libtagReader.a
 
-release_archive = lib/Release/libtagReader.a
+release_archive = ../tagReader/Release/libtagReader.a
 
-debug_objects = obj/Debug/gtagEventor.o \
-                obj/Debug/rulesTable.o  \
-                obj/Debug/daemonControl.o  \
-                obj/Debug/aboutDialog.o \
-                obj/Debug/rulesEditor.o \
-                obj/Debug/rulesEditorHelp.o \
-                obj/Debug/settingsDialog.o \
-                obj/Debug/explorer.o \
-                obj/Debug/systemTray.o
+debug_objects = Debug/gtagEventor.o \
+                Debug/rulesTable.o  \
+                Debug/daemonControl.o  \
+                Debug/aboutDialog.o \
+                Debug/rulesEditor.o \
+                Debug/rulesEditorHelp.o \
+                Debug/settingsDialog.o \
+                Debug/explorer.o \
+                Debug/systemTray.o
 
-release_objects = obj/Release/gtagEventor.o \
-                  obj/Release/rulesTable.o \
-                  obj/Release/daemonControl.o \
-                  obj/Release/aboutDialog.o \
-                  obj/Release/rulesEditor.o \
-                  obj/Release/rulesEditorHelp.o \
-                  obj/Release/settingsDialog.o \
-                  obj/Release/explorer.o \
-                  obj/Release/systemTray.o
+release_objects = Release/gtagEventor.o \
+                  Release/rulesTable.o \
+                  Release/daemonControl.o \
+                  Release/aboutDialog.o \
+                  Release/rulesEditor.o \
+                  Release/rulesEditorHelp.o \
+                  Release/settingsDialog.o \
+                  Release/explorer.o \
+                  Release/systemTray.o
 
 debug_dependencies = $(debug_objects:.o=.d)
 release_dependencies = $(release_objects:.o=.d)
@@ -79,7 +79,7 @@ endif
 include version.mak
 
 ##### Compile flags
-cc_flags = $(build_flags) $(icon_flags) -I . -I lib/source -Wall \
+cc_flags = $(build_flags) $(icon_flags) -I src -I ../tagReader/source -Wall \
           -DPROGRAM_NAME='"gtagEventor"' $(os_cc_flags)
 
 debug_cc_flags = $(cc_flags) -DDEBUG -g \
@@ -110,24 +110,24 @@ bin/Debug/gtagEventor: $(debug_archive) $(debug_objects)
 $(debug_archive):
 
 ########## Debug version DEPENDENCIES
-obj/Debug/%.d: %.c
+Debug/%.d: src/%.c
 	@set -e; rm -f $@; \
 	gcc -M $(debug_cc_flags) $< > $@.$$$$; \
 	sed 's,\($*\)\.o[ :]*,$(@D)/$*.o $@ : ,g' < $@.$$$$ > $@; \
 	rm -f $@.$$$$
 
 ###### Debug version COMPILE
-obj/Debug/gtagEventor.o: tagEventor.c
+Debug/gtagEventor.o: src/tagEventor.c
 	@gcc -c $< $(debug_cc_flags) -o $@
 	@echo "Compiling " $< "---->" $@
 
-obj/Debug/gtagEventor.d: tagEventor.c
+Debug/gtagEventor.d: src/tagEventor.c
 	@set -e; rm -f $@; \
 	gcc -M $(debug_cc_flags) $< > $@.$$$$; \
 	sed 's,tagEventor.o[ :]*,$(@D)/gtagEventor.o $@ : ,g' < $@.$$$$ > $@; \
 	rm -f $@.$$$$
 
-obj/Debug/%.o : %.c
+Debug/%.o : src/%.c
 	@gcc -c $< $(debug_cc_flags) -o $@
 	@echo "Compiling " $<
 
@@ -139,31 +139,31 @@ cleanRelease:
 Release: $(release_binaries)
 
 ########## Release version LINK
-bin/Release/gtagEventor: $(release_archive) $(release_objects)
-	@$(linker)  $(release_objects) -Llib/Release $(link_flags) -o $@
+Release/gtagEventor: $(release_archive) $(release_objects)
+	@$(linker)  $(release_objects) -L../tagReader/Release $(link_flags) -o $@
 	@echo gtagEventor Release version BUILT $@
 	@echo ""
 
 $(release_archive):
 
 ########## Release version COMPILE
-obj/Release/gtagEventor.o : tagEventor.c
+Release/gtagEventor.o : src/tagEventor.c
 	@gcc -c $< $(release_cc_flags) -o $@
 	@echo "Compiling " $< "---->" $@
 
-obj/Release/gtagEventor.d: tagEventor.c
+Release/gtagEventor.d: src/tagEventor.c
 	@set -e; rm -f $@; \
 	gcc -M $(release_cc_flags) $< > $@.$$$$; \
 	sed 's,tagEventor.o[ :]*,$(@D)/gtagEventor.o $@ : ,g' < $@.$$$$ > $@; \
 	rm -f $@.$$$$
 
 ########## Release version DEPENDENCIES
-obj/Release/%.d: %.c
+Release/%.d: src/%.c
 	@set -e; rm -f $@; \
 	gcc -M $(release_cc_flags) $< > $@.$$$$; \
 	sed 's,\($*\)\.o[ :]*,$(@D)/$*.o $@ : ,g' < $@.$$$$ > $@; \
 	rm -f $@.$$$$
 
-obj/Release/%.o : %.c
+Release/%.o : src/%.c
 	@gcc -c $< $(release_cc_flags) -o $@
 	@echo "Compiling " $<
