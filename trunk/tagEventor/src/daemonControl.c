@@ -28,6 +28,7 @@
 #include <sys/stat.h>  /* for umask() */
 #include <limits.h>
 
+#include "constants.h"
 #include "tagReader.h"
 
 /************* VARIABLES STATIC TO THIS FILE  ********************/
