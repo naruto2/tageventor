@@ -16,14 +16,14 @@ binary: Release
 	@echo Binary install package for OS=$(os) created as $(tar_file_name)
   
 Debug:
-	@make -s -C lib/source/ -f Makefile Debug
+	@make -s -C tagReader -f Makefile Debug
 	@make -s -f tagEventor.mak Debug
 	@make -s -f gtagEventor.mak Debug
 	@echo "Debug Done."
 	@echo ""
 
 Release:
-	@make -s -C lib/source/ -f Makefile Release
+	@make -s -C tagReader -f Makefile Release
 	@make -s -f tagEventor.mak Release
 	@make -s -f gtagEventor.mak Release
 	@echo "Release Done."
@@ -32,14 +32,14 @@ Release:
 cleanDebug:
 	@make -s -f tagEventor.mak cleanDebug
 	@make -s -f gtagEventor.mak cleanDebug
-	@make -s -C lib/source/ -f Makefile cleanDebug
+	@make -s -C tagReader -f Makefile cleanDebug
 	@echo "cleanDebug Done."
 	@echo ""
 
 cleanRelease:
 	@make -s -f tagEventor.mak cleanRelease
 	@make -s -f gtagEventor.mak cleanRelease
-	@make -s -C lib/source/ -f Makefile cleanRelease
+	@make -s -C tagReader -f Makefile cleanRelease
 	@echo "cleanRelease Done."
 	@echo ""
 
@@ -49,5 +49,5 @@ clean:
 	@rm -f *~ scripts/*~
 	@make -s -f tagEventor.mak clean
 	@make -s -f gtagEventor.mak clean
-	@make -s -C lib/source/ -f Makefile clean
+	@make -s -C tagReader -f Makefile clean
 	@echo "Clean Done."

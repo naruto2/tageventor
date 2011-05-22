@@ -1,20 +1,20 @@
 all: Debug Release
      
-debug_archive = ../Debug/libtagReader.a
-release_archive = ../Release/libtagReader.a
+debug_archive = Debug/libtagReader.a
+release_archive = Release/libtagReader.a
 
-sources = $(*.c)
+sources = $(src/*.c)
 
-debug_objects = ../obj/Debug/tagReader.o ../obj/Debug/acr122UDriver.o
-release_objects = ../obj/Release/tagReader.o ../obj/Release/acr122UDriver.o
+debug_objects = Debug/tagReader.o Debug/acr122UDriver.o
+release_objects = Release/tagReader.o Release/acr122UDriver.o
 
-../obj/Release/%.d: %.c
+Release/%.d: src/%.c
 	@set -e; rm -f $@; \
 	gcc -MM $(release_flags) $< > $@.$$$$; \
 	sed 's,\($*\)\.o[ :]*,$(@D)/$*.o $@ : ,g' < $@.$$$$ > $@; \
 	rm -f $@.$$$$
 
-../obj/Debug/%.d: %.c
+Debug/%.d: src/%.c
 	@set -e; rm -f $@; \
 	gcc -MM $(debug_flags) $< > $@.$$$$; \
 	sed 's,\($*\)\.o[ :]*,$(@D)/$*.o $@ : ,g' < $@.$$$$ > $@; \
@@ -46,7 +46,7 @@ release_flags = $(os_cc_flags) $(cc_flags)
 ###### Debug version of library
 cleanDebug:
 	@rm -f $(debug_objects) $(debug_archive)
-	@rm -f ../obj/Debug/*.d
+	@rm -f Debug/*.d
 	@echo "libtagReader Debug files cleaned"
 
 Debug: $(debug_archive)
@@ -57,14 +57,14 @@ $(debug_archive): $(debug_objects)
 	@echo Library BUILT $@
 	@echo ""
 
-../obj/Debug/%.o: %.c
+Debug/%.o: src/%.c
 	@gcc -c $< $(debug_flags) -o $@
 	@echo "Compiling " $<
 
 ###### Release version of library
 cleanRelease:
 	@rm -f $(release_objects) $(release_archive)
-	@rm -f ../obj/Release/*.d
+	@rm -f Release/*.d
 	@echo "libtagReader Release files cleaned"
 
 Release: $(release_archive)
@@ -75,7 +75,7 @@ $(release_archive): $(release_objects)
 	@echo Library BUILT $@
 	@echo ""
 
-../obj/Release/%.o: %.c
+Release/%.o: src/%.c
 	@gcc -c $< $(release_flags) -o $@
 	@echo "Compiling " $<
 
