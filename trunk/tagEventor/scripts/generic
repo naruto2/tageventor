@@ -21,7 +21,7 @@ then
       ;;
 
       Darwin)
-         growlnotify -m "Tag with UID = $1, Event Type = IN"
+         /usr/local/bin/growlnotify -m "Tag with UID = $1, Event Type = IN"
       ;;
 
       *)
