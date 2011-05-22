@@ -32,6 +32,7 @@
 
 #include <tagReader.h>
 
+#include "constants.h"
 #include "tagEventor.h"
 #include "rulesTable.h"
 #include "systemTray.h"
