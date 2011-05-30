@@ -36,7 +36,7 @@ include $(release_dependencies)
 include version.mak
 
 ##### Compile Flags
-cc_flags = -Wall -I . -I /usr/include/PCSC -I ../tagReader/src \
+cc_flags = -Wall -I . -I ../tagReader/src \
            -DPROGRAM_NAME="tagEventor" \
            -DDEFAULT_LOCK_FILE_DIR='"/var/run/tagEventor"' \
            -DDAEMON_NAME='"tagEventord"'
@@ -44,7 +44,7 @@ cc_flags = -Wall -I . -I /usr/include/PCSC -I ../tagReader/src \
 os = $(shell uname)
 ifeq ($(os),Darwin)
 	debug_link_flags =   -L../tagReader/Debug   -l tagReader -framework PCSC
-	release_link_flags = -L../tagReader//Release -l tagReader -framework PCSC
+	release_link_flags = -L../tagReader/Release -l tagReader -framework PCSC
 	debug_cc_flags = $(cc_flags) -DDEBUG -g \
                  -DDEFAULT_COMMAND_DIR='"/Library/Application Support/tagEventor"' \
                  -DVERSION_STRING='$(version_string) $(rev_string) " Debug"'
@@ -54,10 +54,10 @@ ifeq ($(os),Darwin)
 else
 	debug_link_flags =   -L../tagReader/Debug   -l tagReader -l pcsclite
 	release_link_flags = -L../tagReader/Release -l tagReader -l pcsclite
-	debug_cc_flags = $(cc_flags) -DDEBUG -g -DDEFAULT_COMMAND_DIR='"/etc/tagEventor"' \
+	debug_cc_flags = $(cc_flags) -I /usr/include/PCSC  -DDEBUG -g -DDEFAULT_COMMAND_DIR='"/etc/tagEventor"' \
                  -DVERSION_STRING='$(version_string) $(rev_string) " Debug"'
 
-	release_cc_flags = $(cc_flags) -DDEFAULT_COMMAND_DIR='"/etc/tagEventor"' \
+	release_cc_flags = $(cc_flags) -I /usr/include/PCSC  -DDEFAULT_COMMAND_DIR='"/etc/tagEventor"' \
                  -DVERSION_STRING='$(version_string) $(rev_string) " Release"'
 endif
 
