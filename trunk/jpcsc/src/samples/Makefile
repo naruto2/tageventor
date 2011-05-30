@@ -1,4 +1,5 @@
 TOPDIR          = ../..
+TOPDIR          = /Users/andrew/Documents/DevProjects/WebApps/tageventor/jpcsc
 
 include ${TOPDIR}/Config
 
@@ -27,6 +28,7 @@ ifeq (${ARCH}, win32)
 else
 	export LD_LIBRARY_PATH=${PCSCDIR}/lib:${LD_LIBRARY_PATH}; ${JAVA} -Djava.library.path="${ARCHDIR}" -cp ${JPCSCJAR}:${BUILDDIR} samples.Test
 endif
+
 tool:
 ifeq (${ARCH}, win32)
 	${JAVA} -Djava.library.path="${ARCHDIR}" -cp "${JPCSCJAR}${CPSEP}${BUILDDIR}" samples.APDUTool
@@ -42,6 +44,7 @@ ifeq (${ARCH}, win32)
 else
 	export LD_LIBRARY_PATH=${PCSCDIR}/lib:${LD_LIBRARY_PATH}; ${JAVA} -Djava.library.path="${BINDIR}/${ARCH}" -cp ${BINDIR}/jpcsc.jar:${BINDIR}/samples.jar samples.Test
 endif
+
 toolbin:
 ifeq (${ARCH}, win32)
 	${JAVA} -Djava.library.path="${BINDIR}/${ARCH}" -cp "${BINDIR}/jpcsc.jar${CPSEP}${BINDIR}/samples.jar" samples.APDUTool

@@ -43,7 +43,12 @@ endif
 
 
 # name of native lib.
-DSTLIB = libjpcsc.so
+ifeq ($(os),Darwin)
+	DSTLIB = libjpcsc.jnilib
+else
+	DSTLIB = libjpcsc.so
+endif
+
 # suffix of object files
 OBJSUFFIX=.o
 # cc flags
